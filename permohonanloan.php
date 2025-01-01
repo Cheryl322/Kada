@@ -3,9 +3,9 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 include 'headermember.php';
+include "footer.php";
 
 ?>
-
 
 <div class="container mt-3">
     <div class="row justify-content-center">
@@ -15,27 +15,27 @@ include 'headermember.php';
                     <h4 class="mb-0">Permohonan Pembiayaan KADA</h4>
                 </div>
                 <div class="card-body">
-                    <form method="POST" action="loanApplicationProcess.php" enctype="multipart/form-data">
+                    <form action="statuspermohonanloan.php" method="POST">
                         
                         <!-- Maklumat Pembiayaan -->
                         <h5 class="mb-3 mt-5">Maklumat Pembiayaan</h5>
                         <div class="row g-4">
                             <div class="col-md-6">
-                                <label for="t_amount" class="form-label">Jumlah Pinjaman</label>
+                                <label for="jumlah_pinjaman" class="form-label">Jumlah Pinjaman</label>
                                 <div class="input-group">
                                     <span class="input-group-text">RM</span>
-                                    <input type="number" name="t_amount" class="form-control" required>
+                                    <input type="number" class="form-control" id="jumlah_pinjaman" name="jumlah_pinjaman" required>
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <label for="period" class="form-label">Tempoh Pembayaran (Bulan)</label>
-                                <input type="number" name="period" class="form-control" required>
+                                <label for="tempoh_pembayaran" class="form-label">Tempoh Pembayaran (Bulan)</label>
+                                <input type="number" class="form-control" id="tempoh_pembayaran" name="tempoh_pembayaran" required>
                             </div>
                             <div class="col-md-6">
-                                <label for="mon_installment" class="form-label">Ansuran Bulanan</label>
+                                <label for="ansuran_bulanan" class="form-label">Ansuran Bulanan</label>
                                 <div class="input-group">
                                     <span class="input-group-text">RM</span>
-                                    <input type="number" name="mon_installment" class="form-control" required>
+                                    <input type="number" class="form-control" id="ansuran_bulanan" name="ansuran_bulanan" required>
                                 </div>
                             </div>
                         </div>
@@ -44,27 +44,27 @@ include 'headermember.php';
                         <h5 class="mb-3 mt-5">Maklumat Peribadi</h5>
                         <div class="row mb-4">
                             <div class="col-md-6">
-                                <label for="name" class="form-label">Nama Penuh (Seperti Dalam K/P)</label>
-                                <input type="text" name="name" class="form-control" required>
+                                <label for="nama" class="form-label">Nama Penuh (Seperti Dalam K/P)</label>
+                                <input type="text" class="form-control" id="nama" name="nama" required>
                             </div>
                             <div class="col-md-6">
-                                <label for="no_ic" class="form-label">No. Kad Pengenalan</label>
-                                <input type="text" name="no_ic" class="form-control" required>
+                                <label for="ic" class="form-label">No. Kad Pengenalan</label>
+                                <input type="text" class="form-control" id="ic" name="ic" required>
                             </div>
                         </div>
 
                         <div class="row mb-4">
                             <div class="col-md-6">
-                                <label for="sex" class="form-label">Jantina</label>
-                                <select name="sex" class="form-select" required>
+                                <label for="jantina" class="form-label">Jantina</label>
+                                <select class="form-select" id="jantina" name="jantina" required>
                                     <option value="">Pilih Jantina</option>
                                     <option value="Lelaki">Lelaki</option>
                                     <option value="Perempuan">Perempuan</option>
                                 </select>
                             </div>
                             <div class="col-md-6">
-                                <label for="religion" class="form-label">Agama</label>
-                                <select name="religion" class="form-select" required>
+                                <label for="agama" class="form-label">Agama</label>
+                                <select class="form-select" id="agama" name="agama" required>
                                     <option value="">Pilih Agama</option>
                                     <option value="Islam">Islam</option>
                                     <option value="Buddha">Buddha</option>
@@ -79,8 +79,8 @@ include 'headermember.php';
 
                         <div class="row mb-4">
                             <div class="col-md-6">
-                                <label for="nationality" class="form-label">Bangsa</label>
-                                <select name="nationality" class="form-select" required>
+                                <label for="bangsa" class="form-label">Bangsa</label>
+                                <select class="form-select" id="bangsa" name="bangsa" required>
                                     <option value="">Pilih Bangsa</option>
                                     <option value="Melayu">Melayu</option>
                                     <option value="Cina">Cina</option>
@@ -92,26 +92,26 @@ include 'headermember.php';
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <label for="DOB" class="form-label">Tarikh Lahir</label>
-                                <input type="date" name="DOB" class="form-control" required>
+                                <label for="tarikh_lahir" class="form-label">Tarikh Lahir</label>
+                                <input type="date" class="form-control" id="tarikh_lahir" name="tarikh_lahir" required>
                             </div>
                         </div>
 
                         <div class="row mb-4">
                             <div class="col-md-12">
-                                <label for="add1" class="form-label">Alamat Rumah</label>
-                                <textarea name="add1" class="form-control" required></textarea>
+                                <label for="alamat_rumah" class="form-label">Alamat Rumah</label>
+                                <textarea class="form-control" id="alamat_rumah" name="alamat_rumah" rows="2" required></textarea>
                             </div>
                         </div>
 
                         <div class="row mb-4">
                             <div class="col-md-6">
-                                <label for="postcode1" class="form-label">Poskod</label>
-                                <input type="text" name="postcode1" class="form-control" required>
+                                <label for="poskod" class="form-label">Poskod</label>
+                                <input type="text" class="form-control" id="poskod" name="poskod" required>
                             </div>
                             <div class="col-md-6">
-                                <label for="state1" class="form-label">Negeri</label>
-                                <select name="state1" class="form-select" required>
+                                <label for="negeri" class="form-label">Negeri</label>
+                                <select class="form-select" id="negeri" name="negeri" required>
                                     <option value="">Pilih Negeri</option>
                                     <option value="Johor">Johor</option>
                                     <option value="Kedah">Kedah</option>
@@ -135,37 +135,37 @@ include 'headermember.php';
 
                         <div class="row mb-4">
                             <div class="col-md-6">
-                                <label for="memberID" class="form-label">No. Anggota</label>
-                                <input type="text" name="memberID" class="form-control" required>
+                                <label for="no_anggota" class="form-label">No. Anggota</label>
+                                <input type="text" class="form-control" id="no_anggota" name="no_anggota" required>
                             </div>
                             <div class="col-md-6">
-                                <label for="PFNo" class="form-label">No. PF</label>
-                                <input type="text" name="PFNo" class="form-control" required>
+                                <label for="no_pf" class="form-label">No. PF</label>
+                                <input type="text" class="form-control" id="no_pf" name="no_pf" required>
                             </div>
                         </div>
 
                         <div class="row mb-4">
                             <div class="col-md-12">
-                                <label for="position" class="form-label">Jawatan</label>
-                                <input type="text" name="position" class="form-control" required>
+                                <label for="jawatan" class="form-label">Jawatan</label>
+                                <input type="text" class="form-control" id="jawatan" name="jawatan" required>
                             </div>
                         </div>
 
                         <div class="row mb-4">
                             <div class="col-md-12">
-                                <label for="add2" class="form-label">Alamat Pejabat</label>
-                                <textarea name="add2" class="form-control" required></textarea>
+                                <label for="alamat_rumah" class="form-label">Alamat Pejabat</label>
+                                <textarea class="form-control" id="alamat_rumah" name="alamat_rumah" rows="2" required></textarea>
                             </div>
                         </div>
 
                         <div class="row mb-4">
                             <div class="col-md-6">
-                                <label for="postcode2" class="form-label">Poskod</label>
-                                <input type="text" name="postcode2" class="form-control" required>
+                                <label for="poskod" class="form-label">Poskod</label>
+                                <input type="text" class="form-control" id="poskod" name="poskod" required>
                             </div>
                             <div class="col-md-6">
-                                <label for="state2" class="form-label">Negeri</label>
-                                <select name="state2" class="form-select" required>
+                                <label for="negeri" class="form-label">Negeri</label>
+                                <select class="form-select" id="negeri" name="negeri" required>
                                     <option value="">Pilih Negeri</option>
                                     <option value="Johor">Johor</option>
                                     <option value="Kedah">Kedah</option>
@@ -189,22 +189,22 @@ include 'headermember.php';
 
                         <div class="row mb-4">
                             <div class="col-md-6">
-                                <label for="office_pNo" class="form-label">No. Telefon Pejabat</label>
-                                <input type="tel" name="office_pNo" class="form-control" required>
+                                <label for="tel_pejabat" class="form-label">No. Telefon Pejabat</label>
+                                <input type="tel" class="form-control" id="tel_pejabat" name="tel_pejabat" required>
                             </div>
                             <div class="col-md-6">
-                                <label for="pNo" class="form-label">No. Telefon Bimbit</label>
+                                <label for="tel_bimbit" class="form-label">No. Telefon Bimbit</label>
                                 <div class="input-group">
                                     <span class="input-group-text">+60</span>
-                                    <input type="tel" name="pNo" class="form-control" required>
+                                    <input type="tel" class="form-control" id="tel_bimbit" name="tel_bimbit" required>
                                 </div>
                             </div>
                         </div>
 
                         <div class="row mb-4">
                             <div class="col-md-6">
-                                <label for="bankName" class="form-label">Nama Bank</label>
-                                <select name="bankName" class="form-select" required>
+                                <label for="nama_bank" class="form-label">Nama Bank</label>
+                                <select class="form-select" id="nama_bank" name="nama_bank" required>
                                     <option value="">Pilih Bank</option>
                                     <option value="Maybank2u">Maybank2u</option>
                                     <option value="CIMB Clicks">CIMB Clicks</option>
@@ -227,8 +227,8 @@ include 'headermember.php';
                                 </select>
                             </div>
                             <div class="col-md-6">
-                                <label for="bankAcc" class="form-label">No. Akaun Bank</label>
-                                <input type="text" name="bankAcc" class="form-control" required>
+                                <label for="no_akaun" class="form-label">No. Akaun Bank</label>
+                                <input type="text" class="form-control" id="no_akaun" name="no_akaun" required>
                             </div>
                         </div>
 
@@ -236,31 +236,31 @@ include 'headermember.php';
                         <h5 class="mb-3 mt-5">Butir-butir Penjamin 1</h5>
                         <div class="row g-4">
                             <div class="col-md-6">
-                                <label for="guarantor_N" class="form-label">Nama (Seperti Dalam K/P)</label>
-                                <input type="text" name="guarantor_N" class="form-control" required>
+                                <label for="penjamin1_nama" class="form-label">Nama (Seperti Dalam K/P)</label>
+                                <input type="text" class="form-control" id="penjamin1_nama" name="penjamin1_nama" required>
                             </div>
                             <div class="col-md-6">
-                                <label for="guarantor_ic" class="form-label">No. Kad Pengenalan</label>
-                                <input type="text" name="guarantor_ic" class="form-control" required>
+                                <label for="penjamin1_ic" class="form-label">No. Kad Pengenalan</label>
+                                <input type="text" class="form-control" id="penjamin1_ic" name="penjamin1_ic" required>
                             </div>
                             <div class="col-md-6">
-                                <label for="guarantor_pNo" class="form-label">No. Telefon</label>
+                                <label for="penjamin1_telefon" class="form-label">No. Telefon</label>
                                 <div class="input-group">
                                     <span class="input-group-text">+60</span>
-                                    <input type="tel" name="guarantor_pNo" class="form-control" required>
+                                    <input type="tel" class="form-control" id="penjamin2_telefon" name="penjamin2_telefon" required>
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <label for="PFNo1" class="form-label">No. PF</label>
-                                <input type="text" name="PFNo1" class="form-control" required>
+                                <label for="penjamin1_pf" class="form-label">No. PF</label>
+                                <input type="text" class="form-control" id="penjamin1_pf" name="penjamin1_pf" required>
                             </div>
                             <div class="col-md-6">
-                                <label for="guarantorMemberID" class="form-label">No. Anggota</label>
-                                <input type="text" name="guarantorMemberID" class="form-control" required>
+                                <label for="penjamin1_anggota" class="form-label">No. Anggota</label>
+                                <input type="text" class="form-control" id="penjamin1_anggota" name="penjamin1_anggota" required>
                             </div>
                             <div class="col-md-6">
-                                <label for="sign" class="form-label">Tandatangan (PDF)</label>
-                                <input type="file" name="sign" class="form-control" required>
+                                <label for="penjamin1_signature" class="form-label">Tandatangan (PDF)</label>
+                                <input type="file" class="form-control" id="penjamin1_signature" name="penjamin1_signature" accept=".pdf" required>
                             </div>
                         </div>
 
@@ -268,31 +268,31 @@ include 'headermember.php';
                         <h5 class="mb-3 mt-5">Butir-butir Penjamin 2</h5>
                         <div class="row g-4">
                             <div class="col-md-6">
-                                <label for="guarantor_N2" class="form-label">Nama (Seperti Dalam K/P)</label>
-                                <input type="text" name="guarantor_N2" class="form-control" required>
+                                <label for="penjamin2_nama" class="form-label">Nama (Seperti Dalam K/P)</label>
+                                <input type="text" class="form-control" id="penjamin2_nama" name="penjamin2_nama" required>
                             </div>
                             <div class="col-md-6">
-                                <label for="guarantor_ic2" class="form-label">No. Kad Pengenalan</label>
-                                <input type="text" name="guarantor_ic2" class="form-control" required>
+                                <label for="penjamin2_ic" class="form-label">No. Kad Pengenalan</label>
+                                <input type="text" class="form-control" id="penjamin2_ic" name="penjamin2_ic" required>
                             </div>
                             <div class="col-md-6">
-                                <label for="guarantor_pNo2" class="form-label">No. Telefon</label>
+                                <label for="penjamin2_telefon" class="form-label">No. Telefon</label>
                                 <div class="input-group">
                                     <span class="input-group-text">+60</span>
-                                    <input type="tel" name="guarantor_pNo2" class="form-control" required>
+                                    <input type="tel" class="form-control" id="penjamin2_telefon" name="penjamin2_telefon" required>
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <label for="PFNo2" class="form-label">No. PF</label>
-                                <input type="text" name="PFNo2" class="form-control" required>
+                                <label for="penjamin2_pf" class="form-label">No. PF</label>
+                                <input type="text" class="form-control" id="penjamin2_pf" name="penjamin2_pf" required>
                             </div>
                             <div class="col-md-6">
-                                <label for="guarantorMemberID2" class="form-label">No. Anggota</label>
-                                <input type="text" name="guarantorMemberID2" class="form-control" required>
+                                <label for="penjamin2_anggota" class="form-label">No. Anggota</label>
+                                <input type="text" class="form-control" id="penjamin2_anggota" name="penjamin2_anggota" required>
                             </div>
                             <div class="col-md-6">
-                                <label for="sign2" class="form-label">Tandatangan (PDF)</label>
-                                <input type="file" name="sign2" class="form-control" required>
+                                <label for="penjamin2_signature" class="form-label">Tandatangan (PDF)</label>
+                                <input type="file" class="form-control" id="penjamin2_signature" name="penjamin2_signature" accept=".pdf" required>
                             </div>
                         </div>
 
@@ -301,46 +301,46 @@ include 'headermember.php';
                         <h5 class="mb-3 mt-5">Pengesahan Majikan</h5>
                         <div class="row g-4">
                             <div class="col-md-6">
-                                <label for="employer_N" class="form-label">Nama Majikan (Seperti Dalam K/P)</label>
-                                <input type="text" name="employer_N" class="form-control" required>
+                                <label for="majikan_nama" class="form-label">Nama Majikan (Seperti Dalam K/P)</label>
+                                <input type="text" class="form-control" id="majikan_nama" name="majikan_nama" required>
                             </div>
                             
                             <div class="col-md-6">
-                                <label for="employer_ic" class="form-label">No. Kad Pengenalan</label>
-                                <input type="text" name="employer_ic" class="form-control" required>
+                                <label for="majikan_ic" class="form-label">No. Kad Pengenalan</label>
+                                <input type="text" class="form-control" id="majikan_ic" name="majikan_ic" required>
                             </div>
 
                             <div class="col-md-6">
-                                <label for="basic_salary" class="form-label">Gaji Pokok Sebulan Kakitangan</label>
+                                <label for="gaji_pokok" class="form-label">Gaji Pokok Sebulan Kakitangan</label>
                                 <div class="input-group">
                                     <span class="input-group-text">RM</span>
-                                    <input type="number" name="basic_salary" class="form-control" required>
+                                    <input type="number" class="form-control" id="gaji_pokok" name="gaji_pokok" required>
                                 </div>
                             </div>
 
                             <div class="col-md-6">
-                                <label for="net_salary" class="form-label">Gaji Bersih Sebulan Kakitangan</label>
+                                <label for="gaji_bersih" class="form-label">Gaji Bersih Sebulan Kakitangan</label>
                                 <div class="input-group">
                                     <span class="input-group-text">RM</span>
-                                    <input type="number" name="net_salary" class="form-control" required>
+                                    <input type="number" class="form-control" id="gaji_bersih" name="gaji_bersih" required>
                                 </div>
                             </div>
 
                             <div class="col-md-6">
-                                <label for="basic_s" class="form-label">Lampiran Slip Gaji Pokok Kakitangan</label>
-                                <input type="file" name="basic_s" class="form-control" required>
+                                <label for="gaji_pokok_file" class="form-label">Lampiran Slip Gaji Pokok Kakitangan</label>
+                                <input type="file" class="form-control" id="gaji_pokok_file" name="gaji_pokok_file" accept=".pdf,.jpg,.jpeg,.png" required>
                                 <div class="form-text">Sila lampirkan slip gaji pokok dalam format PDF</div>
                             </div>
 
                             <div class="col-md-6">
-                                <label for="net_s" class="form-label">Lampiran Slip Gaji Bersih Kakitangan</label>
-                                <input type="file" name="net_s" class="form-control" required>
+                                <label for="gaji_bersih_file" class="form-label">Lampiran Slip Gaji Bersih Kakitangan</label>
+                                <input type="file" class="form-control" id="gaji_bersih_file" name="gaji_bersih_file" accept=".pdf,.jpg,.jpeg,.png" required>
                                 <div class="form-text">Sila lampirkan slip gaji bersih dalam format PDF</div>
                             </div>
 
                             <div class="col-md-6">
-                                <label for="signature" class="form-label">Tandatangan Sah/Cop (PDF)</label>
-                                <input type="file" name="signature" class="form-control" required>
+                                <label for="majikan_signature" class="form-label">Tandatangan Sah/Cop (PDF)</label>
+                                <input type="file" class="form-control" id="majikan_signature" name="majikan_signature" accept=".pdf" required>
                                 <div class="form-text">Sila lampirkan tandatangan dalam format PDF</div>
                             </div>
                         </div>
@@ -370,7 +370,7 @@ include 'headermember.php';
 
                             <!-- Submit Button -->
                             <div class="d-grid gap-2 col-6 mx-auto mt-5 mb-4">
-                                <button class="btn btn-primary" type="submit" id="submitBtn" href="statuspermohonanloan.php">Hantar Permohonan</button>
+                                <button class="btn btn-primary" type="submit" id="submitBtn">Hantar Permohonan</button>
                             </div>
                         </div>
                     </form>
@@ -403,7 +403,5 @@ document.getElementById('bangsa').addEventListener('change', function() {
     }
 });
 </script>
-
-
 
 <?php include 'footer.php'; ?>
