@@ -1,5 +1,4 @@
 <?php
-
 include "headermember.php";
 include "footer.php";
 include "dbconnect.php";
@@ -67,247 +66,305 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 }
 ?>
 
-<!-- <!DOCTYPE html>
-<html lang="ms">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Permohonan Menjadi Anggota</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/minty/bootstrap.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
-</head> -->
+<style>
+/* Container sizing */
+.container {
+    width: 90%;
+    max-width: 1200px !important; /* Adjusted to match maklumat_tambahan.php */
+    margin: 0 auto;
+    padding: 0 15px;
+}
 
+/* Progress bar */
+.progress-container {
+    width: 90%;
+    margin: 20px auto;
+    font-weight: 500;
+}
 
-<body>
-    <!-- <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-        <div class="container">
-            <a class="navbar-brand" href="index.php">KADA</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav">
-                    <li class="nav-item">
-                        <a class="nav-link active" href="#">Pendaftaran</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">Senarai Anggota</a>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav> -->
-    <div class="container mt-4">
-        <h2 class="mb-4">Permohonan Menjadi Anggota</h2>
-        
-        <div class="card">
-            <div class="card-header bg-secondary text-white">
-                MAKLUMAT PERIBADI
-            </div>
-            <div class="card-body">
-                <form method="POST" action="maklumat_tambahan.php">
-                    <div class="mb-3">
-                        <label class="form-label">Nama Penuh <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" name="nama_penuh" required>
-                        <small class="text-muted">Sila pastikan NAMA PENUH seperti dalam kad pengenalan.</small>
-                    </div>
+/* Section header */
+.section-header {
+    background-color: #F8B4B4 !important; 
+    padding: 10px 15px;
+    border-radius: 5px;
+    margin: 20px 0;
+    font-weight: 500;
+    color: black !important;
+    font-size: 18px !important;
+    text-transform: uppercase;
+}
 
-                    <div class="mb-3">
-                        <label class="form-label">Alamat Emel <span class="text-danger">*</span></label>
-                        <input type="email" class="form-control" name="alamat_emel" required>
-                        <small class="text-muted">Sila pastikan ALAMAT EMEL adalah sah dan masih aktif.</small>
-                    </div>
+/* Specific styling for the text */
+.section-header, 
+.section-header * {
+    color: black !important;
+}
 
-                    <div class="mb-3">
-                        <label class="form-label">MyKad/No. Passport <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" name="mykad_passport" 
-                               placeholder="eg. 760910015001 (tanpa sengkang - )" required>
-                    </div>
+/* Table styling */
+.table {
+    width: 100%;
+    margin-bottom: 20px;
+    background-color: white;
+    border: 1px solid #dee2e6;
+}
 
-                    <div class="mb-3">
-                        <label class="form-label">Taraf Perkahwinan <span class="text-danger">*</span></label>
-                        <select class="form-select" name="taraf_perkahwinan" required>
-                            <option value="">Sila Pilih</option>
-                            <option value="Bujang">Bujang</option>
-                            <option value="Berkahwin">Berkahwin</option>
-                            <option value="Duda/Janda">Duda/Janda</option>
-                        </select>
-                    </div>
+.table td {
+    padding: 15px 20px; /* Adjusted padding */
+    border: 1px solid #dee2e6;
+    vertical-align: middle;
+}
 
-                    <div class="mb-3">
-                        <label class="form-label">Alamat Rumah <span class="text-danger">*</span></label>
-                        <textarea class="form-control" name="alamat_rumah" rows="3" required></textarea>
-                    </div>
+/* Form controls */
+.form-control, .form-select {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+}
 
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Poskod <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" name="poskod" required>
-                        </div>
+/* Form labels */
+.form-label {
+    font-weight: 500;
+    color: black !important;
+    margin-bottom: 8px;
+}
 
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Negeri <span class="text-danger">*</span></label>
-                            <select class="form-select" name="negeri" required>
-                                <option value="">Sila Pilih</option>
-                                <option value="Johor">Johor</option>
-                                <option value="Kedah">Kedah</option>
-                                <option value="Kelantan">Kelantan</option>
-                                <option value="Melaka">Melaka</option>
-                                <option value="Negeri Sembilan">Negeri Sembilan</option>
-                                <option value="Pahang">Pahang</option>
-                                <option value="Perak">Perak</option>
-                                <option value="Perlis">Perlis</option>
-                                <option value="Pulau Pinang">Pulau Pinang</option>
-                                <option value="Sabah">Sabah</option>
-                                <option value="Sarawak">Sarawak</option>
-                                <option value="Selangor">Selangor</option>
-                                <option value="Terengganu">Terengganu</option>
-                                <option value="WP Kuala Lumpur">WP Kuala Lumpur</option>
-                                <option value="WP Labuan">WP Labuan</option>
-                                <option value="WP Putrajaya">WP Putrajaya</option>
-                            </select>
-                        </div>
-                    </div>
+.form-text {
+    color: black !important;
+    font-size: 0.875rem;
+    margin-top: 5px;
+}
 
-                    <div class="mb-3">
-                        <label class="form-label">Jantina <span class="text-danger">*</span></label>
-                        <div>
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="jantina" id="jantina_lelaki" value="Lelaki" required>
-                                <label class="form-check-label" for="jantina_lelaki">Lelaki</label>
-                            </div>
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="jantina" id="jantina_perempuan" value="Perempuan" required>
-                                <label class="form-check-label" for="jantina_perempuan">Perempuan</label>
-                            </div>
-                        </div>
-                    </div>
+/* Navigation/Header bar styling */
+.navbar {
+    background-color: #95D5B2 !important; /* Light green color */
+}
 
-                    <div class="mb-3">
-                        <label class="form-label">Agama <span class="text-danger">*</span></label>
-                        <select class="form-select" name="agama" required>
-                            <option value="">Sila Pilih</option>
-                            <option value="Islam">Islam</option>
-                            <option value="Buddha">Buddha</option>
-                            <option value="Hindu">Hindu</option>
-                            <option value="Kristian">Kristian</option>
-                            <option value="Lain-lain">Lain-lain</option>
-                        </select>
-                    </div>
+/* Logo and navigation items */
+.navbar-brand,
+.nav-link {
+    color: white !important;
+}
 
-                    <div class="mb-3">
-                        <label class="form-label">Bangsa <span class="text-danger">*</span></label>
-                        <select class="form-select" name="bangsa" required>
-                            <option value="">Sila Pilih</option>
-                            <option value="Melayu">Melayu</option>
-                            <option value="Cina">Cina</option>
-                            <option value="India">India</option>
-                            <option value="Lain-lain">Lain-lain</option>
-                        </select>
-                    </div>
+/* Profile icon */
+.profile-icon {
+    color: white;
+}
 
-                    <div class="mb-3">
-                        <label class="form-label">No. Anggota <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" name="no_anggota" required>
-                    </div>
+/* Active/hover states */
+.nav-link:hover,
+.nav-link.active {
+    color: #e9ecef !important;
+}
+</style>
 
-                    <div class="mb-3">
-                        <label class="form-label">No. PF <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" name="no_pf" required>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Jawatan & Gred <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" name="jawatan_gred" required>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Alamat Pejabat (Tempat Bertugas) <span class="text-danger">*</span></label>
-                        <textarea class="form-control" name="alamat_pejabat" rows="3" required></textarea>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">No. Tel Bimbit <span class="text-danger">*</span></label>
-                        <input type="tel" class="form-control" name="no_tel_bimbit" required>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">No. Tel Rumah <span class="text-danger">*</span></label>
-                        <input type="tel" class="form-control" name="no_tel_rumah" required>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Gaji Bulanan (RM) <span class="text-danger">*</span></label>
-                        <input type="number" class="form-control" name="gaji_bulanan" required>
-                    </div>
-
-                    <div class="text-end mt-3 mb-5">
-                        <button type="submit" class="btn btn-primary btn-lg">
-                            Seterusnya <i class="fas fa-arrow-right"></i>
-                        </button>
-                    </div>
-                </form>
+<div class="container mt-4">
+    <!-- Progress Bar -->
+    <div class="row justify-content-center mb-4">
+        <div class="col-md-8">
+            <div class="progress" style="height: 30px;">
+                <div class="progress-bar" role="progressbar" style="width: 100%">
+                    Langkah 1/2: Permohonan Menjadi Anggota
+                </div>
             </div>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-    $(document).ready(function(){
-        // Phone number formatting
-        $('input[name="no_tel_bimbit"]').mask('000-000-0000');
-        $('input[name="no_tel_rumah"]').mask('000-000-0000');
-        
-        // MyKad formatting
-        $('input[name="mykad_passport"]').mask('000000-00-0000');
-        
-        // Currency formatting
-        $('input[name="gaji_bulanan"]').mask('000,000,000.00', {reverse: true});
-        
-        // Form validation
-        $('form').on('submit', function(e){
-            let isValid = true;
-            
-            // Reset previous errors
-            $('.is-invalid').removeClass('is-invalid');
-            
-            // Validate email
-            const email = $('input[name="alamat_emel"]').val();
-            if (!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
-                $('input[name="alamat_emel"]').addClass('is-invalid');
-                isValid = false;
-            }
-            
-            // Validate MyKad
-            const mykad = $('input[name="mykad_passport"]').val();
-            if (!mykad.match(/^\d{6}-\d{2}-\d{4}$/)) {
-                $('input[name="mykad_passport"]').addClass('is-invalid');
-                isValid = false;
-            }
-            
-            if (!isValid) {
-                e.preventDefault();
-            }
-        });
-    });
-    </script>
-    <footer class="bg-light mt-5 py-3 mb-5">
-        <div class="container">
-            <div class="row">
-                <div class="col-md-6">
-                    <h5>Hubungi Kami</h5>
-                    <p>
-                        Tel: 03-XXXXXXXX<br>
-                        Email: info@kada.com.my<br>
-                        Alamat: Jalan XXXX, 50000 Kuala Lumpur
-                    </p>
+    <!-- Section Header -->
+    <div class="section-header" style="color: black !important;">
+        MAKLUMAT PERIBADI
+    </div>
+
+    <!-- Form Content -->
+    <div class="card">
+        <div class="card-body">
+            <form method="POST" action="maklumat_tambahan.php">
+                <div class="mb-3">
+                    <label class="form-label">Nama Penuh <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" name="memberName" required>
+                    <small class="text-muted">Sila pastikan NAMA PENUH seperti dalam kad pengenalan.</small>
                 </div>
-                <div class="col-md-6 text-end">
-                    <p>&copy; 2024 KADA. Hak Cipta Terpelihara.</p>
+
+                <div class="mb-3">
+                    <label class="form-label">Alamat Emel <span class="text-danger">*</span></label>
+                    <input type="email" class="form-control" name="email" required>
+                    <small class="text-muted">Sila pastikan ALAMAT EMEL adalah sah dan masih aktif.</small>
                 </div>
-            </div>
+
+                <div class="mb-3">
+                    <label class="form-label">MyKad/No. Passport <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" name="ic" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Taraf Perkahwinan <span class="text-danger">*</span></label>
+                    <select class="form-select" name="maritalStatus" required>
+                        <option value="">Sila Pilih</option>
+                        <option value="Bujang">Bujang</option>
+                        <option value="Berkahwin">Berkahwin</option>
+                        <option value="Duda/Janda">Duda/Janda</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Alamat Rumah <span class="text-danger">*</span></label>
+                    <textarea class="form-control" name="address" rows="3" required></textarea>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Poskod <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="poscode" required>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Negeri <span class="text-danger">*</span></label>
+                        <select class="form-select" name="state" required>
+                            <option value="">Sila Pilih</option>
+                            <option value="Johor">Johor</option>
+                            <option value="Kedah">Kedah</option>
+                            <option value="Kelantan">Kelantan</option>
+                            <option value="Melaka">Melaka</option>
+                            <option value="Negeri Sembilan">Negeri Sembilan</option>
+                            <option value="Pahang">Pahang</option>
+                            <option value="Perak">Perak</option>
+                            <option value="Perlis">Perlis</option>
+                            <option value="Pulau Pinang">Pulau Pinang</option>
+                            <option value="Sabah">Sabah</option>
+                            <option value="Sarawak">Sarawak</option>
+                            <option value="Selangor">Selangor</option>
+                            <option value="Terengganu">Terengganu</option>
+                            <option value="WP Kuala Lumpur">WP Kuala Lumpur</option>
+                            <option value="WP Labuan">WP Labuan</option>
+                            <option value="WP Putrajaya">WP Putrajaya</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Jantina <span class="text-danger">*</span></label>
+                    <div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="sex" id="jantina_lelaki" value="Lelaki" required>
+                            <label class="form-check-label" for="jantina_lelaki">Lelaki</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="sex" id="jantina_perempuan" value="Perempuan" required>
+                            <label class="form-check-label" for="jantina_perempuan">Perempuan</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Agama <span class="text-danger">*</span></label>
+                    <select class="form-select" name="religion" required>
+                        <option value="">Sila Pilih</option>
+                        <option value="Islam">Islam</option>
+                        <option value="Buddha">Buddha</option>
+                        <option value="Hindu">Hindu</option>
+                        <option value="Kristian">Kristian</option>
+                        <option value="Lain-lain">Lain-lain</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Bangsa <span class="text-danger">*</span></label>
+                    <select class="form-select" name="nation" required>
+                        <option value="">Sila Pilih</option>
+                        <option value="Melayu">Melayu</option>
+                        <option value="Cina">Cina</option>
+                        <option value="India">India</option>
+                        <option value="Lain-lain">Lain-lain</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">No. Anggota <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" name="no_anggota" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">No. PF <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" name="no_pf" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Jawatan & Gred <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" name="position" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Alamat Pejabat (Tempat Bertugas) <span class="text-danger">*</span></label>
+                    <textarea class="form-control" name="officeAddress" rows="3" required></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">No. Tel Bimbit <span class="text-danger">*</span></label>
+                    <input type="tel" class="form-control" name="phoneNumber" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">No. Tel Rumah <span class="text-danger">*</span></label>
+                    <input type="tel" class="form-control" name="phoneHome" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Gaji Bulanan (RM) <span class="text-danger">*</span></label>
+                    <input type="number" class="form-control" name="monthlySalary" required>
+                </div>
+
+                <div class="text-end mt-3 mb-5">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        Seterusnya <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </form>
         </div>
-    </footer>
-</body>
-</html> 
+    </div>
+</div>
+
+<script>
+$(document).ready(function(){
+    // Phone number formatting
+    $('input[name="phoneNumber"]').mask('000-000-0000');
+    $('input[name="phoneHome"]').mask('000-000-0000');
+    
+    // MyKad formatting
+    $('input[name="ic"]').mask('000000-00-0000');
+    
+    // Currency formatting
+    $('input[name="monthlySalary"]').mask('000,000,000.00', {reverse: true});
+    
+    // Form validation
+    $('form').on('submit', function(e){
+        let isValid = true;
+        
+        // Reset previous errors
+        $('.is-invalid').removeClass('is-invalid');
+        
+        // Validate email
+        const email = $('input[name="email"]').val();
+        if (!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+            $('input[name="email"]').addClass('is-invalid');
+            isValid = false;
+        }
+        
+        // Validate MyKad
+        const mykad = $('input[name="ic"]').val();
+        if (!mykad.match(/^\d{6}-\d{2}-\d{4}$/)) {
+            $('input[name="ic"]').addClass('is-invalid');
+            isValid = false;
+        }
+        
+        if (!isValid) {
+            e.preventDefault();
+        }
+    });
+});
+</script>
+
+header("Location: success.php");
+exit();
+
+
+<?php include "footer.php"; ?>
