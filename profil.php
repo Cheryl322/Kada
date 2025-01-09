@@ -206,38 +206,6 @@ while($row=mysqli_fetch_array($result)){
        </div>
    </div>
 </div>
-<!-- Add this CSS to your stylesheet
-style>
-profile-sidebar {
-   padding: 20px;
-   background: #f8f9fa;
-   border-radius: 10px;
 
-.profile-image img {
-   width: 150px;
-   height: 150px;
-   object-fit: cover;
-   margin: 0 auto;
-   display: block;
 
-.profile-nav .nav-link {
-   padding: 10px 15px;
-   color: #333;
-   border-left: 3px solid transparent;
-
-.profile-nav .nav-link.active {
-   background: #e9ecef;
-   border-left: 3px solid #007bff;
-
-.profile-content {
-   padding: 20px;
-   background: #fff;
-   border-radius: 10px;
-   box-shadow: 0 0 10px rgba(0,0,0,0.1);
-
-.form-control {
-   border-radius: 5px; -->
-
-</style>
-</div>
 
