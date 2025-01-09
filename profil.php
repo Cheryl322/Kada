@@ -111,7 +111,7 @@ while($row=mysqli_fetch_array($result)){
         <!-- Main Content -->
        <div class="col-md-9">
            <div class="profile-content">
-               <form method="POST" action="update_profile.php">
+               <form method="POST" action="update_profil.php">
                    <div class="form-group row mb-3">
                        <label class="col-sm-3 col-form-label">Nama</label>
                        <div class="col-sm-9">
