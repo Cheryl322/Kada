@@ -34,48 +34,26 @@ function getUserData($user_id) {
 
 // Get user data if user is logged in
 $userData = isset($_SESSION['user_id']) ? getUserData($_SESSION['user_id']) : null;
-$sql="SELECT * FROM tb_profile";
+$sql="SELECT * FROM tb_member";
 $result=mysqli_query($con, $sql);
 while($row=mysqli_fetch_array($result)){
-    $userData['p_name']=$row['p_name'];
-    $userData['p_email']=$row['p_email'];
-    $userData['p_ic']=$row['p_ic'];
-    $userData['p_marital']=$row['p_marital'];
-    $userData['p_address']=$row['p_address'];
-    $userData['p_poskod']=$row['p_poskod'];
-    $userData['p_country']=$row['p_country'];   
-    $userData['p_sex']=$row['p_sex'];
-    $userData['p_agama']=$row['p_agama'];
-    $userData['p_bangsa']=$row['p_bangsa'];
-    $userData['p_nostaff']=$row['p_nostaff'];
-    $userData['p_nopf']=$row['p_nopf'];
-    $userData['p_jawatan']=$row['p_jawatan'];
-    $userData['p_addpejabat']=$row['p_addpejabat'];
-    $userData['p_notel']=$row['p_notel'];
-    $userData['p_notelhome']=$row['p_notelhome'];
+    $userData['memberName']=$row['memberName'];
+    $userData['email']=$row['email'];
+    $userData['ic']=$row['ic'];
+    $userData['maritalStatus']=$row['maritalStatus'];
+    $userData['address']=$row['address'];
+    $userData['poscode']=$row['poscode'];
+    $userData['state']=$row['state'];   
+    $userData['sex']=$row['sex'];
+    $userData['religion']=$row['religion'];
+    $userData['nation']=$row['nation'];
+    $userData['employeeId']=$row['employeeId'];
+    $userData['no_pf']=$row['no_pf'];
+    $userData['position']=$row['position'];
+    $userData['officeAddress']=$row['officeAddress'];
+    $userData['phoneNumber']=$row['phoneNumber'];
+    $userData['phoneHome']=$row['phoneHome'];
 }
-// If no user data, you might want to set default values
-/*if (!$userData) {
-    $userData = [
-        'nama' => 'Yuna Liew Mei Mei',
-        'email' => 'yuna@example.com',
-        'ic_passport' => '000000-00-0000',
-        'marital_status' => 'Kahwin',
-        'address' => '33, Jalan Bunga Tulip',
-        'postcode' => '00000',
-        'state' => 'Johor',
-        'gender' => 'Perempuan',
-        'religion' => 'Buddhist',
-        'bangsa' => 'Buddhist',
-        'noAnggota' => 'Buddhist',
-        'noPF' => 'Buddhist',
-        'jawatanGred'=>'Buddhist',
-        'alamatPejabat'=>'Buddhist',
-        'noTelBimbit'=>'Buddhist',
-        'noTelRumah'=>'Buddhist',
-        'gajiBulanan'=>'Buddhist'
-    ];
-}*/
 
 ?>
 <div class="container">
@@ -125,97 +103,97 @@ while($row=mysqli_fetch_array($result)){
                    <div class="form-group row mb-3">
                        <label class="col-sm-3 col-form-label">Nama</label>
                        <div class="col-sm-9">
-                           <input type="text" class="form-control" name="nama" value="<?php echo htmlspecialchars($userData['p_name']); ?>">
+                           <input type="text" class="form-control" name="nama" value="<?php echo htmlspecialchars($userData['memberName']); ?>">
                        </div>
                    </div>
                     <div class="form-group row mb-3">
                        <label class="col-sm-3 col-form-label">Alamat Emel</label>
                        <div class="col-sm-9">
-                           <input type="email" class="form-control" name="email" value="<?php echo htmlspecialchars($userData['p_email']); ?>">
+                           <input type="email" class="form-control" name="email" value="<?php echo htmlspecialchars($userData['email']); ?>">
                        </div>
                    </div>
                     <div class="form-group row mb-3">
                        <label class="col-sm-3 col-form-label">MyKad/No. Passport</label>
                        <div class="col-sm-9">
-                            <input type="text" class="form-control" name="ic_passport" value="<?php echo htmlspecialchars($userData['p_ic']); ?>">
+                            <input type="text" class="form-control" name="ic_passport" value="<?php echo htmlspecialchars($userData['ic']); ?>">
                        </div>
                    </div>
                     <div class="form-group row mb-3">
                        <label class="col-sm-3 col-form-label">Taraf perkahwinan</label>
                        <div class="col-sm-9">
-                           <input type="text" class="form-control" name="marital_status" value="<?php echo htmlspecialchars($userData['p_marital']); ?>">
+                           <input type="text" class="form-control" name="marital_status" value="<?php echo htmlspecialchars($userData['maritalStatus']); ?>">
                        </div>
                    </div>
                     <div class="form-group row mb-3">
                        <label class="col-sm-3 col-form-label">Alamat Rumah</label>
                        <div class="col-sm-9">
-                           <input type="text" class="form-control" name="address" value="<?php echo htmlspecialchars($userData['p_address']); ?>">
+                           <input type="text" class="form-control" name="address" value="<?php echo htmlspecialchars($userData['address']); ?>">
                        </div>
                    </div>
                     <div class="form-group row mb-3">
                        <label class="col-sm-3 col-form-label">Poskod</label>
                        <div class="col-sm-9">
-                           <input type="text" class="form-control" name="postcode" value="<?php echo htmlspecialchars($userData['p_poskod']); ?>">
+                           <input type="text" class="form-control" name="postcode" value="<?php echo htmlspecialchars($userData['poscode']); ?>">
                        </div>
                    </div>
                     <div class="form-group row mb-3">
                        <label class="col-sm-3 col-form-label">Negeri</label>
                        <div class="col-sm-9">
-                           <input type="text" class="form-control" name="state" value="<?php echo htmlspecialchars($userData['p_country']); ?>">
+                           <input type="text" class="form-control" name="state" value="<?php echo htmlspecialchars($userData['state']); ?>">
                        </div>
                    </div>
                     <div class="form-group row mb-3">
                        <label class="col-sm-3 col-form-label">Jantina</label>
                        <div class="col-sm-9">
-                           <input type="text" class="form-control" name="gender" value="<?php echo htmlspecialchars($userData['p_sex']); ?>">
+                           <input type="text" class="form-control" name="gender" value="<?php echo htmlspecialchars($userData['sex']); ?>">
                        </div>
                    </div>
                     <div class="form-group row mb-3">
                        <label class="col-sm-3 col-form-label">Agama</label>
                        <div class="col-sm-9">
-                           <input type="text" class="form-control" name="religion" value="<?php echo htmlspecialchars($userData['p_agama']); ?>">
+                           <input type="text" class="form-control" name="religion" value="<?php echo htmlspecialchars($userData['religion']); ?>">
                        </div>
                    </div>
                    <div class="form-group row mb-3">
                        <label class="col-sm-3 col-form-label">Bangsa</label>
                        <div class="col-sm-9">
-                           <input type="text" class="form-control" name="bangsa" value="<?php echo htmlspecialchars($userData['p_bangsa']); ?>">
+                           <input type="text" class="form-control" name="bangsa" value="<?php echo htmlspecialchars($userData['nation']); ?>">
                        </div>
                    </div>
                    <div class="form-group row mb-3">
                        <label class="col-sm-3 col-form-label">No. Anggota</label>
                        <div class="col-sm-9">
-                           <input type="text" class="form-control" name="noAnggota" value="<?php echo htmlspecialchars($userData['p_nostaff']); ?>">
+                           <input type="text" class="form-control" name="noAnggota" value="<?php echo htmlspecialchars($userData['employeeId']); ?>">
                        </div>
                    </div>
                    <div class="form-group row mb-3">
                        <label class="col-sm-3 col-form-label">No. PF</label>
                        <div class="col-sm-9">
-                           <input type="text" class="form-control" name="noPF" value="<?php echo htmlspecialchars($userData['p_nopf']); ?>">
+                           <input type="text" class="form-control" name="noPF" value="<?php echo htmlspecialchars($userData['no_pf']); ?>">
                        </div>
                    </div>
                    <div class="form-group row mb-3">
                        <label class="col-sm-3 col-form-label">Jawatan & Gred</label>
                        <div class="col-sm-9">
-                           <input type="text" class="form-control" name="jawatanGred" value="<?php echo htmlspecialchars($userData['p_jawatan']); ?>">
+                           <input type="text" class="form-control" name="jawatanGred" value="<?php echo htmlspecialchars($userData['position']); ?>">
                        </div>
                    </div>
                    <div class="form-group row mb-3">
                        <label class="col-sm-3 col-form-label">Alamat Pejabat</label>
                        <div class="col-sm-9">
-                           <input type="text" class="form-control" name="alamatPejabat" value="<?php echo htmlspecialchars($userData['p_addpejabat']); ?>">
+                           <input type="text" class="form-control" name="alamatPejabat" value="<?php echo htmlspecialchars($userData['officeAddress']); ?>">
                        </div>
                    </div>           
                    <div class="form-group row mb-3">
                        <label class="col-sm-3 col-form-label">No. Tel Bimbit</label>
                        <div class="col-sm-9">
-                           <input type="text" class="form-control" name="noTelBimbit" value="<?php echo htmlspecialchars($userData['p_notel']); ?>">
+                           <input type="text" class="form-control" name="noTelBimbit" value="<?php echo htmlspecialchars($userData['phoneNumber']); ?>">
                        </div>
                    </div>
                    <div class="form-group row mb-3">
                        <label class="col-sm-3 col-form-label">No. Tel Rumah</label>
                        <div class="col-sm-9">
-                           <input type="text" class="form-control" name="noTelRumah" value="<?php echo htmlspecialchars($userData['p_notelhome']); ?>">
+                           <input type="text" class="form-control" name="noTelRumah" value="<?php echo htmlspecialchars($userData['phoneHome']); ?>">
                        </div>
                    </div>   
                     <div class="form-group row mb-5">
