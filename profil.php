@@ -196,26 +196,19 @@ while($row=mysqli_fetch_array($result)){
                            <input type="text" class="form-control" name="noTelRumah" value="<?php echo htmlspecialchars($userData['phoneHome']); ?>"readonly>
                        </div>
                    </div>   
-                    <div class="form-group row mb-5">
-                       <div class="col-sm-9 offset-sm-3">
-                           <button type="submit" class="btn btn-primary">Kemaskini</button>
-                       </div>
-                   </div>
+                   <div class="form-group row mb-5">
+                        <div class="col-sm-9 offset-sm-3">
+                            <button type="button" class="btn btn-primary" id="editButton" onclick="editProfile()">Edit</button>
+                            <button type="submit" class="btn btn-success" id="updateButton" style="display: none;">Simpan</button>
+                            <button type="button" class="btn btn-secondary" id="cancelButton" onclick="cancelEdit()" style="display: none;">Batal</button>
+                        </div>
+                    </div>
                </form>
            </div>
        </div>
    </div>
 </div>
 
-// ... existing form fields ...
-
-<div class="form-group row mb-5">
-    <div class="col-sm-9 offset-sm-3">
-        <button type="button" class="btn btn-primary" id="editButton" onclick="editProfile()">Edit</button>
-        <button type="submit" class="btn btn-success" id="updateButton" style="display: none;">Simpan</button>
-        <button type="button" class="btn btn-secondary" id="cancelButton" onclick="cancelEdit()" style="display: none;">Batal</button>
-    </div>
-</div>
 
 <script>
 function editProfile() {
