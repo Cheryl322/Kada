@@ -79,6 +79,16 @@ while($row=mysqli_fetch_array($result)){
 
 ?>
 <div class="container">
+    <?php
+        if (isset($_SESSION['success_message'])) {
+            echo '<div class="alert alert-success">' . $_SESSION['success_message'] . '</div>';
+            unset($_SESSION['success_message']);
+        }
+        if (isset($_SESSION['error_message'])) {
+            echo '<div class="alert alert-danger">' . $_SESSION['error_message'] . '</div>';
+            unset($_SESSION['error_message']);
+        }
+    ?>
    <div class="row">
        <!-- Left Sidebar -->
        <div class="col-md-3">
