@@ -40,10 +40,8 @@
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Perkhidmatan</a>
           <div class="dropdown-menu">
-            <a class="dropdown-item" href="#">
-              Senarai Permohonan Anggota
-            </a>
-            <a class="dropdown-item" href="#">Senarai Permohonan Pembiayaan</a>
+            <a class="dropdown-item" href="senaraiPermohonanAhli.php">Senarai Permohonan Anggota</a>
+            <a class="dropdown-item" href="senaraiPermohonanPinjaman.php">Senarai Permohonan Pembiayaan</a>
           </div>
         </li>
 
@@ -69,7 +67,7 @@
             </svg>
           </li>
           <li class="nav-item">
-          <a class="nav-link" href="profiladmin.php">Profil</a>
+          <a class="nav-link" href="profil.php">Profil</a>
           </li>
         </ul>
       </ul>
