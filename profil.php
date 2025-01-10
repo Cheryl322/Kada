@@ -196,16 +196,19 @@ while($row=mysqli_fetch_array($result)){
                            <input type="text" class="form-control" name="noTelRumah" value="<?php echo htmlspecialchars($userData['phoneHome']); ?>"readonly>
                        </div>
                    </div>   
-                    <div class="form-group row mb-5">
-                       <div class="col-sm-9 offset-sm-3">
-                           <button type="submit" class="btn btn-primary">Done</button>
-                       </div>
-                   </div>
+                   <div class="form-group row mb-5">
+                        <div class="col-sm-9 offset-sm-3">
+                            <button type="button" class="btn btn-primary" id="editButton" onclick="editProfile()">Edit</button>
+                            <button type="submit" class="btn btn-success" id="updateButton" style="display: none;">Simpan</button>
+                            <button type="button" class="btn btn-secondary" id="cancelButton" onclick="cancelEdit()" style="display: none;">Batal</button>
+                        </div>
+                    </div>
                </form>
            </div>
        </div>
    </div>
 </div>
+
 
 <script>
 function editProfile() {
@@ -213,7 +216,20 @@ function editProfile() {
     inputs.forEach(input => {
         input.removeAttribute('readonly');
     });
-    document.getElementById('updateButton').style.display = 'block';
+    document.getElementById('editButton').style.display = 'none';
+    document.getElementById('updateButton').style.display = 'inline-block';
+    document.getElementById('cancelButton').style.display = 'inline-block';
+}
+
+function cancelEdit() {
+    const inputs = document.querySelectorAll('.form-control');
+    inputs.forEach(input => {
+        input.setAttribute('readonly', true);
+    });
+    document.getElementById('editButton').style.display = 'inline-block';
+    document.getElementById('updateButton').style.display = 'none';
+    document.getElementById('cancelButton').style.display = 'none';
+    location.reload(); // Reload the page to reset the form
 }
 </script>
 
