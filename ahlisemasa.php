@@ -1,7 +1,8 @@
 <?php
 
-include "headermember.php";
+include "headeradmingit .php";
 include "footer.php";
+include "dbconnect.php";
 
 ?>
 
