@@ -5,55 +5,45 @@ include "dbconnect.php";
 include "footer.php";
 // Assuming you have a database connection and user session management
 session_start();
+
+if (isset($_SESSION['success_message'])) {
+    echo '<div class="alert alert-success">' . $_SESSION['success_message'] . '</div>';
+    unset($_SESSION['success_message']);
+}
 ?>
 
 <div class="container mt-5">
 
 <?php
-// Simple function to get user data
-function getUserData($user_id) {
-    // Replace these database credentials with your own
-    $servername = "localhost";
-    $dbname = "db_kada";
-    $username = "root";
-    $password = "";
-
-    try {
-        $pdo = new PDO("mysql:host=$servername;dbname=$dbname", $username, $password);
-        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-        $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
-        $stmt->execute([$user_id]);
-        return $stmt->fetch(PDO::FETCH_ASSOC);
-    } catch(PDOException $e) {
-        return false;
-    }
-}
 
 function getMemberData($employeeId) {
     global $pdo;
     try {
-        $stmt = $pdo->prepare("SELECT * FROM tb_member WHERE employeeId = ?");
+
+        $sql = "SELECT m.*, h.*, o.*
+            FROM tb_member m
+            LEFT JOIN tb_member_homeaddress h ON m.employeeId = h.employeeID
+            LEFT JOIN tb_member_officeaddress o ON m.employeeId = o.employeeID
+            WHERE m.employeeId = ?";
+
+    
+         $stmt = $pdo->prepare($sql);
         $stmt->execute([$employeeId]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     } catch (PDOException $e) {
+        // 添加错误日志
+        error_log("Database Error: " . $e->getMessage());
         return false;
     }
 }
 
 // Get user data if user is logged in
-$userData = isset($_SESSION['user_id']) ? getUserData($_SESSION['user_id']) : null;
+$memberData = getMemberData($_SESSION['employeeID']);
+if (!$memberData) {
+    echo "<script>alert('No member data found!');</script>";
+    exit();
+}
 
-// if (!$userData) {
-//     echo "Data tidak wujud";
-//     exit();
-// }
-
-// $memberData = getMemberData($_SESSION['employeeID']);
-// if (!$memberData) {
-//     echo "No member data found!";
-//     exit();
-// }
 ?>
 <!-- $result=mysqli_query($con, $sql);
 while($row=mysqli_fetch_array($result)){
@@ -122,7 +112,7 @@ while($row=mysqli_fetch_array($result)){
         <!-- Main Content -->
        <div class="col-md-9">
            <div class="profile-content">
-               <form method="POST" action="update_profil.php">
+               <form method="POST" action="update_profil.php" id="profileForm">
                    <div class="form-group row mb-3">
                        <label class="col-sm-3 col-form-label">Nama</label>
                        <div class="col-sm-9">
@@ -150,19 +140,19 @@ while($row=mysqli_fetch_array($result)){
                     <div class="form-group row mb-3">
                        <label class="col-sm-3 col-form-label">Alamat Rumah</label>
                        <div class="col-sm-9">
-                           <input type="text" class="form-control" name="address" value="<?php echo htmlspecialchars($memberData['address']); ?>"readonly>
+                           <input type="text" class="form-control" name="homeAddress" value="<?php echo htmlspecialchars($memberData['homeAddress']); ?>"readonly>
                        </div>
                    </div>
                     <div class="form-group row mb-3">
                        <label class="col-sm-3 col-form-label">Poskod</label>
                        <div class="col-sm-9">
-                           <input type="text" class="form-control" name="postcode" value="<?php echo htmlspecialchars($memberData['poscode']); ?>"readonly>
+                           <input type="text" class="form-control" name="homePostcode" value="<?php echo htmlspecialchars($memberData['homePostcode']); ?>"readonly>
                        </div>
                    </div>
                     <div class="form-group row mb-3">
                        <label class="col-sm-3 col-form-label">Negeri</label>
                        <div class="col-sm-9">
-                           <input type="text" class="form-control" name="state" value="<?php echo htmlspecialchars($memberData['state']); ?>"readonly>
+                           <input type="text" class="form-control" name="homeState" value="<?php echo htmlspecialchars($memberData['homeState']); ?>"readonly>
                        </div>
                    </div>
                     <div class="form-group row mb-3">
@@ -206,6 +196,18 @@ while($row=mysqli_fetch_array($result)){
                        <div class="col-sm-9">
                            <input type="text" class="form-control" name="alamatPejabat" value="<?php echo htmlspecialchars($memberData['officeAddress']); ?>"readonly>
                        </div>
+                   </div>  
+                   <div class="form-group row mb-3">
+                       <label class="col-sm-3 col-form-label">Poskod Pejabat</label>
+                       <div class="col-sm-9">
+                           <input type="text" class="form-control" name="officePostcode" value="<?php echo htmlspecialchars($memberData['officePostcode']); ?>"readonly>
+                       </div>
+                   </div>
+                   <div class="form-group row mb-3">
+                       <label class="col-sm-3 col-form-label">Negeri Pejabat</label>
+                       <div class="col-sm-9">
+                           <input type="text" class="form-control" name="officeState" value="<?php echo htmlspecialchars($memberData['officeState']); ?>"readonly>
+                       </div>
                    </div>           
                    <div class="form-group row mb-3">
                        <label class="col-sm-3 col-form-label">No. Tel Bimbit</label>
@@ -218,9 +220,6 @@ while($row=mysqli_fetch_array($result)){
                        <div class="col-sm-9">
                            <input type="text" class="form-control" name="noTelRumah" value="<?php echo htmlspecialchars($memberData['phoneHome']); ?>"readonly>
                        </div>
-                   </div>   
-                    <div class="form-group row mb-5">
-                       
                    </div>
                </form>
            </div>
@@ -239,7 +238,7 @@ while($row=mysqli_fetch_array($result)){
 
 <script>
 function editProfile() {
-    const inputs = document.querySelectorAll('.form-control');
+    const inputs = document.querySelectorAll('#profileForm .form-control');
     inputs.forEach(input => {
         input.removeAttribute('readonly');
     });
@@ -249,14 +248,7 @@ function editProfile() {
 }
 
 function cancelEdit() {
-    const inputs = document.querySelectorAll('.form-control');
-    inputs.forEach(input => {
-        input.setAttribute('readonly', true);
-    });
-    document.getElementById('editButton').style.display = 'inline-block';
-    document.getElementById('updateButton').style.display = 'none';
-    document.getElementById('cancelButton').style.display = 'none';
-    location.reload(); // Reload the page to reset the form
+    location.reload();
 }
 </script>
 
