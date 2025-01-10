@@ -25,7 +25,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 
     // Prepare the update query using prepared statements
-    $sql = "UPDATE tb_profile SET 
+    $sql = "UPDATE tb_member SET 
             p_name=?, p_email=?, p_ic=?, p_marital=?, 
             p_address=?, p_poskod=?, p_country=?, p_sex=?, 
             p_agama=?, p_bangsa=?, p_nostaff=?, p_nopf=?, 
@@ -48,11 +48,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if (mysqli_stmt_execute($stmt)) {
         mysqli_stmt_close($stmt);
         $_SESSION['success_message'] = "Profil berjaya dikemaskini!";
-        header("Location: profil.php");
-        exit();
-    } else {
-        mysqli_stmt_close($stmt);
-        $_SESSION['error_message'] = "Ralat semasa mengemaskini profil: " . mysqli_error($con);
+        
+        // Fetch the updated profile data
+        $sql_select = "SELECT * FROM tb_profile WHERE id = ?";
+        $stmt_select = mysqli_prepare($con, $sql_select);
+        mysqli_stmt_bind_param($stmt_select, "i", $_SESSION['user_id']);
+        mysqli_stmt_execute($stmt_select);
+        $result = mysqli_stmt_get_result($stmt_select);
+        
+        if ($row = mysqli_fetch_assoc($result)) {
+            $_SESSION['profile_data'] = $row; // Store updated profile in session
+        }
+        
+        mysqli_stmt_close($stmt_select);
         header("Location: profil.php");
         exit();
     }

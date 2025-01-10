@@ -18,7 +18,7 @@ function getUserData($user_id) {
     $username = "root";
     $password = "";
 
-    try {
+    /*try {
         $pdo = new PDO("mysql:host=$servername;dbname=$dbname", $username, $password);
         $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
@@ -26,36 +26,16 @@ function getUserData($user_id) {
         $stmt->execute([$user_id]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     } catch(PDOException $e) {
+        // For development, you might want to see the error
+        // echo "Error: " . $e->getMessage();
         return false;
-    }
-}
-
-function getMemberData($employeeId) {
-    global $pdo;
-    try {
-        $stmt = $pdo->prepare("SELECT * FROM tb_member WHERE employeeId = ?");
-        $stmt->execute([$employeeId]);
-        return $stmt->fetch(PDO::FETCH_ASSOC);
-    } catch (PDOException $e) {
-        return false;
-    }
+    }*/
 }
 
 // Get user data if user is logged in
 $userData = isset($_SESSION['user_id']) ? getUserData($_SESSION['user_id']) : null;
-
-// if (!$userData) {
-//     echo "Data tidak wujud";
-//     exit();
-// }
-
-// $memberData = getMemberData($_SESSION['employeeID']);
-// if (!$memberData) {
-//     echo "No member data found!";
-//     exit();
-// }
-?>
-<!-- $result=mysqli_query($con, $sql);
+$sql="SELECT * FROM tb_member";
+$result=mysqli_query($con, $sql);
 while($row=mysqli_fetch_array($result)){
     $userData['memberName']=$row['memberName'];
     $userData['email']=$row['email'];
@@ -73,9 +53,9 @@ while($row=mysqli_fetch_array($result)){
     $userData['officeAddress']=$row['officeAddress'];
     $userData['phoneNumber']=$row['phoneNumber'];
     $userData['phoneHome']=$row['phoneHome'];
-} -->
+}
 
-
+?>
 <div class="container">
     <?php
         if (isset($_SESSION['success_message'])) {
@@ -93,7 +73,7 @@ while($row=mysqli_fetch_array($result)){
            <div class="profile-sidebar">
                <div class="profile-image">
                    <img src="img/profile.jpeg" class="rounded-circle" alt="Profile Picture">
-                   <h3 class="text-left mt-3">Yuna Liew Mei Ling</h3>
+                   <h3 class="text-left mt-3">Yuna Liew Mei Mei</h3>
                </div>
 
                 <!-- Navigation Menu-->
@@ -107,9 +87,6 @@ while($row=mysqli_fetch_array($result)){
                         </li>
                         <li class="nav-item w-100">
                             <a class="btn btn-info w-75" href="statuspermohonanloan.php">Permohonan</a>
-                        </li>
-                        <li class="nav-item w-100">
-                            <a class="btn btn-info w-75" href="viewfinancialstatus.php">Penyata Kewangan</a>
                         </li>
                         <li class="nav-item w-100">
                             <a class="btn btn-info w-75" href="logout.php">Daftar Keluar</a>
@@ -126,97 +103,97 @@ while($row=mysqli_fetch_array($result)){
                    <div class="form-group row mb-3">
                        <label class="col-sm-3 col-form-label">Nama</label>
                        <div class="col-sm-9">
-                           <input type="text" class="form-control" name="nama" value="<?php echo htmlspecialchars($memberData['memberName']); ?>"readonly>
+                           <input type="text" class="form-control" name="nama" value="<?php echo htmlspecialchars($userData['memberName']); ?>"readonly>
                        </div>
                    </div>
                     <div class="form-group row mb-3">
                        <label class="col-sm-3 col-form-label">Alamat Emel</label>
                        <div class="col-sm-9">
-                           <input type="email" class="form-control" name="email" value="<?php echo htmlspecialchars($memberData['email']); ?>"readonly>
+                           <input type="email" class="form-control" name="email" value="<?php echo htmlspecialchars($userData['email']); ?>"readonly>
                        </div>
                    </div>
                     <div class="form-group row mb-3">
                        <label class="col-sm-3 col-form-label">MyKad/No. Passport</label>
                        <div class="col-sm-9">
-                            <input type="text" class="form-control" name="ic_passport" value="<?php echo htmlspecialchars($memberData['ic']); ?>"readonly>
+                            <input type="text" class="form-control" name="ic_passport" value="<?php echo htmlspecialchars($userData['ic']); ?>"readonly>
                        </div>
                    </div>
                     <div class="form-group row mb-3">
                        <label class="col-sm-3 col-form-label">Taraf perkahwinan</label>
                        <div class="col-sm-9">
-                           <input type="text" class="form-control" name="marital_status" value="<?php echo htmlspecialchars($memberData['maritalStatus']); ?>"readonly>
+                           <input type="text" class="form-control" name="marital_status" value="<?php echo htmlspecialchars($userData['maritalStatus']); ?>"readonly>
                        </div>
                    </div>
                     <div class="form-group row mb-3">
                        <label class="col-sm-3 col-form-label">Alamat Rumah</label>
                        <div class="col-sm-9">
-                           <input type="text" class="form-control" name="address" value="<?php echo htmlspecialchars($memberData['address']); ?>"readonly>
+                           <input type="text" class="form-control" name="address" value="<?php echo htmlspecialchars($userData['address']); ?>"readonly>
                        </div>
                    </div>
                     <div class="form-group row mb-3">
                        <label class="col-sm-3 col-form-label">Poskod</label>
                        <div class="col-sm-9">
-                           <input type="text" class="form-control" name="postcode" value="<?php echo htmlspecialchars($memberData['poscode']); ?>"readonly>
+                           <input type="text" class="form-control" name="postcode" value="<?php echo htmlspecialchars($userData['poscode']); ?>"readonly>
                        </div>
                    </div>
                     <div class="form-group row mb-3">
                        <label class="col-sm-3 col-form-label">Negeri</label>
                        <div class="col-sm-9">
-                           <input type="text" class="form-control" name="state" value="<?php echo htmlspecialchars($memberData['state']); ?>"readonly>
+                           <input type="text" class="form-control" name="state" value="<?php echo htmlspecialchars($userData['state']); ?>"readonly>
                        </div>
                    </div>
                     <div class="form-group row mb-3">
                        <label class="col-sm-3 col-form-label">Jantina</label>
                        <div class="col-sm-9">
-                           <input type="text" class="form-control" name="gender" value="<?php echo htmlspecialchars($memberData['sex']); ?>"readonly>
+                           <input type="text" class="form-control" name="gender" value="<?php echo htmlspecialchars($userData['sex']); ?>"readonly>
                        </div>
                    </div>
                     <div class="form-group row mb-3">
                        <label class="col-sm-3 col-form-label">Agama</label>
                        <div class="col-sm-9">
-                           <input type="text" class="form-control" name="religion" value="<?php echo htmlspecialchars($memberData['religion']); ?>"readonly>
+                           <input type="text" class="form-control" name="religion" value="<?php echo htmlspecialchars($userData['religion']); ?>"readonly>
                        </div>
                    </div>
                    <div class="form-group row mb-3">
                        <label class="col-sm-3 col-form-label">Bangsa</label>
                        <div class="col-sm-9">
-                           <input type="text" class="form-control" name="bangsa" value="<?php echo htmlspecialchars($memberData['nation']); ?>"readonly>
+                           <input type="text" class="form-control" name="bangsa" value="<?php echo htmlspecialchars($userData['nation']); ?>"readonly>
                        </div>
                    </div>
                    <div class="form-group row mb-3">
                        <label class="col-sm-3 col-form-label">No. Anggota</label>
                        <div class="col-sm-9">
-                           <input type="text" class="form-control" name="noAnggota" value="<?php echo htmlspecialchars($memberData['employeeId']); ?>"readonly>
+                           <input type="text" class="form-control" name="noAnggota" value="<?php echo htmlspecialchars($userData['employeeId']); ?>"readonly>
                        </div>
                    </div>
                    <div class="form-group row mb-3">
                        <label class="col-sm-3 col-form-label">No. PF</label>
                        <div class="col-sm-9">
-                           <input type="text" class="form-control" name="noPF" value="<?php echo htmlspecialchars($memberData['no_pf']); ?>"readonly>
+                           <input type="text" class="form-control" name="noPF" value="<?php echo htmlspecialchars($userData['no_pf']); ?>"readonly>
                        </div>
                    </div>
                    <div class="form-group row mb-3">
                        <label class="col-sm-3 col-form-label">Jawatan & Gred</label>
                        <div class="col-sm-9">
-                           <input type="text" class="form-control" name="jawatanGred" value="<?php echo htmlspecialchars($memberData['position']); ?>"readonly>
+                           <input type="text" class="form-control" name="jawatanGred" value="<?php echo htmlspecialchars($userData['position']); ?>"readonly>
                        </div>
                    </div>
                    <div class="form-group row mb-3">
                        <label class="col-sm-3 col-form-label">Alamat Pejabat</label>
                        <div class="col-sm-9">
-                           <input type="text" class="form-control" name="alamatPejabat" value="<?php echo htmlspecialchars($memberData['officeAddress']); ?>"readonly>
+                           <input type="text" class="form-control" name="alamatPejabat" value="<?php echo htmlspecialchars($userData['officeAddress']); ?>"readonly>
                        </div>
                    </div>           
                    <div class="form-group row mb-3">
                        <label class="col-sm-3 col-form-label">No. Tel Bimbit</label>
                        <div class="col-sm-9">
-                           <input type="text" class="form-control" name="noTelBimbit" value="<?php echo htmlspecialchars($memberData['phoneNumber']); ?>"readonly>
+                           <input type="text" class="form-control" name="noTelBimbit" value="<?php echo htmlspecialchars($userData['phoneNumber']); ?>"readonly>
                        </div>
                    </div>
                    <div class="form-group row mb-3">
                        <label class="col-sm-3 col-form-label">No. Tel Rumah</label>
                        <div class="col-sm-9">
-                           <input type="text" class="form-control" name="noTelRumah" value="<?php echo htmlspecialchars($memberData['phoneHome']); ?>"readonly>
+                           <input type="text" class="form-control" name="noTelRumah" value="<?php echo htmlspecialchars($userData['phoneHome']); ?>"readonly>
                        </div>
                    </div>   
                     <div class="form-group row mb-5">
@@ -230,6 +207,7 @@ while($row=mysqli_fetch_array($result)){
    </div>
 </div>
 
+// ... existing form fields ...
 
 <div class="form-group row mb-5">
     <div class="col-sm-9 offset-sm-3">

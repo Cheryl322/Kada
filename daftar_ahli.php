@@ -1,69 +1,39 @@
 <?php
+session_start();
 include "headermember.php";
 include "footer.php";
 include "dbconnect.php";
 
 // Process form submission
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $nama_penuh = mysqli_real_escape_string($conn, $_POST['nama_penuh']);
-    $alamat_emel = mysqli_real_escape_string($conn, $_POST['alamat_emel']);
-    $mykad_passport = mysqli_real_escape_string($conn, $_POST['mykad_passport']);
-    $taraf_perkahwinan = mysqli_real_escape_string($conn, $_POST['taraf_perkahwinan']);
-    $alamat_rumah = mysqli_real_escape_string($conn, $_POST['alamat_rumah']);
-    $poskod = mysqli_real_escape_string($conn, $_POST['poskod']);
-    $negeri = mysqli_real_escape_string($conn, $_POST['negeri']);
-    $jantina = isset($_POST['jantina']) ? mysqli_real_escape_string($conn, $_POST['jantina']) : '';
-    $agama = isset($_POST['agama']) ? mysqli_real_escape_string($conn, $_POST['agama']) : '';
-    $bangsa = isset($_POST['bangsa']) ? mysqli_real_escape_string($conn, $_POST['bangsa']) : '';
-    $no_anggota = isset($_POST['no_anggota']) ? mysqli_real_escape_string($conn, $_POST['no_anggota']) : '';
-    $no_pf = isset($_POST['no_pf']) ? mysqli_real_escape_string($conn, $_POST['no_pf']) : '';
-    $jawatan_gred = isset($_POST['jawatan_gred']) ? mysqli_real_escape_string($conn, $_POST['jawatan_gred']) : '';
-    $alamat_pejabat = isset($_POST['alamat_pejabat']) ? mysqli_real_escape_string($conn, $_POST['alamat_pejabat']) : '';
-    $no_tel_bimbit = isset($_POST['no_tel_bimbit']) ? mysqli_real_escape_string($conn, $_POST['no_tel_bimbit']) : '';
-    $no_tel_rumah = isset($_POST['no_tel_rumah']) ? mysqli_real_escape_string($conn, $_POST['no_tel_rumah']) : '';
-    $gaji_bulanan = isset($_POST['gaji_bulanan']) ? mysqli_real_escape_string($conn, $_POST['gaji_bulanan']) : '';
+    // Store form data in session
+    $_SESSION['personal_info'] = [
+        'nama_penuh' => $_POST['nama_penuh'] ?? '',
+        'alamat_emel' => $_POST['alamat_emel'] ?? '',
+        'ic' => $_POST['ic'] ?? '',
+        'maritalStatus' => $_POST['maritalStatus'] ?? '',
+        'address' => $_POST['address'] ?? '',
+        'poscode' => $_POST['poscode'] ?? '',
+        'state' => $_POST['state'] ?? '',
+        'sex' => $_POST['sex'] ?? '',
+        'religion' => $_POST['religion'] ?? '',
+        'nation' => $_POST['nation'] ?? '',
+        'no_anggota' => $_POST['no_anggota'] ?? '',
+        'no_pf' => $_POST['no_pf'] ?? '',
+        'position' => $_POST['position'] ?? '',
+        'officeAddress' => $_POST['officeAddress'] ?? '',
+        'phoneNumber' => $_POST['phoneNumber'] ?? '',
+        'phoneHome' => $_POST['phoneHome'] ?? '',
+        'monthlySalary' => $_POST['monthlySalary'] ?? ''
+    ];
 
-    // Validation
-    $errors = [];
-    
-    if (empty($nama_penuh)) {
-        $errors[] = "Sila masukkan nama penuh";
-    }
-    
-    if (empty($alamat_emel) || !filter_var($alamat_emel, FILTER_VALIDATE_EMAIL)) {
-        $errors[] = "Alamat emel tidak sah";
-    }
-    
-    if (empty($mykad_passport)) {
-        $errors[] = "Sila masukkan MyKad/No. Passport";
-    }
-
-    if (empty($errors)) {
-        $sql = "INSERT INTO members (nama_penuh, alamat_emel, mykad_passport, taraf_perkahwinan, 
-                alamat_rumah, poskod, negeri, jantina, agama, bangsa, no_anggota, no_pf,
-                jawatan_gred, alamat_pejabat, no_tel_bimbit, no_tel_rumah, gaji_bulanan) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        
-        $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, "sssssssssssssssss", 
-            $nama_penuh, $alamat_emel, $mykad_passport, $taraf_perkahwinan, 
-            $alamat_rumah, $poskod, $negeri, $jantina, $agama, $bangsa, 
-            $no_anggota, $no_pf, $jawatan_gred, $alamat_pejabat, 
-            $no_tel_bimbit, $no_tel_rumah, $gaji_bulanan);
-
-        if (mysqli_stmt_execute($stmt)) {
-            echo "<div class='alert alert-success'>Pendaftaran berjaya!</div>";
-        } else {
-            echo "<div class='alert alert-danger'>Ralat: " . mysqli_error($conn) . "</div>";
-        }
-        
-        mysqli_stmt_close($stmt);
-    } else {
-        foreach ($errors as $error) {
-            echo "<div class='alert alert-danger'>$error</div>";
-        }
-    }
+    // Redirect to maklumat_tambahan.php
+    header("Location: maklumat_tambahan.php");
+    exit();
 }
+
+// Restore form data if coming back from maklumat_tambahan.php
+$formData = isset($_SESSION['personal_info']) ? $_SESSION['personal_info'] : [];
 ?>
 
 <style>
@@ -178,16 +148,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <!-- Form Content -->
     <div class="card">
         <div class="card-body">
-            <form method="POST" action="maklumat_tambahan.php">
+            <form method="POST" action="" onsubmit="return saveFormData();">
                 <div class="mb-3">
                     <label class="form-label">Nama Penuh <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" name="memberName" required>
+                    <input type="text" class="form-control" name="nama_penuh" required 
+                           value="<?php echo isset($formData['nama_penuh']) ? htmlspecialchars($formData['nama_penuh']) : ''; ?>">
                     <small class="text-muted">Sila pastikan NAMA PENUH seperti dalam kad pengenalan.</small>
                 </div>
 
                 <div class="mb-3">
                     <label class="form-label">Alamat Emel <span class="text-danger">*</span></label>
-                    <input type="email" class="form-control" name="email" required>
+                    <input type="email" class="form-control" name="alamat_emel" required
+                           value="<?php echo isset($formData['alamat_emel']) ? htmlspecialchars($formData['alamat_emel']) : ''; ?>">
                     <small class="text-muted">Sila pastikan ALAMAT EMEL adalah sah dan masih aktif.</small>
                 </div>
 
@@ -313,7 +285,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     <input type="number" class="form-control" name="monthlySalary" required>
                 </div>
 
-                <div class="text-end mt-3 mb-5">
+                <div class="text-end">
                     <button type="submit" class="btn btn-primary btn-lg">
                         Seterusnya <i class="fas fa-arrow-right"></i>
                     </button>
@@ -324,42 +296,58 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 </div>
 
 <script>
-$(document).ready(function(){
-    // Phone number formatting
-    $('input[name="phoneNumber"]').mask('000-000-0000');
-    $('input[name="phoneHome"]').mask('000-000-0000');
-    
-    // MyKad formatting
-    $('input[name="ic"]').mask('000000-00-0000');
-    
-    // Currency formatting
-    $('input[name="monthlySalary"]').mask('000,000,000.00', {reverse: true});
-    
-    // Form validation
-    $('form').on('submit', function(e){
-        let isValid = true;
+function saveFormData() {
+    // Store all form data in session storage before submitting
+    const formData = {
+        nama_penuh: $('input[name="nama_penuh"]').val(),
+        alamat_emel: $('input[name="alamat_emel"]').val(),
+        ic: $('input[name="ic"]').val(),
+        maritalStatus: $('select[name="maritalStatus"]').val(),
+        address: $('textarea[name="address"]').val(),
+        poscode: $('input[name="poscode"]').val(),
+        state: $('select[name="state"]').val(),
+        sex: $('input[name="sex"]:checked').val(),
+        religion: $('select[name="religion"]').val(),
+        nation: $('select[name="nation"]').val(),
+        no_anggota: $('input[name="no_anggota"]').val(),
+        no_pf: $('input[name="no_pf"]').val(),
+        position: $('input[name="position"]').val(),
+        officeAddress: $('textarea[name="officeAddress"]').val(),
+        phoneNumber: $('input[name="phoneNumber"]').val(),
+        phoneHome: $('input[name="phoneHome"]').val(),
+        monthlySalary: $('input[name="monthlySalary"]').val()
+    };
+
+    // Store in session storage
+    sessionStorage.setItem('formData', JSON.stringify(formData));
+    return true;
+}
+
+// When page loads, check for saved data
+$(document).ready(function() {
+    const savedData = sessionStorage.getItem('formData');
+    if (savedData) {
+        const formData = JSON.parse(savedData);
         
-        // Reset previous errors
-        $('.is-invalid').removeClass('is-invalid');
-        
-        // Validate email
-        const email = $('input[name="email"]').val();
-        if (!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
-            $('input[name="email"]').addClass('is-invalid');
-            isValid = false;
-        }
-        
-        // Validate MyKad
-        const mykad = $('input[name="ic"]').val();
-        if (!mykad.match(/^\d{6}-\d{2}-\d{4}$/)) {
-            $('input[name="ic"]').addClass('is-invalid');
-            isValid = false;
-        }
-        
-        if (!isValid) {
-            e.preventDefault();
-        }
-    });
+        // Fill in all form fields with saved data
+        $('input[name="nama_penuh"]').val(formData.nama_penuh);
+        $('input[name="alamat_emel"]').val(formData.alamat_emel);
+        $('input[name="ic"]').val(formData.ic);
+        $('select[name="maritalStatus"]').val(formData.maritalStatus);
+        $('textarea[name="address"]').val(formData.address);
+        $('input[name="poscode"]').val(formData.poscode);
+        $('select[name="state"]').val(formData.state);
+        $(`input[name="sex"][value="${formData.sex}"]`).prop('checked', true);
+        $('select[name="religion"]').val(formData.religion);
+        $('select[name="nation"]').val(formData.nation);
+        $('input[name="no_anggota"]').val(formData.no_anggota);
+        $('input[name="no_pf"]').val(formData.no_pf);
+        $('input[name="position"]').val(formData.position);
+        $('textarea[name="officeAddress"]').val(formData.officeAddress);
+        $('input[name="phoneNumber"]').val(formData.phoneNumber);
+        $('input[name="phoneHome"]').val(formData.phoneHome);
+        $('input[name="monthlySalary"]').val(formData.monthlySalary);
+    }
 });
 </script>
 
