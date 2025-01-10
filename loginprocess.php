@@ -13,22 +13,17 @@ mysqli_stmt_bind_param($stmt, "s", $employeeID);
 mysqli_stmt_execute($stmt);
 $result = mysqli_stmt_get_result($stmt);
 
-//$result=mysqli_query($con,$sql);
-
 //Retrieve data
-$row=mysqli_fetch_array($result);
-
-//Count result to check
-$count=mysqli_num_rows($result);
+$row = mysqli_fetch_array($result);
+$count = mysqli_num_rows($result);
 
 // Rule-based AI login
 if ($count == 1) {
     // Verify the password
     if (password_verify($password, $row['password'])) {
         // Set session
-        $_SESSION['employeeID'] = $row['employeeID'];
-        // $_SESSION['user_id'] = $row['id']; // Assuming 'id' is the primary key in tb_employee
-
+        $_SESSION['employeeID'] = $row['employeeID'];  // 这里设置session
+        
         // Check user type
         if ($row['employeeID'] == '1234') {
             // Admin
@@ -48,7 +43,6 @@ if ($count == 1) {
     header('Location: login.php');
     exit();
 }
-
 
 mysqli_close($con);
 ?>
