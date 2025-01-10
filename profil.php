@@ -220,9 +220,9 @@ while($row=mysqli_fetch_array($result)){
                        </div>
                    </div>   
                     <div class="form-group row mb-5">
-                       <div class="col-sm-9 offset-sm-3">
+                       <!-- <div class="col-sm-9 offset-sm-3">
                            <button type="submit" class="btn btn-primary">Kemaskini</button>
-                       </div>
+                       </div> -->
                    </div>
                </form>
            </div>
