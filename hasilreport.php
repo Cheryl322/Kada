@@ -243,10 +243,38 @@
     width: 100%;
     margin-bottom: 20px;
 }
+
+#loadingScreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+#loadingScreen .spinner-border {
+    width: 4rem;
+    height: 4rem;
+
+
+}
 </style>
 </head>
 
 <body>
+
+<div id="loadingScreen" style="display: none;">
+    <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+</div>
+
+
 
 <div class="main-header">
     <div class="header-left">
@@ -326,8 +354,21 @@
         </div>
         <div class="report-box">
             <h4>3. Pilih Ahli</h4>
-            <div class="alert alert-info mt-2" id="selectedCount">
+            <div class="d-flex justify-content-between align-items-center mt-3 mb-2">
+                <div class="alert alert-info mb-0" id="selectedCount">
+
                 Jumlah ahli dipilih: <span>0</span>
+
+                </div>
+                <div class="search-container">
+                    <div class="input-group" style="width: 250px;">
+                        <input type="text" class="form-control" id="searchInput" placeholder="Cari ahli...">
+                        <button class="btn btn-outline-secondary" type="button" id="searchButton">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+
+                </div>
             </div>
             <div class="table-responsive mt-3">
                 <table class="table table-bordered table-hover">
@@ -419,7 +460,8 @@
                     Excel
                 </label>
             </div>
-            <button type="button" class="btn btn-primary">Hasil Report</button>
+
+            <button type="button" class="btn btn-primary" onclick="showLoadingScreen()">Hasil Report</button>
         </div>
     </div>
 </div>
@@ -434,10 +476,27 @@
     </div>
     <ul class="navbar-nav">
       <li class="nav-item">
-        <a class="nav-link active" href="index.php">Laman Utama
+
+      <a class="nav-link active" href="adminmainpage.php">Laman Utama
           <span class="visually-hidden">(current)</span>
         </a>
       </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#">Ahli Semasa</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#">Pendaftaran Ahli</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#">Permohonan Pinjaman</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="hasilreport.php">Hasil Laporan</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="adminviewreport.php">Cek Laporan</a>
+      </li>
+
       <li class="nav-item">
         <a class="nav-link" href="#">Info KADA</a>
       </li>
@@ -451,6 +510,25 @@
   </div>
 </div>
 
+<!-- Add this new modal -->
+<div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmationModalLabel">Laporan Berjaya Disiapkan</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Report anda telah berjaya disiapkan. Adakah anda mahu cek/muat turn report ini?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tidak</button>
+                <button type="button" class="btn btn-primary" onclick="downloadReport()">Ya</button>
+            </div>
+        </div>
+    </div>
+
+</div>
 
 <script>
 const memberData = {
@@ -585,6 +663,24 @@ document.addEventListener('change', function(e) {
         updateSelectedCount();
     }
 });
+
+function showLoadingScreen() {
+    document.getElementById('loadingScreen').style.display = 'flex';
+    
+    // Simulate processing time
+    setTimeout(() => {
+        document.getElementById('loadingScreen').style.display = 'none';
+        // Show confirmation modal
+        const confirmationModal = new bootstrap.Modal(document.getElementById('confirmationModal'));
+        confirmationModal.show();
+    }, 2000);
+}
+
+function downloadReport() {
+    // Redirect to adminviewreport.php
+    window.location.href = 'adminviewreport.php';
+
+}
 </script>
 
 <?php include 'footer.php';?>
