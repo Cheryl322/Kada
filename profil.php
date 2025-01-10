@@ -7,39 +7,40 @@ include "footer.php";
 session_start();
 
 // 检查用户是否登录
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+// 检查 session
+var_dump($_SESSION);
+
+// 检查用户是否登录
 if (!isset($_SESSION['employeeID'])) {
-    echo "<script>alert('请先登录！');
+    echo "<script>alert('Sila log masuk dahulu!');
           window.location.href='login.php';</script>";
     exit();
 }
 
-// 确保数据库连接正确
-if (!isset($pdo)) {
-    die("数据库连接失败");
-}
-
-function getMemberData($employeeId) {
-    global $pdo;
-    try {
-        $sql = "SELECT m.*, h.*, o.*
-                FROM tb_member m
-                LEFT JOIN tb_member_homeaddress h ON m.employeeId = h.employeeID
-                LEFT JOIN tb_member_officeaddress o ON m.employeeId = o.employeeID
-                WHERE m.employeeId = ?";
-        
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute([$employeeId]);
-        return $stmt->fetch(PDO::FETCH_ASSOC);
-    } catch (PDOException $e) {
-        error_log("Database Error: " . $e->getMessage());
-        return false;
-    }
+// 检查数据库连接
+if (!isset($con)) {
+    die("Database connection failed");
 }
 
 // 获取会员数据
-$memberData = getMemberData($_SESSION['employeeID']);
+$sql = "SELECT m.*, h.*, o.*
+        FROM tb_member m
+        LEFT JOIN tb_member_homeaddress h ON m.employeeId = h.employeeID
+        LEFT JOIN tb_member_officeaddress o ON m.employeeId = o.employeeID
+        WHERE m.employeeId = ?";
+
+$stmt = mysqli_prepare($con, $sql);
+mysqli_stmt_bind_param($stmt, "s", $_SESSION['employeeID']);
+mysqli_stmt_execute($stmt);
+$result = mysqli_stmt_get_result($stmt);
+$memberData = mysqli_fetch_assoc($result);
+
+// 检查是否找到数据
 if (!$memberData) {
-    echo "<script>alert('无法获取会员数据！');
+    echo "<script>alert('Tidak dapat mencari data ahli!');
           window.location.href='login.php';</script>";
     exit();
 }
