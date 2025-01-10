@@ -6,41 +6,41 @@ include "footer.php";
 // Assuming you have a database connection and user session management
 session_start();
 
-if (isset($_SESSION['success_message'])) {
-    echo '<div class="alert alert-success">' . $_SESSION['success_message'] . '</div>';
-    unset($_SESSION['success_message']);
+// 检查用户是否登录
+if (!isset($_SESSION['employeeID'])) {
+    echo "<script>alert('请先登录！');
+          window.location.href='login.php';</script>";
+    exit();
 }
-?>
 
-<div class="container mt-5">
-
-<?php
+// 确保数据库连接正确
+if (!isset($pdo)) {
+    die("数据库连接失败");
+}
 
 function getMemberData($employeeId) {
     global $pdo;
     try {
-
         $sql = "SELECT m.*, h.*, o.*
-            FROM tb_member m
-            LEFT JOIN tb_member_homeaddress h ON m.employeeId = h.employeeID
-            LEFT JOIN tb_member_officeaddress o ON m.employeeId = o.employeeID
-            WHERE m.employeeId = ?";
-
-    
-         $stmt = $pdo->prepare($sql);
+                FROM tb_member m
+                LEFT JOIN tb_member_homeaddress h ON m.employeeId = h.employeeID
+                LEFT JOIN tb_member_officeaddress o ON m.employeeId = o.employeeID
+                WHERE m.employeeId = ?";
+        
+        $stmt = $pdo->prepare($sql);
         $stmt->execute([$employeeId]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     } catch (PDOException $e) {
-        // 添加错误日志
         error_log("Database Error: " . $e->getMessage());
         return false;
     }
 }
 
-// Get user data if user is logged in
+// 获取会员数据
 $memberData = getMemberData($_SESSION['employeeID']);
 if (!$memberData) {
-    echo "<script>alert('No member data found!');</script>";
+    echo "<script>alert('无法获取会员数据！');
+          window.location.href='login.php';</script>";
     exit();
 }
 
