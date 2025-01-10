@@ -25,14 +25,14 @@
   justify-content: space-evenly;
   align-items: center;
   min-height: 40vh;
-  width: 100%;
+  width: calc(100% - 20px);
   margin-left: 0;
   position: relative;
-  top: -15vh;
+  top: -5vh;
   margin-top: 60px;
-  padding-bottom: 0;
+  padding: 0 10px;
   flex-wrap: wrap;
-  gap: 20px;hh
+  gap: 20px;
   transition: all 0.3s ease-in-out;
 }
 
@@ -328,7 +328,7 @@
 @media screen and (max-width: 1400px) {
     .circle-container {
         min-height: auto;
-        padding: 20px 0;
+        padding: 20px 10px;
         margin-bottom: 0;
         top: 0;
     }
@@ -342,6 +342,11 @@
         margin-top: 0;
         flex-wrap: nowrap;
         padding-top: 0;
+    }
+
+    .sidebar-open .circle-container {
+        width: calc(100% - 270px);
+        margin-left: 250px;
     }
 }
 
@@ -411,7 +416,7 @@
 
 /* Add these new styles for when sidebar is open */
 .sidebar-open .circle-container {
-    width: calc(100% - 250px);
+    width: calc(100% - 270px);
     margin-left: 250px;
 }
 
@@ -457,9 +462,24 @@
     </div>
     <ul class="navbar-nav">
       <li class="nav-item">
-        <a class="nav-link active" href="index.php">Laman Utama
+        <a class="nav-link active" href="adminmainpage.php">Laman Utama
           <span class="visually-hidden">(current)</span>
         </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#">Ahli Semasa</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#">Pendaftaran Ahli</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#">Permohonan Pinjaman</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="hasilreport.php">Hasil Laporan</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="adminviewreport.php">Cek Laporan</a>
       </li>
       <li class="nav-item">
         <a class="nav-link" href="#">Info KADA</a>
@@ -495,8 +515,14 @@
   </a>
   <a href="hasilreport.php" class="circle">
     <div class="circle-content">
-      <i class="fas fa-clock mb-2"></i>
+      <i class="fas fa-file-alt mb-2"></i>
       <span>Hasil Laporan</span>
+    </div>
+  </a>
+  <a href="adminviewreport.php" class="circle">
+    <div class="circle-content">
+      <i class="fas fa-clipboard-check mb-2"></i>
+      <span>Cek Laporan</span>
     </div>
   </a>
 </div>
@@ -587,6 +613,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const menuButton = document.getElementById('menuButton');
     const closeSidebar = document.getElementById('closeSidebar');
     const mainContent = document.body;
+    const circleContainer = document.querySelector('.circle-container');
 
     // Remove initial-state class after a brief delay
     setTimeout(() => {
@@ -596,6 +623,9 @@ document.addEventListener('DOMContentLoaded', function() {
     function toggleSidebar() {
         sidebar.classList.toggle('closed');
         mainContent.classList.toggle('sidebar-open');
+        
+        // Add transition class to ensure smooth animation
+        circleContainer.style.transition = 'all 0.3s ease-in-out';
     }
 
     menuButton.addEventListener('click', toggleSidebar);
