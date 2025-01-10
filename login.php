@@ -58,10 +58,9 @@ include "footer.php";
                        </div>
                    </div>
                    <div class="d-grid">
-                        <button type="submit" name="login" class="btn btn-primary btn-lg">Log Masuk</button>
-                   </div>
+                        <!-- <button type="submit" name="login" class="btn btn-primary btn-lg">Log Masuk</button> -->
                         <a class="btn btn-primary btn-lg" href="mainpage.php" type="button">Log Masuk</a>
-                   </div> 
+                   </div>
                     <!-- <div class="d-grid">
                        <button type="submit" name="login" class="btn btn-primary">Log Masuk</button>
                    </div>  -->
