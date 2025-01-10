@@ -8,58 +8,103 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $personal_info = $_SESSION['personal_info'];
         
         // Start transaction
-        mysqli_begin_transaction($con);
+        if (!$conn) {
+            throw new Exception("Database connection failed");
+        }
+        
+        mysqli_begin_transaction($conn);
 
-        // Insert personal info
-        $sql = "INSERT INTO members (nama_penuh, no_kp, alamat, poskod, negeri, no_tel) 
-                VALUES (?, ?, ?, ?, ?, ?)";
-        $stmt = mysqli_prepare($con, $sql);
-        mysqli_stmt_bind_param($stmt, "ssssss", 
-            $personal_info['nama_penuh'],
-            $personal_info['no_kp'],
-            $personal_info['alamat'],
-            $personal_info['poskod'],
-            $personal_info['negeri'],
-            $personal_info['no_tel']
+        // First insert the member data (your existing member insertion code)
+        $sql = "INSERT INTO tb_member (employeeId, memberName, email, ic, maritalStatus, 
+                sex, religion, nation, no_pf, position, phoneNumber, phoneHome, monthlySalary) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        
+        $stmt = mysqli_prepare($conn, $sql);
+        if (!$stmt) {
+            throw new Exception("Prepare failed: " . mysqli_error($conn));
+        }
+
+        // Convert monthlySalary to float
+        $monthlySalary = floatval($personal_info['monthlySalary']);
+        
+        mysqli_stmt_bind_param($stmt, "ssssssssssssd", 
+            $personal_info['no_anggota'],      // employeeId
+            $personal_info['nama_penuh'],      // memberName
+            $personal_info['alamat_emel'],     // email
+            $personal_info['ic'],              // ic
+            $personal_info['maritalStatus'],   // maritalStatus
+            $personal_info['sex'],             // sex
+            $personal_info['religion'],        // religion
+            $personal_info['nation'],          // nation
+            $personal_info['no_pf'],           // no_pf
+            $personal_info['position'],        // position
+            $personal_info['phoneNumber'],     // phoneNumber
+            $personal_info['phoneHome'],       // phoneHome
+            $monthlySalary                     // monthlySalary
         );
-        mysqli_stmt_execute($stmt);
 
-        // Insert family members
-        $member_id = mysqli_insert_id($con);
-        foreach ($_POST['hubungan'] as $key => $hubungan) {
-            if (!empty($hubungan) && !empty($_POST['nama_waris'][$key])) {
-                $sql = "INSERT INTO member_waris (member_id, hubungan, nama, no_kp) 
-                        VALUES (?, ?, ?, ?)";
-                $stmt = mysqli_prepare($con, $sql);
-                mysqli_stmt_bind_param($stmt, "isss", 
-                    $member_id,
-                    $_POST['hubungan'][$key],
-                    $_POST['nama_waris'][$key],
-                    $_POST['no_kp_waris'][$key]
+        if (!mysqli_stmt_execute($stmt)) {
+            throw new Exception("Failed to save member: " . mysqli_stmt_error($stmt));
+        }
+
+        $employeeId = $personal_info['no_anggota'];
+
+        // Save family members
+        if (isset($personal_info['family_members']) && is_array($personal_info['family_members'])) {
+            $sql = "INSERT INTO tb_memberregistration_familymemberinfo 
+                    (memberRegistrationID, icFamilyMember, relationship, name) 
+                    VALUES (?, ?, ?, ?)";
+            
+            $stmt = mysqli_prepare($conn, $sql);
+            if (!$stmt) {
+                throw new Exception("Prepare failed for family members: " . mysqli_error($conn));
+            }
+
+            foreach ($personal_info['family_members'] as $family) {
+                mysqli_stmt_bind_param($stmt, "ssss", 
+                    $employeeId,
+                    $family['ic'],           // IC number
+                    $family['relationship'], // Relationship
+                    $family['name']         // Name
                 );
-                mysqli_stmt_execute($stmt);
+                
+                if (!mysqli_stmt_execute($stmt)) {
+                    throw new Exception("Failed to save family member: " . mysqli_stmt_error($stmt));
+                }
             }
         }
 
-        // Insert fees
-        $sql = "INSERT INTO member_fees (member_id, fee_masuk, modal_syer, modal_yuran, 
-                wang_deposit, sumbangan_tabung, simpanan_tetap, lain_lain) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-        $stmt = mysqli_prepare($con, $sql);
-        mysqli_stmt_bind_param($stmt, "iddddddd", 
-            $member_id,
-            $_POST['fee_masuk'],
-            $_POST['modal_syer'],
-            $_POST['modal_yuran'],
-            $_POST['wang_deposit'],
-            $_POST['sumbangan_tabung'],
-            $_POST['simpanan_tetap'],
-            $_POST['lain_lain']
-        );
-        mysqli_stmt_execute($stmt);
+        // Save fees and contributions
+        if (isset($personal_info['fees'])) {
+            $sql = "INSERT INTO tb_memberregistration_feesandcontribution 
+                    (memberRegistrationID, entryFee, modalShare, feeCapital, 
+                    deposit, contribution, fixedDeposit, others) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+            
+            $stmt = mysqli_prepare($conn, $sql);
+            if (!$stmt) {
+                throw new Exception("Prepare failed for fees: " . mysqli_error($conn));
+            }
+
+            $fees = $personal_info['fees'];
+            mysqli_stmt_bind_param($stmt, "siiiiii", 
+                $employeeId,
+                $fees['entryFee'],
+                $fees['modalShare'],
+                $fees['feeCapital'],
+                $fees['deposit'],
+                $fees['contribution'],
+                $fees['fixedDeposit'],
+                $fees['others']
+            );
+            
+            if (!mysqli_stmt_execute($stmt)) {
+                throw new Exception("Failed to save fees: " . mysqli_stmt_error($stmt));
+            }
+        }
 
         // Commit transaction
-        mysqli_commit($con);
+        mysqli_commit($conn);
         
         // Clear session and redirect
         unset($_SESSION['personal_info']);
@@ -68,7 +113,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         exit();
 
     } catch (Exception $e) {
-        mysqli_rollback($con);
+        if (isset($conn)) {
+            mysqli_rollback($conn);
+        }
         $_SESSION['error_message'] = "Ralat semasa pendaftaran: " . $e->getMessage();
         header("Location: maklumat_tambahan.php");
         exit();
