@@ -9,17 +9,18 @@ include "dbconnect.php";
 // }
 
 // Fetch financial status from database
-// $employeeID = $_SESSION['employeeID'];
-// $sql = "SELECT f.*, u.nama 
-//         FROM tb_financialStatus
-//         JOIN tb_member u ON f. = u.id 
-//         WHERE f.user_id = ?";
+//$employeeID = $_SESSION['employeeID'];
 
-// $stmt = mysqli_prepare($con, $sql);
-// mysqli_stmt_bind_param($stmt, "i", $user_id);
-// mysqli_stmt_execute($stmt);
-// $result = mysqli_stmt_get_result($stmt);
-// $financial_data = mysqli_fetch_assoc($result);
+$sql = "SELECT f.*, u.memberName 
+        FROM tb_financialStatus f
+        JOIN tb_member u ON f.accountID = u.employeeID 
+        WHERE f.accountID = ?";
+
+$stmt = mysqli_prepare($con, $sql);
+mysqli_stmt_bind_param($stmt, "i", $user_id);
+mysqli_stmt_execute($stmt);
+$result = mysqli_stmt_get_result($stmt);
+$financial_data = mysqli_fetch_assoc($result);
 ?>
 
 <!DOCTYPE html>
@@ -36,46 +37,45 @@ include "dbconnect.php";
         <div class="card">
             <div class="card-body">
                 <h5 class="card-title">Maklumat Kewangan untuk 
-                    <!-- <?php echo htmlspecialchars($financial_data['nama']); ?> -->
+                     <?php echo htmlspecialchars($financial_data['memberName']); ?>
                 </h5>
                 
                 <table class="table table-bordered mt-3">
-                    <tr>
-                        <th>Pendapatan Bulanan</th>
-                        <td>RM 
-                            <!-- <?php if ($financial_data): ?> -->
-                        </td>
+                <tr>
+                        <th>Account ID</th>
+                        <td><?php echo htmlspecialchars($financial_data['accountID']); ?></td>
                     </tr>
                     <tr>
-                        <th>Perbelanjaan Bulanan</th>
-                        <td>RM 
-                            <!-- <?php echo number_format($financial_data['monthly_expenses'], 2); ?> -->
-                        </td>
+                        <th>Member Saving</th>
+                        <td><?php echo htmlspecialchars($financial_data['memberSaving']); ?></td>
                     </tr>
                     <tr>
-                        <th>Hutang</th>
-                        <td>RM 
-                            <!-- <?php echo number_format($financial_data['debt'], 2); ?>-->
-                        </td> 
+                        <th>Al Bai</th>
+                        <td><?php echo htmlspecialchars($financial_data['alBai']); ?></td>
                     </tr>
                     <tr>
-                        <th>Simpanan</th>
-                        <td>RM 
-                            <!-- <?php echo number_format($financial_data['savings'], 2); ?> -->
-                        </td>
+                        <th>Al Nnah</th>
+                        <td><?php echo htmlspecialchars($financial_data['alnnah']); ?></td>
                     </tr>
                     <tr>
-                        <th>Status</th>
-                        <td>
-                            <?php 
-                            $status = $financial_data['status'];
-                            $badge_class = ($status == 'Baik') ? 'badge-success' : 
-                                         (($status == 'Sederhana') ? 'badge-warning' : 'badge-danger');
-                            ?>
-                            <span class="badge <?php echo $badge_class; ?>">
-                                <!-- <?php echo htmlspecialchars($status); ?> -->
-                            </span>
-                        </td>
+                        <th>B Pulih Kenderaan</th>
+                        <td><?php echo htmlspecialchars($financial_data['bPulihKenderaan']); ?></td>
+                    </tr>
+                    <tr>
+                        <th>Road Tax Insurance</th>
+                        <td><?php echo htmlspecialchars($financial_data['roadTaxInsurance']); ?></td>
+                    </tr>
+                    <tr>
+                        <th>Special Scheme</th>
+                        <td><?php echo htmlspecialchars($financial_data['specialScheme']); ?></td>
+                    </tr>
+                    <tr>
+                        <th>Al Qadrul Hassan</th>
+                        <td><?php echo htmlspecialchars($financial_data['alQadrulHassan']); ?></td>
+                    </tr>
+                    <tr>
+                        <th>Date Updated</th>
+                        <td><?php echo htmlspecialchars($financial_data['dateUpdated']); ?></td>
                     </tr>
                 </table>
 
@@ -85,12 +85,9 @@ include "dbconnect.php";
                 </div>
             </div>
         </div>
-        <!-- <?php if ($financial_data): ?> -->
-        <div class="alert alert-info">
-            Tiada maklumat kewangan dijumpai. 
-            <a href="add_financial_status.php" class="btn btn-primary btn-sm ml-2">Tambah Maklumat Kewangan</a>
-        </div>
-        <!-- <?php endif; ?> -->
+        <?php else: ?>
+        <div class="alert alert-warning">No financial data found for this user.</div>
+        <?php endif; ?>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
