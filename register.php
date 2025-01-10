@@ -1,7 +1,7 @@
 <?php 
 session_start();
 include 'headermain.php'; 
-include "footer.php";
+
 ?>
 
 <style>
@@ -82,4 +82,6 @@ body {
        });
    </script>
 
-
+<?php
+include "footer.php";
+?>
