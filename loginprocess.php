@@ -5,6 +5,10 @@ include "dbconnect.php";
 $employeeID = $_POST['employeeID'];
 $password = $_POST['password'];
 
+// 添加调试信息
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 // SQL query to select user
 $sql = "SELECT * FROM tb_employee 
         WHERE employeeID = ?";
@@ -22,16 +26,13 @@ if ($count == 1) {
     // Verify the password
     if (password_verify($password, $row['password'])) {
         // Set session
-        $_SESSION['employeeID'] = $row['employeeID'];  // 这里设置session
+        $_SESSION['employeeID'] = $row['employeeID'];
         
-        // Check user type
-        if ($row['employeeID'] == '1234') {
-            // Admin
-            header('Location: adminpage.php');
-        } else {
-            // Regular user
-            header('Location: mainpage.php');
-        }
+        // 添加调试信息
+        echo "Login successful. Session employeeID: " . $_SESSION['employeeID'];
+        
+        // 直接重定向到 profil.php
+        header('Location: profil.php');
         exit();
     } else {
         $_SESSION['error_message'] = "Kata laluan salah.";
