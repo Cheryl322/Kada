@@ -3,18 +3,17 @@ session_start();
 include "dbconnect.php";
 
 // Check if user is logged in
-// if (!isset($_SESSION['user_id'])) {
-//     header("Location: login.php");
-//     exit();
-// }
+if (!isset($_SESSION['employeeId'])) {
+    header("Location: login.php");
+    exit();
+}
 
-// Fetch financial status from database
-//$employeeID = $_SESSION['employeeID'];
-
-$sql = "SELECT f.*, u.memberName 
+//Fetch financial status from database
+$employeeID = $_SESSION['employeeID'];
+$sql = "SELECT f.transID, f.transType, f.transAmt, f.transDate, u.nama 
         FROM tb_financialStatus f
-        JOIN tb_member u ON f.accountID = u.employeeID 
-        WHERE f.accountID = ?";
+        JOIN tb_member u ON f.employeeID = u.employeeID
+        WHERE f.employeeID = ?";
 
 $stmt = mysqli_prepare($con, $sql);
 mysqli_stmt_bind_param($stmt, "i", $user_id);
@@ -33,60 +32,45 @@ $financial_data = mysqli_fetch_assoc($result);
     <div class="container mt-5">
         <h2>Status Kewangan</h2>
         
-        <!-- <?php if ($financial_data): ?> -->
+        <?php if ($financial_data): ?> 
         <div class="card">
             <div class="card-body">
                 <h5 class="card-title">Maklumat Kewangan untuk 
-                     <?php echo htmlspecialchars($financial_data['memberName']); ?>
+                    <?php echo htmlspecialchars($financial_data['memberName']); ?>
                 </h5>
                 
                 <table class="table table-bordered mt-3">
-                <tr>
-                        <th>Account ID</th>
-                        <td><?php echo htmlspecialchars($financial_data['accountID']); ?></td>
-                    </tr>
-                    <tr>
-                        <th>Member Saving</th>
-                        <td><?php echo htmlspecialchars($financial_data['memberSaving']); ?></td>
-                    </tr>
-                    <tr>
-                        <th>Al Bai</th>
-                        <td><?php echo htmlspecialchars($financial_data['alBai']); ?></td>
-                    </tr>
-                    <tr>
-                        <th>Al Nnah</th>
-                        <td><?php echo htmlspecialchars($financial_data['alnnah']); ?></td>
-                    </tr>
-                    <tr>
-                        <th>B Pulih Kenderaan</th>
-                        <td><?php echo htmlspecialchars($financial_data['bPulihKenderaan']); ?></td>
-                    </tr>
-                    <tr>
-                        <th>Road Tax Insurance</th>
-                        <td><?php echo htmlspecialchars($financial_data['roadTaxInsurance']); ?></td>
-                    </tr>
-                    <tr>
-                        <th>Special Scheme</th>
-                        <td><?php echo htmlspecialchars($financial_data['specialScheme']); ?></td>
-                    </tr>
-                    <tr>
-                        <th>Al Qadrul Hassan</th>
-                        <td><?php echo htmlspecialchars($financial_data['alQadrulHassan']); ?></td>
-                    </tr>
-                    <tr>
-                        <th>Date Updated</th>
-                        <td><?php echo htmlspecialchars($financial_data['dateUpdated']); ?></td>
-                    </tr>
+                <thead>
+                        <tr>
+                            <th>Trans ID</th>
+                            <th>Jenis Transaksi</th>
+                            <th>Jumlah Transaksi</th>
+                            <th>Tarikh Transaksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($financial_data as $data): ?>
+                        <tr>
+                            <td><?php echo htmlspecialchars($data['transID']); ?></td>
+                            <td><?php echo htmlspecialchars($data['transType']); ?></td>
+                            <td>RM <?php echo number_format($data['transAmt'], 2); ?></td>
+                            <td><?php echo htmlspecialchars($data['transDate']); ?></td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
                 </table>
 
                 <div class="mt-3">
-                    <!-- <a href="edit_financial_status.php" class="btn btn-primary">Kemaskini</a> -->
+                    <a href="edit_financial_status.php" class="btn btn-primary">Kemaskini</a>
                     <a href="dashboard.php" class="btn btn-secondary">Kembali</a>
                 </div>
             </div>
         </div>
         <?php else: ?>
-        <div class="alert alert-warning">No financial data found for this user.</div>
+        <div class="alert alert-info">
+            Tiada maklumat kewangan dijumpai. 
+            <a href="add_financial_status.php" class="btn btn-primary btn-sm ml-2">Tambah Maklumat Kewangan</a>
+        </div>
         <?php endif; ?>
     </div>
 
