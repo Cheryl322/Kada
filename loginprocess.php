@@ -1,52 +1,54 @@
 <?php
 session_start();
-include 'dbconnect.php';
-if(isset($_POST['login'])) {
-   $email = mysqli_real_escape_string($conn, $_POST['email']);
-   $password = mysqli_real_escape_string($conn, $_POST['password']);
-   
-   // Validate input
-   if(empty($email) || empty($password)) {
-       header("Location: login.php?error=Sila isi semua maklumat yang diperlukan");
-       exit();
-   }
-    // Check email format
-   if(!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-       header("Location: login.php?error=Format emel tidak sah");
-       exit();
-   }
-   
-   $sql = "SELECT * FROM users WHERE email = ?";
-   $stmt = mysqli_prepare($conn, $sql);
-   mysqli_stmt_bind_param($stmt, "s", $email);
-   mysqli_stmt_execute($stmt);
-   $result = mysqli_stmt_get_result($stmt);
-   
-   if(mysqli_num_rows($result) > 0) {
-       $row = mysqli_fetch_assoc($result);
-       if(password_verify($password, $row['password'])) {
-           // Set session variables
-           $_SESSION['user_id'] = $row['id'];
-           $_SESSION['role'] = $row['role'];
-           $_SESSION['email'] = $row['email'];
-           
-           // Redirect based on role
-           if($row['role'] == 'admin') {
-               header("Location: admin/dashboard.php");
-           } else {
-               header("Location: member/dashboard.php");
-           }
-           exit();
-       } else {
-           header("Location: login.php?error=Kata laluan tidak sah");
-           exit();
-       }
-   } else {
-       header("Location: login.php?error=Emel tidak dijumpai");
-       exit();
+include "dbconnect.php";
+
+$employeeID = $_POST['employeeID'];
+$password = $_POST['password'];
+
+// SQL query to select user
+$sql = "SELECT * FROM tb_employee 
+        WHERE employeeID = ?";
+$stmt = mysqli_prepare($con, $sql);
+mysqli_stmt_bind_param($stmt, "s", $employeeID);
+mysqli_stmt_execute($stmt);
+$result = mysqli_stmt_get_result($stmt);
+
+//$result=mysqli_query($con,$sql);
+
+//Retrieve data
+$row=mysqli_fetch_array($result);
+
+//Count result to check
+$count=mysqli_num_rows($result);
+
+// Rule-based AI login
+if ($count == 1) {
+    // Verify the password
+    if (password_verify($password, $row['password'])) {
+        // Set session
+        $_SESSION['employeeID'] = $row['employeeID'];
+        // $_SESSION['user_id'] = $row['id']; // Assuming 'id' is the primary key in tb_employee
+
+        // Check user type
+        if ($row['employeeID'] == '1234') {
+            // Admin
+            header('Location: adminpage.php');
+        } else {
+            // Regular user
+            header('Location: mainpage.php');
+        }
+        exit();
+    } else {
+        $_SESSION['error_message'] = "Kata laluan salah.";
+        header('Location: login.php');
+        exit();
     }
 } else {
-   header("Location: index.php");
-   exit();
+    $_SESSION['error_message'] = "ID pekerja tidak wujud.";
+    header('Location: login.php');
+    exit();
 }
+
+
+mysqli_close($con);
 ?>

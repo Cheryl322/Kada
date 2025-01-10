@@ -40,9 +40,9 @@ include "footer.php";
                        <div class="alert alert-danger"><?php echo htmlspecialchars($_GET['error']); ?></div>
                    <?php endif; ?>
                     <div class="mb-3">
-                       <label for="email" class="form-label">Emel (User/Admin)</label>
-                       <input type="email" class="form-control" id="email" name="email" 
-                              placeholder="Masukkan emel" required>
+                       <label for="employeeID" class="form-label">EmployeeID (User/Admin)</label>
+                       <input type="text" class="form-control" id="employeeID" name="employeeID" 
+                              placeholder="Masukkan employee ID" required>
                    </div>
                     <div class="mb-3">
                        <label for="password" class="form-label">Kata Laluan</label>
@@ -58,11 +58,11 @@ include "footer.php";
                        </div>
                    </div>
                    <div class="d-grid">
-                        <a class="btn btn-primary btn-lg" href="mainpage.php" role="button">Log Masuk</a>
-                   </div>
+                        <a class="btn btn-primary btn-lg" href="mainpage.php" type="button">Log Masuk</a>
+                   </div> 
                     <!-- <div class="d-grid">
                        <button type="submit" name="login" class="btn btn-primary">Log Masuk</button>
-                   </div> -->
+                   </div>  -->
                     <div class="text-center mt-3">
                        <p>Sila daftar sekiranya anda belum mempunyai akaun. 
                           <a href="register.php" class="text-decoration-none">Daftar Akaun?</a>
