@@ -599,4 +599,24 @@ $(document).ready(function() {
 </script>
 
 <!-- Add SweetAlert2 library -->
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"><
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+document.getElementById('loanForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    // Show loading message
+    Swal.fire({
+        title: 'Sila Tunggu',
+        text: 'Sedang memproses permohonan anda...',
+        allowOutsideClick: false,
+        showConfirmButton: false,
+        willOpen: () => {
+            Swal.showLoading();
+        }
+    });
+
+    // Submit the form
+    this.submit();
+});
+</script>

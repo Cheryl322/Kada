@@ -6,6 +6,10 @@ include "footer.php";
 ?>
 
 <style>
+.main-container {
+    padding: 40px 0;
+}
+
 body {
     background: url('img/padi.jpg') no-repeat center center fixed;
     background-size: cover;
@@ -14,7 +18,8 @@ body {
     color: #2C3E50;
 }
 
-body::before {
+
+/* body::before {
     content: '';
     position: fixed;
     top: 0;
@@ -23,11 +28,9 @@ body::before {
     bottom: 0;
     background: linear-gradient(rgba(245, 245, 245, 0.85), rgba(240, 240, 240, 0.8));
     z-index: -1;
-}
+} */
 
-.main-container {
-    padding: 40px 0;
-}
+
 
 .content-card {
     background: rgba(255, 255, 255, 0.9);

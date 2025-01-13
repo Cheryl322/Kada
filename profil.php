@@ -1,19 +1,13 @@
 <?php
 
+// Assuming you have a database connection and user session management
 include "headermember.php";
 include "dbconnect.php";
-include "footer.php";
-// Assuming you have a database connection and user session management
-if(!session_id()){
-    session_start();
-}
 
 if (!isset($_SESSION['employeeID'])) {
     header('Location: login.php');
     exit();
 }
-
-
 
 // 获取会员数据
 $sql = "SELECT m.*, 
@@ -24,13 +18,14 @@ $sql = "SELECT m.*,
         LEFT JOIN tb_member_officeaddress o ON m.employeeId = o.employeeID
         WHERE m.employeeId = ?";
 
-
 $stmt = mysqli_prepare($conn, $sql);
 mysqli_stmt_bind_param($stmt, "s", $_SESSION['employeeID']);
 mysqli_stmt_execute($stmt);
 $result = mysqli_stmt_get_result($stmt);
 $memberData = mysqli_fetch_assoc($result);
 
+
+include "footer.php";
 ?>
 
 <?php
@@ -40,14 +35,12 @@ include "dbconnect.php";
 // 添加这行来防止页面缓存
 header("Cache-Control: no-cache, must-revalidate");
 
-// 获取最新的用户数据
 $employeeId = $_SESSION['employeeID'];
 $query = "SELECT * FROM tb_member WHERE employeeId = ?";
 $stmt = $pdo->prepare($query);
 $stmt->execute([$employeeId]);
 $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-// 显示成功/错误消息
 if(isset($_SESSION['success_message'])): ?>
     <div class="alert alert-success alert-dismissible fade show" role="alert">
         <?php 
