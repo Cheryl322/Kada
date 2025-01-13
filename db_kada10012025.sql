@@ -216,7 +216,7 @@ CREATE TABLE `tb_loanguarantordetails` (
 --
 
 CREATE TABLE `tb_member` (
-  `employeeId` int(4) NOT NULL,
+  `employeeID` int(4) NOT NULL,
   `memberName` varchar(255) NOT NULL,
   `email` varchar(255) NOT NULL,
   `ic` varchar(20) NOT NULL,
@@ -229,13 +229,14 @@ CREATE TABLE `tb_member` (
   `phoneNumber` varchar(20) DEFAULT NULL,
   `phoneHome` varchar(20) DEFAULT NULL,
   `monthlySalary` decimal(10,2) DEFAULT NULL
+  PRIMARY KEY (`employeeID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `tb_member`
 --
 
-INSERT INTO `tb_member` (`employeeId`, `memberName`, `email`, `ic`, `maritalStatus`, `sex`, `religion`, `nation`, `no_pf`, `position`, `phoneNumber`, `phoneHome`, `monthlySalary`) VALUES
+INSERT INTO `tb_member` (`employeeID`, `memberName`, `email`, `ic`, `maritalStatus`, `sex`, `religion`, `nation`, `no_pf`, `position`, `phoneNumber`, `phoneHome`, `monthlySalary`) VALUES
 (1, 'Lau Yee Wen', 'yeewen1214@gmail.com', '041214040018', 'Bujang', '', '', '', '', '', '', '', 0.00),
 (2, 'Lau Yee Wen', 'yeewen1214@gmail.com', '041214040018', 'Bujang', '', '', '', '', '', '', '', 0.00),
 (3, 'Lau Yee Wen', 'yeewen1214@gmail.com', '041214040018', 'Bujang', '', '', '', '', '', '', '', 0.00),
@@ -330,6 +331,8 @@ CREATE TABLE `tb_member_homeaddress` (
   `homeAddress` varchar(255) NOT NULL,
   `homePostcode` int(6) NOT NULL,
   `homeState` varchar(35) NOT NULL
+  PRIMARY KEY (`employeeID`),
+  FOREIGN KEY (`employeeID`) REFERENCES `tb_member`(`employeeID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -351,10 +354,12 @@ CREATE TABLE `tb_member_memberapplicationdetails` (
 --
 
 CREATE TABLE `tb_member_officeaddress` (
-  `employeeID` int(11) NOT NULL,
+  `employeeID` int(4) NOT NULL,
   `officeAddress` varchar(255) NOT NULL,
   `officePostcode` int(6) NOT NULL,
   `officeState` varchar(20) NOT NULL
+  PRIMARY KEY (`employeeID`),
+  FOREIGN KEY (`employeeID`) REFERENCES `tb_member`(`employeeID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
