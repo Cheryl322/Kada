@@ -1,14 +1,5 @@
-<<<<<<< HEAD
 <!-- <?php
-//Set DB Parameter
-=======
-<?php
-// Database credentials
-$servername = "localhost";  // Your database server (usually localhost)
-$username = "root";         // Your database username (default is root)
-$password = "";            // Your database password (default is empty for XAMPP)
-$dbname = "db_kada";       // Your database name
->>>>>>> 88cd7e6 (Describe the changes made)
+// Set DB Parameter
 
 // Create connection with error reporting
 $conn = mysqli_connect($servername, $username, $password, $dbname);
@@ -21,7 +12,6 @@ if (!$conn) {
 // Set charset
 mysqli_set_charset($conn, "utf8mb4");
 
-<<<<<<< HEAD
 ?> -->
 
 <?php
@@ -43,11 +33,4 @@ try {
 } catch(PDOException $e) {
     die("Connection failed: " . $e->getMessage());
 }
-=======
-// Enable error reporting
-mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
-
-// Uncomment the line below for debugging
-// error_log("Database connected successfully");
->>>>>>> 88cd7e6 (Describe the changes made)
 ?>

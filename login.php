@@ -152,7 +152,6 @@ body::before {
                     </div>
 
                     <div class="mb-3">
-<<<<<<< HEAD
                        <label for="employeeID" class="form-label">EmployeeID (User/Admin)</label>
                        <input type="text" class="form-control" id="employeeID" name="employeeID" 
                               placeholder="Masukkan employee ID" required>
@@ -195,50 +194,3 @@ body::before {
        });
    </script>
 </body>
-=======
-                        <label for="password" class="form-label">
-                            <i class="fas fa-lock me-2"></i>Kata Laluan
-                        </label>
-                        <div class="input-group">
-                            <input type="password" class="form-control" id="password" name="password" 
-                                   placeholder="Masukkan kata laluan" required>
-                            <button class="btn btn-outline-secondary" type="button" id="togglePassword">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                        </div>
-                        <div class="text-end mt-2">
-                            <a href="forgot-password.php" class="forgot-password text-decoration-none">
-                                <i class="fas fa-question-circle me-1"></i>Lupa kata laluan?
-                            </a>
-                        </div>
-                    </div>
-
-                    <div class="d-grid gap-2 mt-4">
-                        <button type="submit" name="login" class="btn btn-primary btn-lg">
-                            <i class="fas fa-sign-in-alt me-2"></i>Log Masuk
-                        </button>
-                    </div>
-
-                    <div class="text-center mt-4">
-                        <p class="mb-0">Belum mempunyai akaun? 
-                            <a href="register.php" class="register-link text-decoration-none">
-                                <i class="fas fa-user-plus me-1"></i>Daftar Sekarang
-                            </a>
-                        </p>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script>
-document.getElementById('togglePassword').addEventListener('click', function() {
-    const password = document.getElementById('password');
-    const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
-    password.setAttribute('type', type);
-    this.querySelector('i').classList.toggle('fa-eye');
-    this.querySelector('i').classList.toggle('fa-eye-slash');
-});
-</script>
->>>>>>> 88cd7e6 (Describe the changes made)
