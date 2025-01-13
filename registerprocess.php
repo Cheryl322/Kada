@@ -8,78 +8,74 @@ if ($_SERVER['REQUEST_METHOD'] != 'POST') {
     exit;
 }
 
-// Check if form fields are set
-if (!isset($_POST['employeeID']) || !isset($_POST['password'])) {
-    $_SESSION['message'] = ['type' => 'danger', 'text' => 'Please fill in all required fields.'];
-    header('Location: register.php');
-    exit;
-}
-
-// Retrieve and sanitize data from form
 $employeeID = mysqli_real_escape_string($conn, trim($_POST['employeeID']));
 $password = trim($_POST['password']);
+$adminKey = isset($_POST['adminKey']) ? trim($_POST['adminKey']) : '';
 
-// Validate input
-if (empty($employeeID) || empty($password)) {
-    $_SESSION['message'] = ['type' => 'danger', 'text' => 'Employee ID and password cannot be empty.'];
-    header('Location: register.php');
-    exit;
-}
+// Define your admin key (store this securely in production!)
+$ADMIN_KEY = "KADA2024"; // Change this to your desired admin key
 
 try {
-    // Check if connection is successful
-    if (!$conn) {
-        throw new Exception("Database connection failed");
-    }
-
     // Check if employee ID already exists
-    $sql_check = "SELECT employeeID FROM tb_employee WHERE employeeID = ?";
-    $stmt_check = mysqli_prepare($conn, $sql_check);
-    
-    if (!$stmt_check) {
-        throw new Exception("Prepare statement failed: " . mysqli_error($conn));
-    }
-
-    mysqli_stmt_bind_param($stmt_check, "s", $employeeID);
-    mysqli_stmt_execute($stmt_check);
-    $result = mysqli_stmt_get_result($stmt_check);
+    $check_sql = "SELECT employeeID FROM tb_employee WHERE employeeID = ?";
+    $check_stmt = mysqli_prepare($conn, $check_sql);
+    mysqli_stmt_bind_param($check_stmt, "s", $employeeID);
+    mysqli_stmt_execute($check_stmt);
+    $result = mysqli_stmt_get_result($check_stmt);
 
     if (mysqli_num_rows($result) > 0) {
-        $_SESSION['message'] = ['type' => 'danger', 'text' => 'Employee ID already registered. Please try again.'];
+        $_SESSION['error_message'] = "Employee ID already exists!";
         header('Location: register.php');
         exit;
     }
-    mysqli_stmt_close($stmt_check);
 
-    // Hash password before storing
+    // Hash password
     $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-
-    // Insert new employee
-    $sql_insert = "INSERT INTO tb_employee (employeeID, password) VALUES (?, ?)";
-    $stmt_insert = mysqli_prepare($conn, $sql_insert);
     
-    if (!$stmt_insert) {
-        throw new Exception("Prepare statement failed: " . mysqli_error($conn));
+    // Determine role based on admin key
+    $role = ($adminKey === $ADMIN_KEY) ? 'admin' : 'user';
+
+    // Begin transaction
+    mysqli_begin_transaction($conn);
+
+    // Insert into tb_employee
+    $insert_sql = "INSERT INTO tb_employee (employeeID, password, role) VALUES (?, ?, ?)";
+    $insert_stmt = mysqli_prepare($conn, $insert_sql);
+    mysqli_stmt_bind_param($insert_stmt, "sss", $employeeID, $hashed_password, $role);
+    mysqli_stmt_execute($insert_stmt);
+
+    // If registering as admin, also insert into tb_admin
+    if ($role === 'admin') {
+        $admin_sql = "INSERT INTO tb_admin (employeeID, staffName) VALUES (?, ?)";
+        $admin_stmt = mysqli_prepare($conn, $admin_sql);
+        $default_name = "Admin " . $employeeID; // You can modify this default name
+        mysqli_stmt_bind_param($admin_stmt, "ss", $employeeID, $default_name);
+        mysqli_stmt_execute($admin_stmt);
     }
 
-    mysqli_stmt_bind_param($stmt_insert, "ss", $employeeID, $hashed_password);
-    
-    if (mysqli_stmt_execute($stmt_insert)) {
-        $_SESSION['message'] = ['type' => 'success', 'text' => 'Registration successful! Please login.'];
-        header('Location: login.php');
-        exit;
-    } else {
-        throw new Exception("Error executing statement: " . mysqli_stmt_error($stmt_insert));
-    }
+    // Commit transaction
+    mysqli_commit($conn);
+
+    // Set success message
+    $_SESSION['success_message'] = ($role === 'admin') 
+        ? "Pendaftaran admin berjaya! Sila log masuk."
+        : "Pendaftaran berjaya! Sila log masuk.";
+
+    // Show success popup using SweetAlert2
+    header('Location: login.php');
+    exit;
 
 } catch (Exception $e) {
-    $_SESSION['message'] = ['type' => 'danger', 'text' => 'Registration failed: ' . $e->getMessage()];
+    // Rollback transaction on error
+    mysqli_rollback($conn);
+    $_SESSION['error_message'] = "Registration failed: " . $e->getMessage();
     header('Location: register.php');
     exit;
 } finally {
-    if (isset($stmt_check)) mysqli_stmt_close($stmt_check);
-    if (isset($stmt_insert)) mysqli_stmt_close($stmt_insert);
-    if (isset($conn)) mysqli_close($conn);
+    if (isset($check_stmt)) mysqli_stmt_close($check_stmt);
+    if (isset($insert_stmt)) mysqli_stmt_close($insert_stmt);
+    if (isset($admin_stmt)) mysqli_stmt_close($admin_stmt);
+    mysqli_close($conn);
 }
 
 ?>
