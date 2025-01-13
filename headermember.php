@@ -7,7 +7,7 @@
   <link href="css/bootstrap.min (1).css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-  <style>
+<style>
 .footer {
    position: fixed;
    left: 0;
@@ -81,7 +81,7 @@ body::before {
                 </li>
               </ul>
             </a>
-            <a class="dropdown-item" href="pengesahananggota.php">Permohonan Pembiayaan</a>
+            <a class="dropdown-item" href="permohonanloan.php">Permohonan Pembiayaan</a>
           </div>
         </li>
 
