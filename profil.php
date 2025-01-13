@@ -39,16 +39,6 @@ $memberData = mysqli_fetch_assoc($result);
     <p style="text-align: center; font-size:30px;"><b>Maklumat Peribadi</b></p>
     <div class="my-4"></div>
 
-    <!-- <?php
-        if (isset($_SESSION['success_message'])) {
-            echo '<div class="alert alert-success">' . $_SESSION['success_message'] . '</div>';
-            unset($_SESSION['success_message']);
-        }
-        if (isset($_SESSION['error_message'])) {
-            echo '<div class="alert alert-danger">' . $_SESSION['error_message'] . '</div>';
-            unset($_SESSION['error_message']);
-        }
-    ?> -->
    <div class="row">
        <!-- Left Sidebar -->
        <div class="col-md-3">
@@ -171,6 +161,13 @@ $memberData = mysqli_fetch_assoc($result);
                                    </tr>
                                </tbody>
                            </table>
+                           <div class="form-group row mb-5">
+                                <div class="col-sm-9 offset-sm-3">
+                                    <!-- <button type="button" class="btn btn-primary" id="editButton" onclick="editProfile()">Edit</button> -->
+                                    <button type="submit" class="btn btn-success" id="updateButton" style="display: none;">Simpan</button>
+                                    <button type="button" class="btn btn-secondary" id="cancelButton" onclick="cancelEdit()" style="display: none;">Batal</button>
+                                </div>
+                           </div>
                        </form>
                    </div>
                </div>
@@ -182,20 +179,16 @@ $memberData = mysqli_fetch_assoc($result);
 
 
 
-<div class="form-group row mb-5">
-    <div class="col-sm-9 offset-sm-3">
-        <!-- <button type="button" class="btn btn-primary" id="editButton" onclick="editProfile()">Edit</button> -->
-        <button type="submit" class="btn btn-success" id="updateButton" style="display: none;">Simpan</button>
-        <button type="button" class="btn btn-secondary" id="cancelButton" onclick="cancelEdit()" style="display: none;">Batal</button>
-    </div>
-</div>
+
 
 <script>
 function editProfile() {
+    console.log('Edit profile clicked');
     const inputs = document.querySelectorAll('#profileForm .form-control');
     inputs.forEach(input => {
         if (input.name !== 'employeeID') {
             input.removeAttribute('readonly');
+            console.log('Made editable:', input.name);
         }
     });
     document.getElementById('editButton').style.display = 'none';
@@ -207,12 +200,24 @@ function cancelEdit() {
     location.reload();
 }
 
-// Modify form submission handling
+// Add console logging to debug form submission
 document.getElementById('profileForm').addEventListener('submit', function(e) {
-    e.preventDefault(); // Prevent default submission
+    e.preventDefault();
+    console.log('Form submission attempted');
+    
+    // Log form data
+    const formData = new FormData(this);
+    for (let pair of formData.entries()) {
+        console.log(pair[0] + ': ' + pair[1]);
+    }
+    
     if (confirm('Adakah anda pasti untuk menyimpan perubahan ini?')) {
-        this.submit(); // Submit the form if confirmed
+        console.log('Submission confirmed');
+        this.submit();
+    } else {
+        console.log('Submission cancelled');
     }
 });
 </script>
 
+<br><br><br><br><br>

@@ -2,12 +2,29 @@
 session_start();
 include "dbconnect.php";
 
-// Add debugging
+// 添加调试信息
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// Debug POST data
-file_put_contents('debug.txt', print_r($_POST, true));
+// 确保数据库连接正确
+try {
+    $host = "localhost";
+    $dbname = "kada";  // 你的数据库名称
+    $username = "root";  // 你的数据库用户名
+    $password = "";    // 你的数据库密码
+
+    $pdo = new PDO(
+        "mysql:host=$host;dbname=$dbname;charset=utf8",
+        $username,
+        $password,
+        [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
+    );
+
+} catch(PDOException $e) {
+    $_SESSION['error_message'] = "Database connection failed: " . $e->getMessage();
+    header("Location: profil.php");
+    exit();
+}
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     try {
@@ -15,85 +32,79 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             throw new Exception("Session tidak sah");
         }
 
-        // Debug values
-        file_put_contents('debug.txt', print_r($_POST, true), FILE_APPEND);
-        
         $employeeId = $_SESSION['employeeID'];
-        $memberName = $_POST['memberName'] ?? '';
-        $email = $_POST['email'] ?? '';
-        $ic = $_POST['ic'] ?? '';
-        $maritalStatus = $_POST['maritalStatus'] ?? '';
-        $sex = $_POST['sex'] ?? '';
-        $religion = $_POST['religion'] ?? '';
-        $nation = $_POST['nation'] ?? '';
-        $no_pf = $_POST['no_pf'] ?? '';
-        $position = $_POST['position'] ?? '';
-        $phoneNumber = $_POST['phoneNumber'] ?? '';
-        $phoneHome = $_POST['phoneHome'] ?? '';
-
-        // Debug SQL
-        $sql_member = "UPDATE tb_member SET 
-                   memberName=?, email=?, ic=?, maritalStatus=?,
-                   sex=?, religion=?, nation=?, no_pf=?,
-                   position=?, phoneNumber=?, phoneHome=?
-                   WHERE employeeId=?";
         
-        file_put_contents('debug.txt', $sql_member . "\n", FILE_APPEND);
-
-        $pdo->beginTransaction();
-
+        // Update member information
+        $sql_member = "UPDATE tb_member SET 
+            memberName = ?,
+            email = ?,
+            ic = ?,
+            maritalStatus = ?,
+            sex = ?,
+            religion = ?,
+            nation = ?,
+            no_pf = ?,
+            position = ?,
+            phoneNumber = ?,
+            phoneHome = ?
+            WHERE employeeId = ?";
+        
         $stmt = $pdo->prepare($sql_member);
-        $result = $stmt->execute([
-            $memberName, $email, $ic, $maritalStatus,
-            $sex, $religion, $nation, $no_pf,
-            $position, $phoneNumber, $phoneHome,
+        $stmt->execute([
+            $_POST['memberName'],
+            $_POST['email'],
+            $_POST['ic'],
+            $_POST['maritalStatus'],
+            $_POST['sex'],
+            $_POST['religion'],
+            $_POST['nation'],
+            $_POST['no_pf'],
+            $_POST['position'],
+            $_POST['phoneNumber'],
+            $_POST['phoneHome'],
             $employeeId
         ]);
 
-        // Debug execution result
-        file_put_contents('debug.txt', "Execute result: " . var_export($result, true) . "\n", FILE_APPEND);
-
-        // Similar debug for home and office address updates
+        // Update home address
         $sql_home = "UPDATE tb_member_homeaddress SET 
-                     homeAddress=?, homePostcode=?, homeState=?
-                     WHERE employeeID=?";
+            homeAddress = ?,
+            homePostcode = ?,
+            homeState = ?
+            WHERE employeeID = ?";
         
         $stmt = $pdo->prepare($sql_home);
         $stmt->execute([
-            $_POST['homeAddress'] ?? '',
-            $_POST['homePostcode'] ?? '',
-            $_POST['homeState'] ?? '',
+            $_POST['homeAddress'],
+            $_POST['homePostcode'],
+            $_POST['homeState'],
             $employeeId
         ]);
 
+        // Update office address
         $sql_office = "UPDATE tb_member_officeaddress SET 
-                       officeAddress=?, officePostcode=?, officeState=?
-                       WHERE employeeID=?";
+            officeAddress = ?,
+            officePostcode = ?,
+            officeState = ?
+            WHERE employeeID = ?";
         
         $stmt = $pdo->prepare($sql_office);
         $stmt->execute([
-            $_POST['officeAddress'] ?? '',
-            $_POST['officePostcode'] ?? '',
-            $_POST['officeState'] ?? '',
+            $_POST['officeAddress'],
+            $_POST['officePostcode'],
+            $_POST['officeState'],
             $employeeId
         ]);
 
-        $pdo->commit();
         $_SESSION['success_message'] = "Profil berjaya dikemaskini!";
-
+        
     } catch (Exception $e) {
-        $pdo->rollBack();
-        // Debug error
-        file_put_contents('debug.txt', "Error: " . $e->getMessage() . "\n", FILE_APPEND);
         $_SESSION['error_message'] = "Ralat: " . $e->getMessage();
     }
-
+    
     header("Location: profil.php");
     exit();
 }
 
-// Debug if we reach here
-file_put_contents('debug.txt', "Not a POST request\n", FILE_APPEND);
 header("Location: profil.php");
 exit();
 ?>
