@@ -1,6 +1,5 @@
 <?php
 include 'headermain.php';
-include "footer.php";
 ?>
 
 <style>
@@ -39,11 +38,10 @@ body::before {
     max-width: 180px;
     margin: 0 auto 30px;
     display: block;
-    transition: transform 0.3s ease;
 }
 
-.logo:hover {
-    transform: scale(1.05);
+.form-group {
+    margin-bottom: 20px;
 }
 
 .form-label {
@@ -56,74 +54,26 @@ body::before {
     border: 1px solid #e2e8f0;
     padding: 12px;
     border-radius: 10px;
-    transition: all 0.3s ease;
+    width: 100%;
 }
 
-.form-control:focus {
-    border-color: #2c5282;
-    box-shadow: 0 0 0 3px rgba(44, 82, 130, 0.1);
-}
-
-.input-group .btn {
-    border-top-right-radius: 10px !important;
-    border-bottom-right-radius: 10px !important;
-    border: 1px solid #e2e8f0;
-}
-
-.btn-primary {
+.btn-login {
     background: #2c5282;
+    color: white;
+    width: 100%;
+    padding: 12px;
     border: none;
-    padding: 12px 24px;
+    border-radius: 10px;
     font-weight: 500;
-    letter-spacing: 0.5px;
-    transition: all 0.3s ease;
-}
-
-.btn-primary:hover {
-    background: #1a4971;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    margin-top: 20px;
 }
 
 .forgot-password {
     color: #2c5282;
+    text-decoration: none;
     font-size: 0.9rem;
-    transition: color 0.3s ease;
-}
-
-.forgot-password:hover {
-    color: #1a4971;
-    text-decoration: underline !important;
-}
-
-.register-link {
-    color: #2c5282;
-    font-weight: 500;
-    transition: color 0.3s ease;
-}
-
-.register-link:hover {
-    color: #1a4971;
-}
-
-.alert {
-    border-radius: 10px;
-    padding: 15px;
-    margin-bottom: 20px;
-    border: none;
-}
-
-.alert-danger {
-    background: #fff5f5;
-    color: #c53030;
-    border-left: 4px solid #c53030;
-}
-
-@media (max-width: 768px) {
-    .login-container {
-        padding: 30px 20px;
-        margin: 20px auto;
-    }
+    float: right;
+    margin-top: 10px;
 }
 </style>
 
@@ -133,17 +83,30 @@ body::before {
             <div class="login-container">
                 <img src="img/kadalogo.jpg" alt="KADA Logo" class="logo">
                 
-                <h2 class="text-center mb-4" style="color: #2c5282; font-weight: 600;">Log Masuk</h2>
-                
-                <form method="POST" action="loginprocess.php">
-                    <?php if(isset($_GET['error'])): ?>
-                        <div class="alert alert-danger">
-                            <i class="fas fa-exclamation-circle me-2"></i>
-                            <?php echo htmlspecialchars($_GET['error']); ?>
-                        </div>
-                    <?php endif; ?>
+                <?php if(isset($_SESSION['success_message'])): ?>
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <i class="fas fa-check-circle me-2"></i>
+                        <?php 
+                            echo $_SESSION['success_message']; 
+                            unset($_SESSION['success_message']);
+                        ?>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                <?php endif; ?>
 
-                    <div class="mb-4">
+                <h2 class="text-center mb-4" style="color: #2c5282;">Log Masuk</h2>
+                
+                <?php if(isset($_SESSION['error_message'])): ?>
+                    <div class="alert alert-danger">
+                        <?php 
+                            echo $_SESSION['error_message']; 
+                            unset($_SESSION['error_message']);
+                        ?>
+                    </div>
+                <?php endif; ?>
+
+                <form action="loginprocess.php" method="POST">
+                    <div class="form-group">
                         <label for="employeeID" class="form-label">
                             <i class="fas fa-user me-2"></i>Employee ID
                         </label>
@@ -151,51 +114,7 @@ body::before {
                                placeholder="Masukkan employee ID" required>
                     </div>
 
-                    <div class="mb-3">
-<<<<<<< HEAD
-                       <label for="employeeID" class="form-label">EmployeeID (User/Admin)</label>
-                       <input type="text" class="form-control" id="employeeID" name="employeeID" 
-                              placeholder="Masukkan employee ID" required>
-                   </div>
-                    <div class="mb-3">
-                       <label for="password" class="form-label">Kata Laluan</label>
-                       <div class="input-group">
-                           <input type="password" class="form-control" id="password" name="password" 
-                                  placeholder="Masukkan kata laluan" required>
-                           <button class="btn btn-outline-secondary" type="button" id="togglePassword">
-                               <i class="fas fa-eye"></i>
-                           </button>
-                       </div>
-                       <div class="text-end mt-1">
-                           <a href="forgot-password.php" class="text-decoration-none">Lupa kata laluan?</a>
-                       </div>
-                   </div>
-                   <div class="d-grid">
-                        <button type="submit" name="login" class="btn btn-primary btn-lg">Log Masuk</button>
-                        <!-- <a class="btn btn-primary btn-lg" href="mainpage.php" type="button">Log Masuk</a> -->
-                   </div>
-                    <div class="text-center mt-3">
-                       <p>Sila daftar sekiranya anda belum mempunyai akaun. 
-                          <a href="register.php" class="text-decoration-none">Daftar Akaun?</a>
-                       </p>
-                   </div>
-               </form>
-           </div>
-       </div>
-   </div>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-   <script>
-       // Toggle password visibility
-       document.getElementById('togglePassword').addEventListener('click', function() {
-           const password = document.getElementById('password');
-           const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
-           password.setAttribute('type', type);
-           this.querySelector('i').classList.toggle('fa-eye');
-           this.querySelector('i').classList.toggle('fa-eye-slash');
-       });
-   </script>
-</body>
-=======
+                    <div class="form-group">
                         <label for="password" class="form-label">
                             <i class="fas fa-lock me-2"></i>Kata Laluan
                         </label>
@@ -206,22 +125,18 @@ body::before {
                                 <i class="fas fa-eye"></i>
                             </button>
                         </div>
-                        <div class="text-end mt-2">
-                            <a href="forgot-password.php" class="forgot-password text-decoration-none">
-                                <i class="fas fa-question-circle me-1"></i>Lupa kata laluan?
-                            </a>
-                        </div>
+                        <a href="forgot-password.php" class="forgot-password">
+                            <i class="fas fa-question-circle me-1"></i>Lupa kata laluan?
+                        </a>
                     </div>
 
-                    <div class="d-grid gap-2 mt-4">
-                        <button type="submit" name="login" class="btn btn-primary btn-lg">
-                            <i class="fas fa-sign-in-alt me-2"></i>Log Masuk
-                        </button>
-                    </div>
+                    <button type="submit" class="btn btn-login">
+                        <i class="fas fa-sign-in-alt me-2"></i>Log Masuk
+                    </button>
 
                     <div class="text-center mt-4">
                         <p class="mb-0">Belum mempunyai akaun? 
-                            <a href="register.php" class="register-link text-decoration-none">
+                            <a href="register.php" class="text-decoration-none" style="color: #2c5282;">
                                 <i class="fas fa-user-plus me-1"></i>Daftar Sekarang
                             </a>
                         </p>
@@ -233,12 +148,19 @@ body::before {
 </div>
 
 <script>
-document.getElementById('togglePassword').addEventListener('click', function() {
-    const password = document.getElementById('password');
-    const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
-    password.setAttribute('type', type);
-    this.querySelector('i').classList.toggle('fa-eye');
-    this.querySelector('i').classList.toggle('fa-eye-slash');
+// Add this to show a modal popup for success message
+document.addEventListener('DOMContentLoaded', function() {
+    <?php if(isset($_SESSION['success_message'])): ?>
+        Swal.fire({
+            title: 'Berjaya!',
+            text: '<?php echo $_SESSION['success_message']; ?>',
+            icon: 'success',
+            confirmButtonText: 'OK',
+            confirmButtonColor: '#2c5282'
+        });
+        <?php unset($_SESSION['success_message']); ?>
+    <?php endif; ?>
 });
 </script>
->>>>>>> 88cd7e6 (Describe the changes made)
+
+<?php include 'footer.php'; ?>
