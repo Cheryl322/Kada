@@ -201,6 +201,54 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             echo "<div class='alert alert-warning'>No family member data received</div>";
         }
         
+        // Insert home address
+        $insertHomeAddress = "INSERT INTO tb_member_homeaddress 
+            (employeeID, homeAddress, postcode, state) 
+            VALUES (?, ?, ?, ?)
+            ON DUPLICATE KEY UPDATE 
+            homeAddress = VALUES(homeAddress),
+            postcode = VALUES(postcode),
+            state = VALUES(state)";
+            
+        $stmt = $conn->prepare($insertHomeAddress);
+        if (!$stmt) {
+            throw new Exception("Failed to prepare home address insert: " . $conn->error);
+        }
+        
+        $stmt->bind_param("isss",
+            $employeeID,
+            $_SESSION['personal_info']['address'],    // home address
+            $_SESSION['personal_info']['posscode'],   // postcode
+            $_SESSION['personal_info']['state']       // state
+        );
+        
+        if (!$stmt->execute()) {
+            throw new Exception("Failed to save home address: " . $stmt->error);
+        }
+        
+        // Insert office address
+        $insertOfficeAddress = "INSERT INTO tb_member_officeaddress 
+            (employeeID, officeAddress) 
+            VALUES (?, ?)
+            ON DUPLICATE KEY UPDATE 
+            officeAddress = VALUES(officeAddress)";
+            
+        $stmt = $conn->prepare($insertOfficeAddress);
+        if (!$stmt) {
+            throw new Exception("Failed to prepare office address insert: " . $conn->error);
+        }
+        
+        $stmt->bind_param("is",
+            $employeeID,
+            $_SESSION['personal_info']['officeAddress']  // office address
+        );
+        
+        if (!$stmt->execute()) {
+            throw new Exception("Failed to save office address: " . $stmt->error);
+        }
+        
+        echo "<div class='alert alert-success'>All information saved successfully!</div>";
+        
     } catch (Exception $e) {
         echo "<div class='alert alert-danger'>Error: " . $e->getMessage() . "</div>";
         error_log("Error in maklumat_tambahan.php: " . $e->getMessage());

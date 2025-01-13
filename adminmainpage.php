@@ -1,3 +1,18 @@
+<?php
+session_start();
+
+// Debug lines
+error_log("Admin page access - Session data: " . print_r($_SESSION, true));
+
+// Check if user is logged in and is an admin
+if (!isset($_SESSION['employeeID']) || $_SESSION['role'] !== 'admin') {
+    error_log("Access denied - employeeID: " . (isset($_SESSION['employeeID']) ? $_SESSION['employeeID'] : 'not set'));
+    error_log("Access denied - role: " . (isset($_SESSION['role']) ? $_SESSION['role'] : 'not set'));
+    header('Location: login.php');
+    exit();
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 

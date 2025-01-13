@@ -1,18 +1,17 @@
 <?php
-$host = "localhost";
-$user = "root";
-$password = ""; // default XAMPP password is blank
-$database = "db_kada";
 
-$con = mysqli_connect($host, $user, $password, $database);
+// Database credentials
+$servername = "localhost";  // Your database server (usually localhost)
+$username = "root";         // Your database username (default is root)
+$password = "";            // Your database password (default is empty for XAMPP)
+$dbname = "db_kada";       // Your database name
 
-if (!$con) {
-    die("Connection failed: " . mysqli_connect_error());
+// Create connection
+$conn = new mysqli($servername, $username, $password, $dbname);
+
+// Check connection
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
 }
 
-// Set charset to ensure proper handling of special characters
-mysqli_set_charset($con, "utf8mb4");
-
-// Add this to test connection
-echo "Connected successfully to database";
 ?>
