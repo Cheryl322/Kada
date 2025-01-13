@@ -1,115 +1,109 @@
 <?php
 session_start();
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 include 'dbconnect.php';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     try {
+        // Debug log
+        error_log("Starting loan application process");
+        
+        if (!isset($_SESSION['employeeID'])) {
+            throw new Exception("No employee ID found in session");
+        }
+        
+        $employeeID = $_SESSION['employeeID'];
+        
         // Start transaction
         mysqli_begin_transaction($conn);
 
-        // Get employeeID from session
-        $employeeID = $_SESSION['employeeID'];
+        // First insert into tb_loan
+        $sqlLoan = "INSERT INTO tb_loan (
+            employeeID,
+            amountRequested,
+            financingPeriod,
+            monthlyInstallments,
+            employerName,
+            employerIC,
+            basicSalary,
+            netSalary,
+            status
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Pending')";
 
-        // Insert employer information
-        $sqlEmployer = "INSERT INTO tb_employer (
-            employeeID, employerName, employerIC, 
-            basicSalary, netSalary
-        ) VALUES (?, ?, ?, ?, ?)";
+        $stmtLoan = mysqli_prepare($conn, $sqlLoan);
+        
+        if (!$stmtLoan) {
+            throw new Exception("Error preparing loan statement: " . mysqli_error($conn));
+        }
 
-        $stmtEmployer = mysqli_prepare($conn, $sqlEmployer);
-        mysqli_stmt_bind_param($stmtEmployer, 'sssdd',
+        mysqli_stmt_bind_param($stmtLoan, 'sdddssdd',
             $employeeID,
+            $_POST['amountRequested'],
+            $_POST['financingPeriod'],
+            $_POST['monthlyPayment'],
             $_POST['employerName'],
             $_POST['employerIC'],
             $_POST['basicSalary'],
             $_POST['netSalary']
         );
-        mysqli_stmt_execute($stmtEmployer);
 
-        // Handle file uploads
-        $uploadDir = 'uploads/loan_documents/';
-        if (!file_exists($uploadDir)) {
-            mkdir($uploadDir, 0777, true);
+        if (!mysqli_stmt_execute($stmtLoan)) {
+            throw new Exception("Error executing loan statement: " . mysqli_stmt_error($stmtLoan));
         }
 
-        // Function to handle file upload
-        function uploadFile($file, $uploadDir, $prefix) {
-            if (isset($file['tmp_name']) && !empty($file['tmp_name'])) {
-                $fileName = $prefix . '_' . time() . '_' . basename($file['name']);
-                $targetPath = $uploadDir . $fileName;
-                
-                if (move_uploaded_file($file['tmp_name'], $targetPath)) {
-                    return $fileName;
-                }
-            }
-            throw new Exception("Error uploading file");
+        // Then insert into tb_bank
+        $sqlBank = "INSERT INTO tb_bank (employeeID, bankName, accountNo) 
+                   VALUES (?, ?, ?)";
+        
+        $stmtBank = mysqli_prepare($conn, $sqlBank);
+        if (!$stmtBank) {
+            throw new Exception("Error preparing bank statement: " . mysqli_error($conn));
         }
 
-        // Upload salary slips and signature
-        $basicSalarySlip = uploadFile($_FILES['basicSalarySlip'], $uploadDir, 'basic_salary');
-        $netSalarySlip = uploadFile($_FILES['netSalarySlip'], $uploadDir, 'net_salary');
-        $employerSignature = uploadFile($_FILES['employerSignature'], $uploadDir, 'employer_sig');
-
-        // Update document paths in database
-        $sqlDocs = "INSERT INTO tb_employer_documents (
-            employeeID, basicSalarySlip, netSalarySlip, employerSignature
-        ) VALUES (?, ?, ?, ?)";
-
-        $stmtDocs = mysqli_prepare($conn, $sqlDocs);
-        mysqli_stmt_bind_param($stmtDocs, 'ssss',
+        mysqli_stmt_bind_param($stmtBank, 'sss',
             $employeeID,
-            $basicSalarySlip,
-            $netSalarySlip,
-            $employerSignature
+            $_POST['bankName'],
+            $_POST['bankAccountNo']
         );
-        mysqli_stmt_execute($stmtDocs);
 
-        // Insert loan application
-        $sqlLoan = "INSERT INTO tb_loan (
-            employeeID, loanAmount, loanPeriod, monthlyPayment,
-            status, applicationDate
-        ) VALUES (?, ?, ?, ?, 'Pending', NOW())";
+        if (!mysqli_stmt_execute($stmtBank)) {
+            throw new Exception("Error executing bank statement: " . mysqli_stmt_error($stmtBank));
+        }
 
-        $stmtLoan = mysqli_prepare($conn, $sqlLoan);
-        mysqli_stmt_bind_param($stmtLoan, 'sddd',
-            $employeeID,
-            $_POST['amountRequested'],
-            $_POST['financingPeriod'],
-            $_POST['monthlyPayment']
-        );
-        mysqli_stmt_execute($stmtLoan);
-
-        // Commit transaction
+        // If we get here, commit the transaction
         mysqli_commit($conn);
+        
+        $_SESSION['status'] = "success";
+        $_SESSION['message'] = "Permohonan anda telah berjaya dihantar!";
+        
+        error_log("Transaction successful - redirecting to success2.php");
+        
+        // Make sure nothing has been output before this point
+        if (headers_sent($filename, $linenum)) {
+            error_log("Headers already sent in $filename on line $linenum");
+        }
 
-        // Return success response
-        $response = array(
-            'status' => 'success',
-            'message' => 'Permohonan anda telah berjaya dihantar!'
-        );
-        echo json_encode($response);
+        header("Location: success2.php");
+        exit();
 
     } catch (Exception $e) {
-        // Rollback transaction on error
         mysqli_rollback($conn);
+        error_log("Error in loan application: " . $e->getMessage());
         
-        $response = array(
-            'status' => 'error',
-            'message' => 'Ralat semasa memproses permohonan: ' . $e->getMessage()
-        );
-        echo json_encode($response);
+        $_SESSION['status'] = "error";
+        $_SESSION['error'] = $e->getMessage();
+        
+        header("Location: success2.php");
+        exit();
     } finally {
-        // Close all statements
-        if (isset($stmtEmployer)) mysqli_stmt_close($stmtEmployer);
-        if (isset($stmtDocs)) mysqli_stmt_close($stmtDocs);
         if (isset($stmtLoan)) mysqli_stmt_close($stmtLoan);
+        if (isset($stmtBank)) mysqli_stmt_close($stmtBank);
         mysqli_close($conn);
     }
 } else {
-    $response = array(
-        'status' => 'error',
-        'message' => 'Invalid request method'
-    );
-    echo json_encode($response);
+    header("Location: permohonanloan.php");
+    exit();
 }
 ?>
