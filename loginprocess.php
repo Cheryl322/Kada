@@ -1,4 +1,4 @@
-<!-- <?php
+<?php
 session_start();
 include "dbconnect.php";
 
@@ -7,48 +7,29 @@ if ($_SERVER['REQUEST_METHOD'] != 'POST') {
     exit;
 }
 
-// Check if form fields are set
-if (!isset($_POST['employeeID']) || !isset($_POST['password'])) {
-    $_SESSION['error_message'] = "Sila isi semua maklumat yang diperlukan.";
-    header('Location: login.php');
-    exit;
-}
-
 $employeeID = mysqli_real_escape_string($conn, trim($_POST['employeeID']));
 $password = trim($_POST['password']);
 
 try {
-    // Check if connection is successful
-    if (!$conn) {
-        throw new Exception("Database connection failed");
-    }
-
-    // SQL query to select user
+    // Get user data including role
     $sql = "SELECT * FROM tb_employee WHERE employeeID = ?";
     $stmt = mysqli_prepare($conn, $sql);
-    
-    if (!$stmt) {
-        throw new Exception("Prepare statement failed: " . mysqli_error($conn));
-    }
-
     mysqli_stmt_bind_param($stmt, "s", $employeeID);
     mysqli_stmt_execute($stmt);
     $result = mysqli_stmt_get_result($stmt);
     
     if ($result && mysqli_num_rows($result) == 1) {
-        $row = mysqli_fetch_assoc($result);
+        $user = mysqli_fetch_assoc($result);
         
-        // Verify the password
-        if (password_verify($password, $row['password'])) {
-            // Set session
-            $_SESSION['employeeID'] = $row['employeeID'];
+        if (password_verify($password, $user['password'])) {
+            // Set session variables
+            $_SESSION['employeeID'] = $user['employeeID'];
+            $_SESSION['role'] = $user['role']; // Store the role in session
             
-            // Check user type
-            if ($row['employeeID'] == '1234') {
-                // Admin
-                header('Location: adminpage.php');
+            // Redirect based on role
+            if ($user['role'] === 'admin') {
+                header('Location: adminmainpage.php');
             } else {
-                // Regular user
                 header('Location: mainpage.php');
             }
             exit();
@@ -69,6 +50,6 @@ try {
     exit();
 } finally {
     if (isset($stmt)) mysqli_stmt_close($stmt);
-    if (isset($conn)) mysqli_close($conn);
+    mysqli_close($conn);
 }
 ?>

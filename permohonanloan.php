@@ -15,7 +15,7 @@ include "footer.php";
                     <h4 class="mb-0">Permohonan Pembiayaan KADA</h4>
                 </div>
                 <div class="card-body">
-                    <form action="statuspermohonanloan.php" method="POST">
+                    <form action="statuspermohonanloan.php" method="POST" enctype="multipart/form-data">
                         
                         <!-- Maklumat Pembiayaan -->
                         <h5 class="mb-3 mt-5">Maklumat Pembiayaan</h5>
@@ -24,18 +24,18 @@ include "footer.php";
                                 <label for="jumlah_pinjaman" class="form-label">Jumlah Pinjaman</label>
                                 <div class="input-group">
                                     <span class="input-group-text">RM</span>
-                                    <input type="number" class="form-control" id="jumlah_pinjaman" name="jumlah_pinjaman" required>
+                                    <input type="number" class="form-control" id="jumlah_pinjaman" name="amountRequested" required>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <label for="tempoh_pembayaran" class="form-label">Tempoh Pembayaran (Bulan)</label>
-                                <input type="number" class="form-control" id="tempoh_pembayaran" name="tempoh_pembayaran" required>
+                                <input type="number" class="form-control" id="tempoh_pembayaran" name="financingPeriod" required>
                             </div>
                             <div class="col-md-6">
                                 <label for="ansuran_bulanan" class="form-label">Ansuran Bulanan</label>
                                 <div class="input-group">
                                     <span class="input-group-text">RM</span>
-                                    <input type="number" class="form-control" id="ansuran_bulanan" name="ansuran_bulanan" required>
+                                    <input type="number" class="form-control" id="ansuran_bulanan" name="monthlyInstallments" required>
                                 </div>
                             </div>
                         </div>
@@ -45,7 +45,7 @@ include "footer.php";
                         <div class="row mb-4">
                             <div class="col-md-6">
                                 <label for="nama" class="form-label">Nama Penuh (Seperti Dalam K/P)</label>
-                                <input type="text" class="form-control" id="nama" name="nama" required>
+                                <input type="text" class="form-control" id="nama" name="memberName" required>
                             </div>
                             <div class="col-md-6">
                                 <label for="ic" class="form-label">No. Kad Pengenalan</label>
@@ -56,7 +56,7 @@ include "footer.php";
                         <div class="row mb-4">
                             <div class="col-md-6">
                                 <label for="jantina" class="form-label">Jantina</label>
-                                <select class="form-select" id="jantina" name="jantina" required>
+                                <select class="form-select" id="jantina" name="sex" required>
                                     <option value="">Pilih Jantina</option>
                                     <option value="Lelaki">Lelaki</option>
                                     <option value="Perempuan">Perempuan</option>
@@ -64,7 +64,7 @@ include "footer.php";
                             </div>
                             <div class="col-md-6">
                                 <label for="agama" class="form-label">Agama</label>
-                                <select class="form-select" id="agama" name="agama" required>
+                                <select class="form-select" id="agama" name="religion" required>
                                     <option value="">Pilih Agama</option>
                                     <option value="Islam">Islam</option>
                                     <option value="Buddha">Buddha</option>
@@ -80,7 +80,7 @@ include "footer.php";
                         <div class="row mb-4">
                             <div class="col-md-6">
                                 <label for="bangsa" class="form-label">Bangsa</label>
-                                <select class="form-select" id="bangsa" name="bangsa" required>
+                                <select class="form-select" id="bangsa" name="nation" required>
                                     <option value="">Pilih Bangsa</option>
                                     <option value="Melayu">Melayu</option>
                                     <option value="Cina">Cina</option>
@@ -91,27 +91,24 @@ include "footer.php";
                                     <input type="text" class="form-control" id="bangsa_lain" name="bangsa_lain" placeholder="Sila nyatakan bangsa anda">
                                 </div>
                             </div>
-                            <div class="col-md-6">
-                                <label for="tarikh_lahir" class="form-label">Tarikh Lahir</label>
-                                <input type="date" class="form-control" id="tarikh_lahir" name="tarikh_lahir" required>
-                            </div>
+
                         </div>
 
                         <div class="row mb-4">
                             <div class="col-md-12">
                                 <label for="alamat_rumah" class="form-label">Alamat Rumah</label>
-                                <textarea class="form-control" id="alamat_rumah" name="alamat_rumah" rows="2" required></textarea>
+                                <textarea class="form-control" id="alamat_rumah" name="homeAddress" rows="2" required></textarea>
                             </div>
                         </div>
 
                         <div class="row mb-4">
                             <div class="col-md-6">
                                 <label for="poskod" class="form-label">Poskod</label>
-                                <input type="text" class="form-control" id="poskod" name="poskod" required>
+                                <input type="text" class="form-control" id="poskod" name="homePostcode" required>
                             </div>
                             <div class="col-md-6">
                                 <label for="negeri" class="form-label">Negeri</label>
-                                <select class="form-select" id="negeri" name="negeri" required>
+                                <select class="form-select" id="negeri" name="homeState" required>
                                     <option value="">Pilih Negeri</option>
                                     <option value="Johor">Johor</option>
                                     <option value="Kedah">Kedah</option>
@@ -136,7 +133,7 @@ include "footer.php";
                         <div class="row mb-4">
                             <div class="col-md-6">
                                 <label for="no_anggota" class="form-label">No. Anggota</label>
-                                <input type="text" class="form-control" id="no_anggota" name="no_anggota" required>
+                                <input type="text" class="form-control" id="no_anggota" name="employeeID" required>
                             </div>
                             <div class="col-md-6">
                                 <label for="no_pf" class="form-label">No. PF</label>
@@ -147,25 +144,25 @@ include "footer.php";
                         <div class="row mb-4">
                             <div class="col-md-12">
                                 <label for="jawatan" class="form-label">Jawatan</label>
-                                <input type="text" class="form-control" id="jawatan" name="jawatan" required>
+                                <input type="text" class="form-control" id="jawatan" name="position" required>
                             </div>
                         </div>
 
                         <div class="row mb-4">
                             <div class="col-md-12">
                                 <label for="alamat_rumah" class="form-label">Alamat Pejabat</label>
-                                <textarea class="form-control" id="alamat_rumah" name="alamat_rumah" rows="2" required></textarea>
+                                <textarea class="form-control" id="alamat_rumah" name="officeAddress" rows="2" required></textarea>
                             </div>
                         </div>
 
                         <div class="row mb-4">
                             <div class="col-md-6">
                                 <label for="poskod" class="form-label">Poskod</label>
-                                <input type="text" class="form-control" id="poskod" name="poskod" required>
+                                <input type="text" class="form-control" id="poskod" name="officePostcode" required>
                             </div>
                             <div class="col-md-6">
                                 <label for="negeri" class="form-label">Negeri</label>
-                                <select class="form-select" id="negeri" name="negeri" required>
+                                <select class="form-select" id="negeri" name="officeState" required>
                                     <option value="">Pilih Negeri</option>
                                     <option value="Johor">Johor</option>
                                     <option value="Kedah">Kedah</option>
@@ -189,14 +186,10 @@ include "footer.php";
 
                         <div class="row mb-4">
                             <div class="col-md-6">
-                                <label for="tel_pejabat" class="form-label">No. Telefon Pejabat</label>
-                                <input type="tel" class="form-control" id="tel_pejabat" name="tel_pejabat" required>
-                            </div>
-                            <div class="col-md-6">
                                 <label for="tel_bimbit" class="form-label">No. Telefon Bimbit</label>
                                 <div class="input-group">
                                     <span class="input-group-text">+60</span>
-                                    <input type="tel" class="form-control" id="tel_bimbit" name="tel_bimbit" required>
+                                    <input type="tel" class="form-control" id="tel_bimbit" name="phoneNumber" required>
                                 </div>
                             </div>
                         </div>
@@ -204,7 +197,7 @@ include "footer.php";
                         <div class="row mb-4">
                             <div class="col-md-6">
                                 <label for="nama_bank" class="form-label">Nama Bank</label>
-                                <select class="form-select" id="nama_bank" name="nama_bank" required>
+                                <select class="form-select" id="nama_bank" name="bankName" required>
                                     <option value="">Pilih Bank</option>
                                     <option value="Maybank2u">Maybank2u</option>
                                     <option value="CIMB Clicks">CIMB Clicks</option>
@@ -228,7 +221,7 @@ include "footer.php";
                             </div>
                             <div class="col-md-6">
                                 <label for="no_akaun" class="form-label">No. Akaun Bank</label>
-                                <input type="text" class="form-control" id="no_akaun" name="no_akaun" required>
+                                <input type="text" class="form-control" id="no_akaun" name="bankNo" required>
                             </div>
                         </div>
 
@@ -237,30 +230,30 @@ include "footer.php";
                         <div class="row g-4">
                             <div class="col-md-6">
                                 <label for="penjamin1_nama" class="form-label">Nama (Seperti Dalam K/P)</label>
-                                <input type="text" class="form-control" id="penjamin1_nama" name="penjamin1_nama" required>
+                                <input type="text" class="form-control" id="penjamin1_nama" name="guarantorName" required>
                             </div>
                             <div class="col-md-6">
                                 <label for="penjamin1_ic" class="form-label">No. Kad Pengenalan</label>
-                                <input type="text" class="form-control" id="penjamin1_ic" name="penjamin1_ic" required>
+                                <input type="text" class="form-control" id="penjamin1_ic" name="icGuarantor" required>
                             </div>
                             <div class="col-md-6">
                                 <label for="penjamin1_telefon" class="form-label">No. Telefon</label>
                                 <div class="input-group">
                                     <span class="input-group-text">+60</span>
-                                    <input type="tel" class="form-control" id="penjamin2_telefon" name="penjamin2_telefon" required>
+                                    <input type="tel" class="form-control" id="penjamin2_telefon" name="telGuarantor" required>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <label for="penjamin1_pf" class="form-label">No. PF</label>
-                                <input type="text" class="form-control" id="penjamin1_pf" name="penjamin1_pf" required>
+                                <input type="text" class="form-control" id="penjamin1_pf" name="noPFGuarantor" required>
                             </div>
                             <div class="col-md-6">
                                 <label for="penjamin1_anggota" class="form-label">No. Anggota</label>
-                                <input type="text" class="form-control" id="penjamin1_anggota" name="penjamin1_anggota" required>
+                                <input type="text" class="form-control" id="penjamin1_anggota" name="guarantorMemberID" required>
                             </div>
                             <div class="col-md-6">
                                 <label for="penjamin1_signature" class="form-label">Tandatangan (PDF)</label>
-                                <input type="file" class="form-control" id="penjamin1_signature" name="penjamin1_signature" accept=".pdf" required>
+                                <input type="file" class="form-control" id="penjamin1_signature" name="tandatanganGua" accept=".pdf" required>
                             </div>
                         </div>
 
@@ -269,30 +262,30 @@ include "footer.php";
                         <div class="row g-4">
                             <div class="col-md-6">
                                 <label for="penjamin2_nama" class="form-label">Nama (Seperti Dalam K/P)</label>
-                                <input type="text" class="form-control" id="penjamin2_nama" name="penjamin2_nama" required>
+                                <input type="text" class="form-control" id="penjamin2_nama" name="guarantorName" required>
                             </div>
                             <div class="col-md-6">
                                 <label for="penjamin2_ic" class="form-label">No. Kad Pengenalan</label>
-                                <input type="text" class="form-control" id="penjamin2_ic" name="penjamin2_ic" required>
+                                <input type="text" class="form-control" id="penjamin2_ic" name="icGuarantor" required>
                             </div>
                             <div class="col-md-6">
                                 <label for="penjamin2_telefon" class="form-label">No. Telefon</label>
                                 <div class="input-group">
                                     <span class="input-group-text">+60</span>
-                                    <input type="tel" class="form-control" id="penjamin2_telefon" name="penjamin2_telefon" required>
+                                    <input type="tel" class="form-control" id="penjamin2_telefon" name="telGuarantor" required>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <label for="penjamin2_pf" class="form-label">No. PF</label>
-                                <input type="text" class="form-control" id="penjamin2_pf" name="penjamin2_pf" required>
+                                <input type="text" class="form-control" id="penjamin2_pf" name="noPFGuarantor" required>
                             </div>
                             <div class="col-md-6">
                                 <label for="penjamin2_anggota" class="form-label">No. Anggota</label>
-                                <input type="text" class="form-control" id="penjamin2_anggota" name="penjamin2_anggota" required>
+                                <input type="text" class="form-control" id="penjamin2_anggota" name="guarantorMemberID" required>
                             </div>
                             <div class="col-md-6">
                                 <label for="penjamin2_signature" class="form-label">Tandatangan (PDF)</label>
-                                <input type="file" class="form-control" id="penjamin2_signature" name="penjamin2_signature" accept=".pdf" required>
+                                <input type="file" class="form-control" id="penjamin2_signature" name="tandatanganGua" accept=".pdf" required>
                             </div>
                         </div>
 
@@ -302,19 +295,19 @@ include "footer.php";
                         <div class="row g-4">
                             <div class="col-md-6">
                                 <label for="majikan_nama" class="form-label">Nama Majikan (Seperti Dalam K/P)</label>
-                                <input type="text" class="form-control" id="majikan_nama" name="majikan_nama" required>
+                                <input type="text" class="form-control" id="majikan_nama" name="employerName" required>
                             </div>
                             
                             <div class="col-md-6">
                                 <label for="majikan_ic" class="form-label">No. Kad Pengenalan</label>
-                                <input type="text" class="form-control" id="majikan_ic" name="majikan_ic" required>
+                                <input type="text" class="form-control" id="majikan_ic" name="employerIc" required>
                             </div>
 
                             <div class="col-md-6">
                                 <label for="gaji_pokok" class="form-label">Gaji Pokok Sebulan Kakitangan</label>
                                 <div class="input-group">
                                     <span class="input-group-text">RM</span>
-                                    <input type="number" class="form-control" id="gaji_pokok" name="gaji_pokok" required>
+                                    <input type="number" class="form-control" id="gaji_pokok" name="basicSalary" required>
                                 </div>
                             </div>
 
@@ -322,25 +315,25 @@ include "footer.php";
                                 <label for="gaji_bersih" class="form-label">Gaji Bersih Sebulan Kakitangan</label>
                                 <div class="input-group">
                                     <span class="input-group-text">RM</span>
-                                    <input type="number" class="form-control" id="gaji_bersih" name="gaji_bersih" required>
+                                    <input type="number" class="form-control" id="gaji_bersih" name="netSalary" required>
                                 </div>
                             </div>
 
                             <div class="col-md-6">
                                 <label for="gaji_pokok_file" class="form-label">Lampiran Slip Gaji Pokok Kakitangan</label>
-                                <input type="file" class="form-control" id="gaji_pokok_file" name="gaji_pokok_file" accept=".pdf,.jpg,.jpeg,.png" required>
+                                <input type="file" class="form-control" id="gaji_pokok_file" name="basicSalaryFile" accept=".pdf,.jpg,.jpeg,.png" required>
                                 <div class="form-text">Sila lampirkan slip gaji pokok dalam format PDF</div>
                             </div>
 
                             <div class="col-md-6">
                                 <label for="gaji_bersih_file" class="form-label">Lampiran Slip Gaji Bersih Kakitangan</label>
-                                <input type="file" class="form-control" id="gaji_bersih_file" name="gaji_bersih_file" accept=".pdf,.jpg,.jpeg,.png" required>
+                                <input type="file" class="form-control" id="gaji_bersih_file" name="netSalaryFile" accept=".pdf,.jpg,.jpeg,.png" required>
                                 <div class="form-text">Sila lampirkan slip gaji bersih dalam format PDF</div>
                             </div>
 
                             <div class="col-md-6">
                                 <label for="majikan_signature" class="form-label">Tandatangan Sah/Cop (PDF)</label>
-                                <input type="file" class="form-control" id="majikan_signature" name="majikan_signature" accept=".pdf" required>
+                                <input type="file" class="form-control" id="majikan_signature" name="signature" accept=".pdf" required>
                                 <div class="form-text">Sila lampirkan tandatangan dalam format PDF</div>
                             </div>
                         </div>
