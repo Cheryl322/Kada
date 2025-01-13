@@ -470,10 +470,10 @@
         <a class="nav-link" href="#">Ahli Semasa</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" href="#">Pendaftaran Ahli</a>
+        <a class="nav-link" href="senaraiPermohonanAhli.php">Pendaftaran Ahli</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" href="#">Permohonan Pinjaman</a>
+        <a class="nav-link" href="senaraiPermohonanPinjaman.php">Permohonan Pinjaman</a>
       </li>
       <li class="nav-item">
         <a class="nav-link" href="hasilreport.php">Hasil Laporan</a>
@@ -501,13 +501,13 @@
       <span>Ahli Semasa</span>
     </div>
   </a>
-  <a href="page2.php" class="circle">
+  <a href="senaraiPermohonanAhli.php" class="circle">
     <div class="circle-content">
       <i class="fas fa-user-plus mb-2"></i>
       <span>Pendaftaran Ahli</span>
     </div>
   </a>
-  <a href="page3.php" class="circle">
+  <a href="senaraiPermohonanPinjaman.php" class="circle">
     <div class="circle-content">
       <i class="fas fa-hand-holding-usd mb-2"></i>
       <span>Permohonan Pinjaman</span>
