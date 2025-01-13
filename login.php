@@ -114,51 +114,6 @@ body::before {
                                placeholder="Masukkan employee ID" required>
                     </div>
 
-<<<<<<< HEAD
-                    <div class="mb-3">
-                       <label for="employeeID" class="form-label">EmployeeID (User/Admin)</label>
-                       <input type="text" class="form-control" id="employeeID" name="employeeID" 
-                              placeholder="Masukkan employee ID" required>
-                   </div>
-                    <div class="mb-3">
-                       <label for="password" class="form-label">Kata Laluan</label>
-                       <div class="input-group">
-                           <input type="password" class="form-control" id="password" name="password" 
-                                  placeholder="Masukkan kata laluan" required>
-                           <button class="btn btn-outline-secondary" type="button" id="togglePassword">
-                               <i class="fas fa-eye"></i>
-                           </button>
-                       </div>
-                       <div class="text-end mt-1">
-                           <a href="forgot-password.php" class="text-decoration-none">Lupa kata laluan?</a>
-                       </div>
-                   </div>
-                   <div class="d-grid">
-                        <button type="submit" name="login" class="btn btn-primary btn-lg">Log Masuk</button>
-                        <!-- <a class="btn btn-primary btn-lg" href="mainpage.php" type="button">Log Masuk</a> -->
-                   </div>
-                    <div class="text-center mt-3">
-                       <p>Sila daftar sekiranya anda belum mempunyai akaun. 
-                          <a href="register.php" class="text-decoration-none">Daftar Akaun?</a>
-                       </p>
-                   </div>
-               </form>
-           </div>
-       </div>
-   </div>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-   <script>
-       // Toggle password visibility
-       document.getElementById('togglePassword').addEventListener('click', function() {
-           const password = document.getElementById('password');
-           const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
-           password.setAttribute('type', type);
-           this.querySelector('i').classList.toggle('fa-eye');
-           this.querySelector('i').classList.toggle('fa-eye-slash');
-       });
-   </script>
-</body>
-=======
                     <div class="form-group">
                         <label for="password" class="form-label">
                             <i class="fas fa-lock me-2"></i>Kata Laluan
@@ -209,4 +164,3 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <?php include 'footer.php'; ?>
->>>>>>> c6f7562e84b8058c24287ee6cc92ceb05125d139
