@@ -1,40 +1,18 @@
-<!-- <?php
-//Set DB Parameter
+<?php
+$host = "localhost";
+$user = "root";
+$password = ""; // default XAMPP password is blank
+$database = "db_kada";
 
-$servername ="localhost";
-$username ="root";
-$password ="";
-$dbname ="db_kada";
+$con = mysqli_connect($host, $user, $password, $database);
 
-//Connect DB
-$con = mysqli_connect($servername, $username, $password, $dbname);
-
-//Connection Check
 if (!$con) {
     die("Connection failed: " . mysqli_connect_error());
 }
 
+// Set charset to ensure proper handling of special characters
 mysqli_set_charset($con, "utf8mb4");
 
-?> -->
-
-<?php
-try {
-    $host = "localhost";
-    $dbname = "db_kada";
-    $username = "root";
-    $password = "";  // 如果有密码请填写
-
-    $pdo = new PDO(
-        "mysql:host=$host;dbname=$dbname;charset=utf8mb4",
-        $username,
-        $password,
-        [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
-        ]
-    );
-} catch(PDOException $e) {
-    die("Connection failed: " . $e->getMessage());
-}
+// Add this to test connection
+echo "Connected successfully to database";
 ?>
