@@ -1,75 +1,163 @@
 <?php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
-include 'headermember.php';
-include "footer.php";
-include "dbconnect.php";
+session_start();
+include 'dbconnect.php';
 
-$t_amount = $_POST['t_amount'];
-$period = $_POST['period'];
-$mon_installment = $_POST['mon_installment'];
-$name = $_POST['name'];
-$no_ic = $_POST['no_ic'];
-$sex = $_POST['sex'];
-$religion = $_POST['religion'];
-$nationality = $_POST['nationality'];
-$DOB = $_POST['DOB'];
-$add1 = $_POST['add1'];
-$postcode1 = $_POST['postcode1'];
-$state1 = $_POST['state1'];
-$memberID = $_POST['memberID'];
-$PFNo = $_POST['PFNo'];
-$position = $_POST['position'];
-$add2 = $_POST['add2'];
-$postcode2 = $_POST['postcode2'];
-$state2 = $_POST['state2'];
-$office_pNo = $_POST['office_pNo'];
-$pNo = $_POST['pNo'];
-$bankName = $_POST['bankName'];
-$bankAcc = $_POST['bankAcc'];
-$guarantor_N = $_POST['guarantor_N'];
-$guarantor_ic = $_POST['guarantor_ic'];
-$guarantor_pNo = $_POST['guarantor_pNo'];
-$PFNo1 = $_POST['PFNo1'];
-$guarantorMemberID = $_POST['guarantorMemberID'];
-$sign = isset($_FILES['sign']) && $_FILES['sign']['error'] === UPLOAD_ERR_OK ? 
-    mysqli_real_escape_string($con, file_get_contents($_FILES['sign']['tmp_name'])) : '';
-$guarantor_N2 = $_POST['guarantor_N2'];
-$guarantor_ic2 = $_POST['guarantor_ic2'];
-$guarantor_pNo2 = $_POST['guarantor_pNo2'];
-$PFNo2 = $_POST['PFNo2'];
-$guarantorMemberID2 = $_POST['guarantorMemberID2'];
-$sign2 = isset($_FILES['sign2']) && $_FILES['sign2']['error'] === UPLOAD_ERR_OK ? 
-    mysqli_real_escape_string($con, file_get_contents($_FILES['sign2']['tmp_name'])) : '';
-$employer_N = $_POST['employer_N'];
-$employer_ic = $_POST['employer_ic'];
-$basic_salary = $_POST['basic_salary'];
-$net_salary = $_POST['net_salary'];
-$basic_s = isset($_FILES['basic_s']) && $_FILES['basic_s']['error'] === UPLOAD_ERR_OK ? 
-    mysqli_real_escape_string($con, file_get_contents($_FILES['basic_s']['tmp_name'])) : '';
-$net_s = isset($_FILES['net_s']) && $_FILES['net_s']['error'] === UPLOAD_ERR_OK ? 
-    mysqli_real_escape_string($con, file_get_contents($_FILES['net_s']['tmp_name'])) : '';
-$signature = isset($_FILES['signature']) && $_FILES['signature']['error'] === UPLOAD_ERR_OK ? 
-    mysqli_real_escape_string($con, file_get_contents($_FILES['signature']['tmp_name'])) : '';
-
-// Escape other string inputs
-$t_amount = mysqli_real_escape_string($con, $t_amount);
-$period = mysqli_real_escape_string($con, $period);
-$name = mysqli_real_escape_string($con, $name);
-
-//SQL Insert operation
-$sql = "INSERT INTO tb_loanapplication(t_amount, period, mon_installment, name, no_ic, sex, religion, nationality, DOB, add1, postcode1, state1, memberID, PFNo, position, add2, postcode2, state2, office_pNo, pNo, bankName, bankAcc, guarantor_N, guarantor_ic, guarantor_pNo, PFNo1, guarantorMemberID, sign, guarantor_N2, guarantor_ic2, guarantor_pNo2, PFNo2, guarantorMemberID2, sign2, employer_N, employer_ic, basic_salary, net_salary, basic_s, net_s, signature)
-	VALUES ('$t_amount','$period','$mon_installment','$name','$no_ic','$sex','$religion','$nationality','$DOB','$add1','$postcode1','$state1','$memberID','$PFNo','$position','$add2','$postcode2','$state2','$office_pNo','$pNo','$bankName','$bankAcc','$guarantor_N','$guarantor_ic','$guarantor_pNo','$PFNo1','$guarantorMemberID','$sign','$guarantor_N2','$guarantor_ic2','$guarantor_pNo2','$PFNo2','$guarantorMemberID2','$sign2','$employer_N','$employer_ic','$basic_salary','$net_salary','$basic_s','$net_s','$signature')";
-
-// Execute SQL
-if(mysqli_query($con, $sql)) {
-    // Redirect user to loan application page
-    header("Location: permohonanloan.php");
-    exit();
+// Debug: Print connection status
+if ($con) {
+    echo "Database connected successfully<br>";
 } else {
-    echo "Error: " . mysqli_error($con);
+    echo "Database connection failed: " . mysqli_connect_error() . "<br>";
+    exit();
 }
 
-// Close connection
-mysqli_close($con);
+try {
+    mysqli_begin_transaction($con);
 
+    // Debug: Print POST data
+    echo "<pre>POST data: ";
+    print_r($_POST);
+    echo "</pre>";
+
+    // Debug: Print FILES data
+    echo "<pre>FILES data: ";
+    print_r($_FILES);
+    echo "</pre>";
+
+    // 1. First insert member personal information
+    $sql = "INSERT INTO tb_member (employeeID, memberName, ic, sex, religion, nation, no_pf, position, phoneNumber) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    
+    $employeeID = $_POST['employeeID']; // Store this for later use
+    
+    $stmt = mysqli_prepare($con, $sql);
+    mysqli_stmt_bind_param($stmt, "issssssss", 
+        $employeeID,
+        $_POST['memberName'],
+        $_POST['ic'],
+        $_POST['sex'],
+        $_POST['religion'],
+        $_POST['nation'],
+        $_POST['no_pf'],
+        $_POST['position'],
+        $_POST['phoneNumber']
+    );
+    
+    if (!mysqli_stmt_execute($stmt)) {
+        throw new Exception("Error inserting member information: " . mysqli_error($con));
+    }
+
+    // 2. Insert loan using the same employeeID as loanApplicationID
+    $sql = "INSERT INTO tb_loan (loanApplicationID, amountRequested, financingPeriod, monthlyInstallments, 
+            employerName, employerIc, basicSalary, netSalary, basicSalaryFile, 
+            netSalaryFile, signature) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    
+    // Handle file uploads
+    $basicSalaryFile = null;
+    $netSalaryFile = null;
+    $signature = null;
+
+    if (isset($_FILES['basicSalaryFile']) && $_FILES['basicSalaryFile']['error'] === 0) {
+        $basicSalaryFile = file_get_contents($_FILES['basicSalaryFile']['tmp_name']);
+    }
+    if (isset($_FILES['netSalaryFile']) && $_FILES['netSalaryFile']['error'] === 0) {
+        $netSalaryFile = file_get_contents($_FILES['netSalaryFile']['tmp_name']);
+    }
+    if (isset($_FILES['signature']) && $_FILES['signature']['error'] === 0) {
+        $signature = file_get_contents($_FILES['signature']['tmp_name']);
+    }
+    
+    $stmt = mysqli_prepare($con, $sql);
+    mysqli_stmt_bind_param($stmt, "iiiisiiibbb", 
+        $employeeID,  // Use the same employeeID as loanApplicationID
+        $_POST['amountRequested'],
+        $_POST['financingPeriod'],
+        $_POST['monthlyInstallments'],
+        $_POST['employerName'],
+        $_POST['employerIc'],
+        $_POST['basicSalary'],
+        $_POST['netSalary'],
+        $basicSalaryFile,
+        $netSalaryFile,
+        $signature
+    );
+    
+    if (!mysqli_stmt_execute($stmt)) {
+        throw new Exception("Error inserting loan: " . mysqli_error($con));
+    }
+
+    // 3. Insert member addresses
+    // Home Address
+    $sql = "INSERT INTO tb_member_homeaddress (employeeID, homeAddress, homePostcode, homeState) 
+            VALUES (?, ?, ?, ?)";
+    $stmt = mysqli_prepare($con, $sql);
+    mysqli_stmt_bind_param($stmt, "isss", 
+        $_POST['employeeID'],
+        $_POST['homeAddress'],
+        $_POST['homePostcode'],
+        $_POST['homeState']
+    );
+    
+    if (!mysqli_stmt_execute($stmt)) {
+        throw new Exception("Error inserting home address: " . mysqli_error($con));
+    }
+
+    // Office Address
+    $sql = "INSERT INTO tb_member_officeaddress (employeeID, officeAddress, officePostcode, officeState) 
+            VALUES (?, ?, ?, ?)";
+    $stmt = mysqli_prepare($con, $sql);
+    mysqli_stmt_bind_param($stmt, "isss", 
+        $_POST['employeeID'],
+        $_POST['officeAddress'],
+        $_POST['officePostcode'],
+        $_POST['officeState']
+    );
+    
+    if (!mysqli_stmt_execute($stmt)) {
+        throw new Exception("Error inserting office address: " . mysqli_error($con));
+    }
+
+    // 4. Insert guarantor information
+    $sql = "INSERT INTO tb_guarantor (employeeID, icGuarantor, guarantorName, 
+            memberIdGuarantor, telGuarantor, noPFGuarantor, tandatanganGua) 
+            VALUES (?, ?, ?, ?, ?, ?, ?)";
+    
+    $tandatanganGua = null;
+    if (isset($_FILES['tandatanganGua']) && $_FILES['tandatanganGua']['error'] === 0) {
+        $tandatanganGua = file_get_contents($_FILES['tandatanganGua']['tmp_name']);
+    }
+    
+    $stmt = mysqli_prepare($con, $sql);
+    mysqli_stmt_bind_param($stmt, "iisiisb", 
+        $_POST['employeeID'],
+        $_POST['icGuarantor'],
+        $_POST['guarantorName'],
+        $_POST['guarantorMemberID'],
+        $_POST['telGuarantor'],
+        $_POST['noPFGuarantor'],
+        $tandatanganGua
+    );
+    
+    if (!mysqli_stmt_execute($stmt)) {
+        throw new Exception("Error inserting guarantor: " . mysqli_error($con));
+    }
+
+    mysqli_commit($con);
+    $_SESSION['success_message'] = "Loan application submitted successfully!";
+    header("Location: permohonanloan.php");
+    exit();
+
+} catch (Exception $e) {
+    mysqli_rollback($con);
+    echo "Error: " . $e->getMessage() . "<br>";
+    $_SESSION['error_message'] = $e->getMessage();
+    // Comment out the redirect temporarily for debugging
+    // header("Location: permohonanloan.php");
+    // exit();
+} finally {
+    mysqli_close($con);
+}
 ?>

@@ -1,4 +1,5 @@
 <?php
+
 // Database credentials
 $servername = "localhost";  // Your database server (usually localhost)
 $username = "root";         // Your database username (default is root)
@@ -12,4 +13,5 @@ $conn = new mysqli($servername, $username, $password, $dbname);
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
+
 ?>
