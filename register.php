@@ -127,18 +127,20 @@ body::before {
         <div class="col-md-6">
             <div class="register-container">
                 <img src="img/kadalogo.jpg" alt="KADA Logo" class="logo">
+                <h2 class="text-center mb-4">Daftar Akaun</h2>
                 
-                <h2 class="text-center mb-4" style="color: #2c5282; font-weight: 600;">Daftar Akaun</h2>
-                
-                <form method="POST" action="registerprocess.php">
-                    <?php if (isset($_SESSION['message'])): ?>
-                        <div class="alert">
-                            <i class="fas fa-exclamation-circle me-2"></i>
-                            <?php echo htmlspecialchars($_SESSION['message']['text']); ?>
-                        </div>
-                        <?php unset($_SESSION['message']); ?>
-                    <?php endif; ?>
-                    
+                <?php 
+                // Show error message if exists
+                if(isset($_SESSION['error_message'])): ?>
+                    <div class="alert alert-danger">
+                        <?php 
+                            echo $_SESSION['error_message']; 
+                            unset($_SESSION['error_message']);
+                        ?>
+                    </div>
+                <?php endif; ?>
+
+                <form action="registerprocess.php" method="POST" onsubmit="return validateForm()">
                     <div class="mb-4">
                         <label for="employeeID" class="form-label">
                             <i class="fas fa-id-card"></i>
@@ -155,8 +157,22 @@ body::before {
                         </label>
                         <div class="input-group">
                             <input type="password" class="form-control" id="password" name="password" 
-                                   placeholder="Masukkan kata laluan" autocomplete="off" required>
+                                   placeholder="Masukkan kata laluan" required>
                             <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="adminKey" class="form-label">
+                            <i class="fas fa-key"></i>
+                            Admin Key (Optional)
+                        </label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="adminKey" name="adminKey" 
+                                   placeholder="Masukkan admin key jika mendaftar sebagai admin">
+                            <button class="btn btn-outline-secondary" type="button" id="toggleAdminKey">
                                 <i class="fas fa-eye"></i>
                             </button>
                         </div>
@@ -182,6 +198,17 @@ body::before {
 </div>
 
 <script>
+function validateForm() {
+    var employeeID = document.getElementById('employeeID').value;
+    var password = document.getElementById('password').value;
+
+    if (employeeID.trim() === '' || password.trim() === '') {
+        alert('Please fill in all fields');
+        return false;
+    }
+    return true;
+}
+
 document.getElementById('togglePassword').addEventListener('click', function() {
     const password = document.getElementById('password');
     const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
