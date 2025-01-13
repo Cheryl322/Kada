@@ -33,6 +33,33 @@ $memberData = mysqli_fetch_assoc($result);
 
 ?>
 
+<?php
+session_start();
+include "dbconnect.php";
+
+// 添加这行来防止页面缓存
+header("Cache-Control: no-cache, must-revalidate");
+
+// 获取最新的用户数据
+$employeeId = $_SESSION['employeeID'];
+$query = "SELECT * FROM tb_member WHERE employeeId = ?";
+$stmt = $pdo->prepare($query);
+$stmt->execute([$employeeId]);
+$row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+// 显示成功/错误消息
+if(isset($_SESSION['success_message'])): ?>
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <?php 
+            echo $_SESSION['success_message'];
+            unset($_SESSION['success_message']);
+        ?>
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+<?php endif; ?>
+
     <div class="container">
 
     <div class="my-3"></div>
@@ -78,9 +105,6 @@ $memberData = mysqli_fetch_assoc($result);
                <div class="card mb-3">
                    <div class="card-header text-white bg-primary d-flex justify-content-between align-items-center">
                        Butir-butir Peribadi Pemohon
-                       <button type="button" class="btn btn-info" id="editButton" onclick="editProfile()">
-                           Kemaskini
-                       </button>
                    </div>
                    <div class="card-body">
                        <form method="POST" action="update_profil.php" id="profileForm">
@@ -163,7 +187,7 @@ $memberData = mysqli_fetch_assoc($result);
                            </table>
                            <div class="form-group row mb-5">
                                 <div class="col-sm-9 offset-sm-3">
-                                    <!-- <button type="button" class="btn btn-primary" id="editButton" onclick="editProfile()">Edit</button> -->
+                                    <button type="button" class="btn btn-primary" id="editButton" onclick="editProfile()">Kemaskini</button>
                                     <button type="submit" class="btn btn-success" id="updateButton" style="display: none;">Simpan</button>
                                     <button type="button" class="btn btn-secondary" id="cancelButton" onclick="cancelEdit()" style="display: none;">Batal</button>
                                 </div>
@@ -177,18 +201,13 @@ $memberData = mysqli_fetch_assoc($result);
 </div>
 
 
-
-
-
-
 <script>
+// 修改 JavaScript 代码
 function editProfile() {
-    console.log('Edit profile clicked');
     const inputs = document.querySelectorAll('#profileForm .form-control');
     inputs.forEach(input => {
         if (input.name !== 'employeeID') {
             input.removeAttribute('readonly');
-            console.log('Made editable:', input.name);
         }
     });
     document.getElementById('editButton').style.display = 'none';
@@ -197,25 +216,32 @@ function editProfile() {
 }
 
 function cancelEdit() {
-    location.reload();
+    if(confirm('Adakah anda pasti untuk membatalkan?')) {
+        // 强制刷新页面
+        window.location.reload(true);
+    }
 }
 
-// Add console logging to debug form submission
+// 表单提交处理
 document.getElementById('profileForm').addEventListener('submit', function(e) {
     e.preventDefault();
-    console.log('Form submission attempted');
     
-    // Log form data
-    const formData = new FormData(this);
-    for (let pair of formData.entries()) {
-        console.log(pair[0] + ': ' + pair[1]);
-    }
-    
-    if (confirm('Adakah anda pasti untuk menyimpan perubahan ini?')) {
-        console.log('Submission confirmed');
-        this.submit();
-    } else {
-        console.log('Submission cancelled');
+    if(confirm('Adakah anda pasti untuk menyimpan perubahan ini?')) {
+        const formData = new FormData(this);
+        
+        fetch('update_profil.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.text())
+        .then(data => {
+            // 强制刷新页面以显示最新数据
+            window.location.reload(true);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error updating profile');
+        });
     }
 });
 </script>
