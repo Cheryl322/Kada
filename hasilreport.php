@@ -476,19 +476,15 @@
     </div>
     <ul class="navbar-nav">
       <li class="nav-item">
-
-      <a class="nav-link active" href="adminmainpage.php">Laman Utama
+        <a class="nav-link active" href="adminmainpage.php">Laman Utama
           <span class="visually-hidden">(current)</span>
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" href="#">Ahli Semasa</a>
+        <a class="nav-link" href="senaraiahli.php">Ahli Semasa</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" href="#">Pendaftaran Ahli</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="#">Permohonan Pinjaman</a>
+        <a class="nav-link" href="senaraipembiayaan.php">Permohonan Pinjaman</a>
       </li>
       <li class="nav-item">
         <a class="nav-link" href="hasilreport.php">Hasil Laporan</a>
@@ -496,7 +492,6 @@
       <li class="nav-item">
         <a class="nav-link" href="adminviewreport.php">Cek Laporan</a>
       </li>
-
       <li class="nav-item">
         <a class="nav-link" href="#">Info KADA</a>
       </li>
