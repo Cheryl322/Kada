@@ -19,7 +19,7 @@ body {
 }
 
 
-/* body::before {
+body::before {
     content: '';
     position: fixed;
     top: 0;
@@ -28,7 +28,7 @@ body {
     bottom: 0;
     background: linear-gradient(rgba(245, 245, 245, 0.85), rgba(240, 240, 240, 0.8));
     z-index: -1;
-} */
+}
 
 
 
