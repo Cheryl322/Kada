@@ -524,10 +524,7 @@ if (!isset($_SESSION['employeeID']) || $_SESSION['role'] !== 'admin') {
         <a class="nav-link" href="senaraiahli.php">Ahli Semasa</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" href="#">Pendaftaran Ahli</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="#">Permohonan Pinjaman</a>
+        <a class="nav-link" href="senaraipembiayaan.php">Permohonan Pinjaman</a>
       </li>
       <li class="nav-item">
         <a class="nav-link" href="hasilreport.php">Hasil Laporan</a>
