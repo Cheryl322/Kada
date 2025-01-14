@@ -3,21 +3,29 @@ session_start();
 include "dbconnect.php";
 include "headermember.php";
 
+if (!isset($_SESSION['employeeID'])) {
+    header("Location: login.php");
+    exit();
+}
+
 $employeeID = $_SESSION['employeeID'];
 
 // Get month and year filter from URL parameters
 $month = isset($_GET['month']) ? $_GET['month'] : date('m');
 $year = isset($_GET['year']) ? $_GET['year'] : date('Y');
 
+// 使用 mysqli 而不是 PDO
 $sql = "SELECT * FROM tb_transaction 
         WHERE employeeID = ? 
         AND MONTH(transDate) = ? 
         AND YEAR(transDate) = ?
         ORDER BY transDate DESC";
 
-$stmt = $pdo->prepare($sql);
-$stmt->execute([$employeeID, $month, $year]);
-$transactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$stmt = mysqli_prepare($conn, $sql);
+mysqli_stmt_bind_param($stmt, 'sss', $employeeID, $month, $year);
+mysqli_stmt_execute($stmt);
+$result = mysqli_stmt_get_result($stmt);
+$transactions = mysqli_fetch_all($result, MYSQLI_ASSOC);
 ?>
 
 <div class="container mt-5">
@@ -66,18 +74,38 @@ $transactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach($transactions as $trans): ?>
+                    <?php if (empty($transactions)): ?>
                     <tr>
-                        <td><?php echo date('d/m/Y', strtotime($trans['transDate'])); ?></td>
-                        <td><?php echo $trans['transType']; ?></td>
-                        <td><?php echo number_format($trans['transAmt'], 2); ?></td>
-                        <td>
-                            <span class="badge badge-success">Selesai</span>
-                        </td>
+                        <td colspan="4" class="text-center">Tiada rekod transaksi untuk tempoh ini</td>
                     </tr>
-                    <?php endforeach; ?>
+                    <?php else: ?>
+                        <?php foreach($transactions as $trans): ?>
+                        <tr>
+                            <td><?php echo date('d/m/Y', strtotime($trans['transDate'])); ?></td>
+                            <td><?php echo htmlspecialchars($trans['transType']); ?></td>
+                            <td><?php echo number_format($trans['transAmt'], 2); ?></td>
+                            <td>
+                                <span class="badge bg-success">Selesai</span>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
                 </tbody>
             </table>
         </div>
     </div>
-</div> 
+</div>
+
+<style>
+.form-control {
+    margin-bottom: 10px;
+}
+
+.table th {
+    background-color: #f8f9fa;
+}
+
+.badge {
+    padding: 8px 12px;
+}
+</style> 

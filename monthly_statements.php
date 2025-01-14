@@ -3,15 +3,45 @@ session_start();
 include "dbconnect.php";
 include "headermember.php";
 
+if (!isset($_SESSION['employeeID'])) {
+    header("Location: login.php");
+    exit();
+}
+
 $employeeID = $_SESSION['employeeID'];
 
+// 检查连接
+if (!isset($conn)) {
+    die("Database connection not established");
+}
+
 // Fetch all monthly statements
-$sql = "SELECT * FROM tb_monthly_reports 
+$sql = "SELECT * FROM tb_transaction
         WHERE employeeID = ? 
-        ORDER BY reportMonth DESC";
-$stmt = $pdo->prepare($sql);
-$stmt->execute([$employeeID]);
-$statements = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        -- ORDER BY reportMonth DESC";
+
+try {
+    $stmt = mysqli_prepare($conn, $sql);
+    if ($stmt === false) {
+        throw new Exception("Error preparing statement: " . mysqli_error($conn));
+    }
+
+    mysqli_stmt_bind_param($stmt, 's', $employeeID);
+    
+    if (!mysqli_stmt_execute($stmt)) {
+        throw new Exception("Error executing statement: " . mysqli_stmt_error($stmt));
+    }
+
+    $result = mysqli_stmt_get_result($stmt);
+    $statements = mysqli_fetch_all($result, MYSQLI_ASSOC);
+    
+} catch (Exception $e) {
+    die("Error: " . $e->getMessage());
+} finally {
+    if (isset($stmt)) {
+        mysqli_stmt_close($stmt);
+    }
+}
 ?>
 
 <div class="container mt-5">
