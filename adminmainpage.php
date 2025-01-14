@@ -425,6 +425,41 @@
     margin-left: 250px;
     max-width: calc(100% - 270px);
 }
+
+/* Add these new styles for the dropdown */
+.profile-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    display: none;
+    min-width: 150px;
+    z-index: 1000;
+}
+
+.profile-dropdown.show {
+    display: block;
+}
+
+.profile-dropdown a {
+    display: block;
+    padding: 10px 15px;
+    color: #333;
+    text-decoration: none;
+    transition: background-color 0.3s;
+}
+
+
+.profile-dropdown a:hover {
+    background-color: #f5f5f5;
+}
+
+.profile-dropdown a i {
+    margin-right: 8px;
+    color: rgb(34, 119, 210);
+}
 </style>
 </head>
 
@@ -447,8 +482,11 @@
             <i class="fas fa-bell"></i>
             <span class="notification-badge">3</span>
         </div>
-        <div class="icon-button">
-            <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Profile" class="profile-pic">
+        <div class="icon-button" style="position: relative;">
+            <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Profile" class="profile-pic" id="profileButton">
+            <div class="profile-dropdown" id="profileDropdown">
+                <a href="logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </div>
         </div>
     </div>
 </div>
@@ -487,6 +525,9 @@
       </li>
       <li class="nav-item">
         <a class="nav-link" href="#">Hubungi Kami</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="logout.php">Log Out</a>
       </li>
     </ul>
   </div>
@@ -597,7 +638,6 @@
             </tbody>
         </table>
     </div>
-</div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -611,7 +651,6 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(() => {
         sidebar.classList.remove('initial-state');
     }, 100);
-
     function toggleSidebar() {
         sidebar.classList.toggle('closed');
         mainContent.classList.toggle('sidebar-open');
@@ -622,6 +661,22 @@ document.addEventListener('DOMContentLoaded', function() {
 
     menuButton.addEventListener('click', toggleSidebar);
     closeSidebar.addEventListener('click', toggleSidebar);
+
+    // Add this new code for profile dropdown
+    const profileButton = document.getElementById('profileButton');
+    const profileDropdown = document.getElementById('profileDropdown');
+
+    profileButton.addEventListener('click', function(e) {
+        e.stopPropagation();
+        profileDropdown.classList.toggle('show');
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!profileButton.contains(e.target)) {
+            profileDropdown.classList.remove('show');
+        }
+    });
 });
 </script>
 
