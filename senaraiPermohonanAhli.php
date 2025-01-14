@@ -4,6 +4,12 @@ include "headeradmin.php";
 include "footer.php";
 include "dbconnect.php";
 
+// Database configuration
+$servername = "localhost";
+$username = "root";  // Your database username
+$password = "";      // Your database password
+$dbname = "db_kada";    // Your database name
+
 // Establish database connection
 $conn = mysqli_connect($servername, $username, $password, $dbname);
 
