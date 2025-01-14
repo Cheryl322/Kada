@@ -42,559 +42,1052 @@ $memberData = mysqli_fetch_assoc($result);
 mysqli_stmt_close($stmt);
 ?>
 
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-<div class="container mt-3">
-    <div class="card">
-        <div class="card-header bg-primary text-white">
-            <h4 class="mb-0">Permohonan Pembiayaan KADA</h4>
+<div class="container">
+    <!-- Header and Progress Steps -->
+    <div class="loan-container">
+        <!-- Header -->
+        <div class="loan-header">
+            <h1>Permohonan Pembiayaan KADA</h1>
         </div>
-        
+
         <!-- Progress Steps -->
         <div class="progress-steps">
-            <div class="step active" data-step="1">
-                <div class="step-number">1</div>
-                <div class="step-title">Maklumat Peribadi</div>
+            <div class="step-item active">
+                <div class="step-circle">1</div>
+                <div class="step-line"></div>
+                <div class="step-label">Maklumat Peribadi</div>
             </div>
-            <div class="step" data-step="2">
-                <div class="step-number">2</div>
-                <div class="step-title">Maklumat Pembiayaan</div>
+            <div class="step-item">
+                <div class="step-circle">2</div>
+                <div class="step-line"></div>
+                <div class="step-label">Maklumat Pembiayaan</div>
             </div>
-            <div class="step" data-step="3">
-                <div class="step-number">3</div>
-                <div class="step-title">Maklumat Penjamin</div>
+            <div class="step-item">
+                <div class="step-circle">3</div>
+                <div class="step-line"></div>
+                <div class="step-label">Maklumat Penjamin</div>
             </div>
-            <div class="step" data-step="4">
-                <div class="step-number">4</div>
-                <div class="step-title">Pengesahan Majikan</div>
+            <div class="step-item">
+                <div class="step-circle">4</div>
+                <div class="step-line"></div>
+                <div class="step-label">Pengesahan Majikan</div>
             </div>
         </div>
+    </div>
 
-        <div class="card-body">
-            <form id="loanForm" action="loanApplicationProcess.php" method="POST" enctype="multipart/form-data">
-                <!-- Step 1: Maklumat Peribadi -->
-                <div class="form-step" id="step1">
-                    <h5>Maklumat Peribadi</h5>
-                    <!-- Personal Info -->
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="nama" class="form-label">Nama Penuh (Seperti Dalam K/P)</label>
-                            <input type="text" class="form-control" id="nama" name="memberName" 
-                                value="<?php echo isset($memberData['memberName']) ? htmlspecialchars($memberData['memberName']) : ''; ?>" readonly>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="ic" class="form-label">No. Kad Pengenalan</label>
-                            <input type="text" class="form-control" id="ic" name="ic" 
-                                value="<?php echo isset($memberData['ic']) ? htmlspecialchars($memberData['ic']) : ''; ?>" readonly>
-                        </div>
+    <!-- Form content starts here -->
+    <div class="form-section">
+        <form id="loanForm" method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="employeeID" value="<?php echo isset($_SESSION['employeeID']) ? $_SESSION['employeeID'] : ''; ?>">
+            <!-- Step 1: Maklumat Peribadi -->
+            <div class="form-step" id="step1">
+                <h5>Maklumat Peribadi</h5>
+                <!-- Personal Info -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="nama" class="form-label">Nama Penuh (Seperti Dalam K/P)</label>
+                        <input type="text" class="form-control" id="nama" name="memberName" 
+                            value="<?php echo isset($memberData['memberName']) ? htmlspecialchars($memberData['memberName']) : ''; ?>" readonly>
                     </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="jantina" class="form-label">Jantina</label>
-                            <input type="text" class="form-control" id="jantina" name="sex" 
-                                value="<?php echo isset($memberData['sex']) ? htmlspecialchars($memberData['sex']) : ''; ?>" readonly>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="agama" class="form-label">Agama</label>
-                            <input type="text" class="form-control" id="agama" name="religion" 
-                                value="<?php echo isset($memberData['religion']) ? htmlspecialchars($memberData['religion']) : ''; ?>" readonly>
-                        </div>
-                    </div>
-
-                    <!-- Home Address -->
-                    <h6>Alamat Rumah</h6>
-                    <div class="row mb-3">
-                        <div class="col-md-12">
-                            <label for="alamat" class="form-label">Alamat Rumah</label>
-                            <textarea class="form-control" id="alamat" name="homeAddress" rows="3" readonly><?php echo isset($memberData['homeAddress']) ? htmlspecialchars($memberData['homeAddress']) : ''; ?></textarea>
-                        </div>
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="poskod" class="form-label">Poskod</label>
-                            <input type="text" class="form-control" id="poskod" name="homePostcode" 
-                                value="<?php echo isset($memberData['homePostcode']) ? htmlspecialchars($memberData['homePostcode']) : ''; ?>" readonly>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="negeri" class="form-label">Negeri</label>
-                            <input type="text" class="form-control" id="negeri" name="homeState" 
-                                value="<?php echo isset($memberData['homeState']) ? htmlspecialchars($memberData['homeState']) : ''; ?>" readonly>
-                        </div>
-                    </div>
-
-                    <!-- Office Address -->
-                    <h6>Alamat Pejabat</h6>
-                    <div class="row mb-3">
-                        <div class="col-md-12">
-                            <label for="officeAddress" class="form-label">Alamat</label>
-                            <textarea class="form-control" id="officeAddress" name="officeAddress" rows="3" readonly><?php echo isset($memberData['officeAddress']) ? htmlspecialchars($memberData['officeAddress']) : ''; ?></textarea>
-                        </div>
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="officePostcode" class="form-label">Poskod</label>
-                            <input type="text" class="form-control" id="officePostcode" name="officePostcode" 
-                                value="<?php echo isset($memberData['officePostcode']) ? htmlspecialchars($memberData['officePostcode']) : ''; ?>" readonly>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="officeState" class="form-label">Negeri</label>
-                            <input type="text" class="form-control" id="officeState" name="officeState" 
-                                value="<?php echo isset($memberData['officeState']) ? htmlspecialchars($memberData['officeState']) : ''; ?>" readonly>
-                        </div>
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="officeTel" class="form-label">No. Telefon Bimbit</label>
-                            <div class="input-group">
-                                <span class="input-group-text">+60</span>
-                                <input type="text" class="form-control" id="officeTel" name="officeTel" 
-                                    value="<?php echo isset($memberData['phoneHome']) ? htmlspecialchars($memberData['phoneHome']) : ''; ?>" readonly>
-                            </div>
-                        </div>
-                    </div>
-
-                    <h6 class="mt-4">Maklumat Bank</h6>
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="bankName" class="form-label">Nama Bank</label>
-                            <select class="form-control" id="bankName" name="bankName" required>
-                                <option value="">Pilih Bank</option>
-                                <option value="Maybank">Maybank</option>
-                                <option value="CIMB Bank">CIMB Bank</option>
-                                <option value="Public Bank">Public Bank</option>
-                                <option value="RHB Bank">RHB Bank</option>
-                                <option value="Hong Leong Bank">Hong Leong Bank</option>
-                                <option value="AmBank">AmBank</option>
-                                <option value="UOB Bank">UOB Bank</option>
-                                <option value="Bank Rakyat">Bank Rakyat</option>
-                                <option value="Bank Islam">Bank Islam</option>
-                                <option value="Affin Bank">Affin Bank</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="bankAccountNo" class="form-label">No. Akaun Bank</label>
-                            <input type="text" class="form-control" id="bankAccountNo" name="bankAccountNo" required>
-                        </div>
-                    </div>
-
-                    <div class="mt-3">
-                        <button type="button" class="btn btn-primary next-step">Seterusnya</button>
+                    <div class="col-md-6">
+                        <label for="ic" class="form-label">No. Kad Pengenalan</label>
+                        <input type="text" class="form-control" id="ic" name="ic" 
+                            value="<?php echo isset($memberData['ic']) ? htmlspecialchars($memberData['ic']) : ''; ?>" readonly>
                     </div>
                 </div>
 
-                <!-- Step 2: Maklumat Pembiayaan -->
-                <div class="form-step" id="step2" style="display: none;">
-                    <h5>Maklumat Pembiayaan</h5>
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="jumlah_pinjaman" class="form-label">Jumlah Pinjaman</label>
-                            <div class="input-group">
-                                <span class="input-group-text">RM</span>
-                                <input type="number" class="form-control" id="jumlah_pinjaman" name="amountRequested" required>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="tempoh_pembayaran" class="form-label">Tempoh Pembayaran (Bulan)</label>
-                            <input type="number" class="form-control" id="tempoh_pembayaran" name="financingPeriod" required>
-                        </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="jantina" class="form-label">Jantina</label>
+                        <input type="text" class="form-control" id="jantina" name="sex" 
+                            value="<?php echo isset($memberData['sex']) ? htmlspecialchars($memberData['sex']) : ''; ?>" readonly>
                     </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="ansuran_bulanan" class="form-label">Ansuran Bulanan</label>
-                            <div class="input-group">
-                                <span class="input-group-text">RM</span>
-                                <input type="number" class="form-control" id="ansuran_bulanan" name="monthlyPayment" readonly>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="mt-3">
-                        <button type="button" class="btn btn-secondary prev-step">Kembali</button>
-                        <button type="button" class="btn btn-primary next-step">Seterusnya</button>
+                    <div class="col-md-6">
+                        <label for="agama" class="form-label">Agama</label>
+                        <input type="text" class="form-control" id="agama" name="religion" 
+                            value="<?php echo isset($memberData['religion']) ? htmlspecialchars($memberData['religion']) : ''; ?>" readonly>
                     </div>
                 </div>
 
-                <!-- Step 3: Maklumat Penjamin -->
-                <div class="form-step" id="step3" style="display: none;">
-                    <h5>Maklumat Penjamin</h5>
-                    
+                <!-- Home Address -->
+                <h6>Alamat Rumah</h6>
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <label for="alamat" class="form-label">Alamat Rumah</label>
+                        <textarea class="form-control" id="alamat" name="homeAddress" rows="3" readonly><?php echo isset($memberData['homeAddress']) ? htmlspecialchars($memberData['homeAddress']) : ''; ?></textarea>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="poskod" class="form-label">Poskod</label>
+                        <input type="text" class="form-control" id="poskod" name="homePostcode" 
+                            value="<?php echo isset($memberData['homePostcode']) ? htmlspecialchars($memberData['homePostcode']) : ''; ?>" readonly>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="negeri" class="form-label">Negeri</label>
+                        <input type="text" class="form-control" id="negeri" name="homeState" 
+                            value="<?php echo isset($memberData['homeState']) ? htmlspecialchars($memberData['homeState']) : ''; ?>" readonly>
+                    </div>
+                </div>
+
+                <!-- Office Address -->
+                <h6>Alamat Pejabat</h6>
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <label for="officeAddress" class="form-label">Alamat</label>
+                        <textarea class="form-control" id="officeAddress" name="officeAddress" rows="3" readonly><?php echo isset($memberData['officeAddress']) ? htmlspecialchars($memberData['officeAddress']) : ''; ?></textarea>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="officePostcode" class="form-label">Poskod</label>
+                        <input type="text" class="form-control" id="officePostcode" name="officePostcode" 
+                            value="<?php echo isset($memberData['officePostcode']) ? htmlspecialchars($memberData['officePostcode']) : ''; ?>" readonly>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="officeState" class="form-label">Negeri</label>
+                        <input type="text" class="form-control" id="officeState" name="officeState" 
+                            value="<?php echo isset($memberData['officeState']) ? htmlspecialchars($memberData['officeState']) : ''; ?>" readonly>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="officeTel" class="form-label">No. Telefon Bimbit</label>
+                        <div class="input-group">
+                            <span class="input-group-text">+60</span>
+                            <input type="text" class="form-control" id="officeTel" name="officeTel" 
+                                value="<?php echo isset($memberData['phoneHome']) ? htmlspecialchars($memberData['phoneHome']) : ''; ?>" readonly>
+                        </div>
+                    </div>
+                </div>
+
+                <h6 class="mt-4">Maklumat Bank</h6>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="bankName" class="form-label">Nama Bank</label>
+                        <select class="form-control" id="bankName" name="bankName" required>
+                            <option value="">Pilih Bank</option>
+                            <option value="Maybank">Maybank</option>
+                            <option value="CIMB Bank">CIMB Bank</option>
+                            <option value="Public Bank">Public Bank</option>
+                            <option value="RHB Bank">RHB Bank</option>
+                            <option value="Hong Leong Bank">Hong Leong Bank</option>
+                            <option value="AmBank">AmBank</option>
+                            <option value="UOB Bank">UOB Bank</option>
+                            <option value="Bank Rakyat">Bank Rakyat</option>
+                            <option value="Bank Islam">Bank Islam</option>
+                            <option value="Affin Bank">Affin Bank</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="accountNo" class="form-label">No. Akaun Bank</label>
+                        <input type="text" class="form-control" id="accountNo" name="accountNo" required>
+                    </div>
+                </div>
+
+                <div class="mt-3">
+                    <button type="button" class="btn btn-primary next-step">Seterusnya</button>
+                </div>
+            </div>
+
+            <!-- Step 2: Maklumat Pembiayaan -->
+            <div class="form-step" id="step2">
+                <h5>Maklumat Pembiayaan</h5>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="jumlah_pinjaman" class="form-label">Jumlah Pinjaman</label>
+                        <div class="input-group">
+                            <span class="input-group-text">RM</span>
+                            <input type="number" 
+                                   class="form-control" 
+                                   id="jumlah_pinjaman" 
+                                   name="amountRequested"
+                                   required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="tempoh_pembayaran" class="form-label">Tempoh Pembayaran (Bulan)</label>
+                        <input type="number" 
+                               class="form-control" 
+                               id="tempoh_pembayaran" 
+                               name="financingPeriod" 
+                               required>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="ansuran_bulanan" class="form-label">Ansuran Bulanan</label>
+                        <div class="input-group">
+                            <span class="input-group-text">RM</span>
+                            <input type="number" 
+                                   class="form-control" 
+                                   id="ansuran_bulanan" 
+                                   name="monthlyInstallments" 
+                                   readonly>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-3">
+                    <button type="button" class="btn btn-secondary prev-step">Kembali</button>
+                    <button type="button" class="btn btn-primary next-step">Seterusnya</button>
+                </div>
+            </div>
+
+            <!-- Step 3: Maklumat Penjamin -->
+            <div class="form-step" id="step3">
+                <h5>Maklumat Penjamin</h5>
+                
+                <!-- Guarantor Information Section -->
+                <div class="guarantor-section">
+                    <div class="section-header">
+                        <h4>Maklumat Penjamin</h4>
+                    </div>
+
                     <!-- Guarantor 1 -->
-                    <h6 class="mt-3">Butir-butir Penjamin 1</h6>
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="guarantorName1" class="form-label">Nama (Seperti Dalam K/P)</label>
-                            <input type="text" class="form-control" id="guarantorName1" name="guarantorName1" required>
+                    <div class="form-container">
+                        <div class="form-title">
+                            <h5>Butir-butir Penjamin 1</h5>
                         </div>
-                        <div class="col-md-6">
-                            <label for="guarantorIC1" class="form-label">No. Kad Pengenalan</label>
-                            <input type="text" class="form-control" id="guarantorIC1" name="guarantorIC1" required>
-                        </div>
-                    </div>
 
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="guarantorPhone1" class="form-label">No. Telefon</label>
-                            <div class="input-group">
-                                <span class="input-group-text">+60</span>
-                                <input type="text" class="form-control" id="guarantorPhone1" name="guarantorPhone1" required>
+                        <div class="form-grid">
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <label>Nama (Seperti Dalam K/P)</label>
+                                    <input type="text" class="form-control" name="guarantorName1" required>
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label>No. Kad Pengenalan</label>
+                                    <input type="text" class="form-control" name="guarantorIC1" required>
+                                </div>
                             </div>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="guarantorPF1" class="form-label">No. PF</label>
-                            <input type="text" class="form-control" id="guarantorPF1" name="guarantorPF1" required>
-                        </div>
-                    </div>
 
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="guarantorMemberID1" class="form-label">No. Anggota</label>
-                            <input type="text" class="form-control" id="guarantorMemberID1" name="guarantorMemberID1" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="guarantorSignature1" class="form-label">Tandatangan (PDF)</label>
-                            <input type="file" class="form-control" id="guarantorSignature1" name="guarantorSignature1" accept=".pdf" required>
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <label>No. Telefon</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">+60</span>
+                                        <input type="text" class="form-control" name="guarantorPhone1" required>
+                                    </div>
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label>No. PF</label>
+                                    <input type="text" class="form-control" name="guarantorPF1" required>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <label>No. Anggota</label>
+                                    <input type="text" class="form-control" name="guarantorMemberNo1" required>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
                     <!-- Guarantor 2 -->
-                    <h6 class="mt-4">Butir-butir Penjamin 2</h6>
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="guarantorName2" class="form-label">Nama (Seperti Dalam K/P)</label>
-                            <input type="text" class="form-control" id="guarantorName2" name="guarantorName2" required>
+                    <div class="form-container mt-4">
+                        <div class="form-title">
+                            <h5>Butir-butir Penjamin 2</h5>
                         </div>
-                        <div class="col-md-6">
-                            <label for="guarantorIC2" class="form-label">No. Kad Pengenalan</label>
-                            <input type="text" class="form-control" id="guarantorIC2" name="guarantorIC2" required>
-                        </div>
-                    </div>
 
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="guarantorPhone2" class="form-label">No. Telefon</label>
-                            <div class="input-group">
-                                <span class="input-group-text">+60</span>
-                                <input type="text" class="form-control" id="guarantorPhone2" name="guarantorPhone2" required>
+                        <div class="form-grid">
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <label>Nama (Seperti Dalam K/P)</label>
+                                    <input type="text" class="form-control" name="guarantorName2" required>
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label>No. Kad Pengenalan</label>
+                                    <input type="text" class="form-control" name="guarantorIC2" required>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <label>No. Telefon</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">+60</span>
+                                        <input type="text" class="form-control" name="guarantorPhone2" required>
+                                    </div>
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label>No. PF</label>
+                                    <input type="text" class="form-control" name="guarantorPF2" required>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <label>No. Anggota</label>
+                                    <input type="text" class="form-control" name="guarantorMemberNo2" required>
+                                </div>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <label for="guarantorPF2" class="form-label">No. PF</label>
-                            <input type="text" class="form-control" id="guarantorPF2" name="guarantorPF2" required>
-                        </div>
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="guarantorMemberID2" class="form-label">No. Anggota</label>
-                            <input type="text" class="form-control" id="guarantorMemberID2" name="guarantorMemberID2" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="guarantorSignature2" class="form-label">Tandatangan (PDF)</label>
-                            <input type="file" class="form-control" id="guarantorSignature2" name="guarantorSignature2" accept=".pdf" required>
-                        </div>
-                    </div>
-
-                    <div class="mt-3">
-                        <button type="button" class="btn btn-secondary prev-step">Kembali</button>
-                        <button type="button" class="btn btn-primary next-step">Seterusnya</button>
                     </div>
                 </div>
 
-                <!-- Step 4: Pengesahan Majikan -->
-                <div class="form-step" id="step4" style="display: none;">
-                    <h5>Pengesahan Majikan</h5>
-                    
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="employerName" class="form-label">Nama Majikan (Seperti Dalam K/P)</label>
-                            <input type="text" class="form-control" id="employerName" name="employerName" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="employerIC" class="form-label">No. Kad Pengenalan</label>
-                            <input type="text" class="form-control" id="employerIC" name="employerIC" required>
+                <!-- Navigation Buttons -->
+                <div class="mt-3">
+                    <button type="button" class="btn btn-secondary prev-step">Kembali</button>
+                    <button type="button" class="btn btn-success next-step">Seterusnya</button>
+                </div>
+            </div>
+
+            <!-- Step 4: Pengesahan Majikan -->
+            <div class="form-step" id="step4">
+                <h5>Pengesahan Majikan</h5>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="employerName" class="form-label">Nama Majikan (Seperti Dalam K/P)</label>
+                        <input type="text" class="form-control" id="employerName" name="employerName" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="employerIC" class="form-label">No. Kad Pengenalan</label>
+                        <input type="text" class="form-control" id="employerIC" name="employerIC" required>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="basicSalary" class="form-label">Gaji Pokok Sebulan Kakitangan</label>
+                        <div class="input-group">
+                            <span class="input-group-text">RM</span>
+                            <input type="number" step="0.01" class="form-control" id="basicSalary" name="basicSalary" required>
                         </div>
                     </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="basicSalary" class="form-label">Gaji Pokok Sebulan Kakitangan</label>
-                            <div class="input-group">
-                                <span class="input-group-text">RM</span>
-                                <input type="number" step="0.01" class="form-control" id="basicSalary" name="basicSalary" required>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="netSalary" class="form-label">Gaji Bersih Sebulan Kakitangan</label>
-                            <div class="input-group">
-                                <span class="input-group-text">RM</span>
-                                <input type="number" step="0.01" class="form-control" id="netSalary" name="netSalary" required>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="basicSalarySlip" class="form-label">Lampiran Slip Gaji Pokok Kakitangan</label>
-                            <input type="file" class="form-control" id="basicSalarySlip" name="basicSalarySlip" accept=".pdf" required>
-                            <small class="form-text text-muted">Sila lampirkan slip gaji pokok dalam format PDF</small>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="netSalarySlip" class="form-label">Lampiran Slip Gaji Bersih Kakitangan</label>
-                            <input type="file" class="form-control" id="netSalarySlip" name="netSalarySlip" accept=".pdf" required>
-                            <small class="form-text text-muted">Sila lampirkan slip gaji bersih dalam format PDF</small>
-                        </div>
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="employerSignature" class="form-label">Tandatangan Sah/Cop (PDF)</label>
-                            <input type="file" class="form-control" id="employerSignature" name="employerSignature" accept=".pdf" required>
-                            <small class="form-text text-muted">Sila lampirkan tandatangan dalam format PDF</small>
-                        </div>
-                    </div>
-
-                    <div class="mt-4">
-                        <div class="form-check mb-3">
-                            <input class="form-check-input" type="checkbox" id="agreement1" name="agreement1" required>
-                            <label class="form-check-label" for="agreement1">
-                                Saya mengesahkan bahawa semua maklumat yang diberikan dalam borang ini adalah tepat dan benar. Saya faham bahawa sebarang maklumat palsu yang diberikan boleh menyebabkan permohonan ditolak dan tindakan undang-undang boleh diambil.
-                            </label>
-                        </div>
-
-                        <div class="form-check mb-3">
-                            <input class="form-check-input" type="checkbox" id="agreement2" name="agreement2" required>
-                            <label class="form-check-label" for="agreement2">
-                                Saya bersetuju untuk memberi kuasa kepada KOPERASI KAKITANGAN KADA KELANTAN BHD atau wakilnya yang sah untuk medapat apa-apa maklumat yang diperlukan dan juga medapatkan bayaran balik dari potongan gaji dan emolumen saya sebagaimana amaun yang dipinjamkan.
-                            </label>
-                        </div>
-
-                        <div class="form-check mb-4">
-                            <input class="form-check-input" type="checkbox" id="agreement3" name="agreement3" required>
-                            <label class="form-check-label" for="agreement3">
-                                Saya bersetuju menerima sebarang keputusan dari KOPERASI in untuk menolak permohonan tanpa memberi sebarang alasan.
-                            </label>
-                        </div>
-
-                        <div class="d-grid gap-2">
-                            <button type="button" class="btn btn-secondary prev-step mb-2">Kembali</button>
-                            <button type="submit" class="btn btn-success btn-lg" id="submitBtn" style="background-color: #75B798; border-color: #75B798;">
-                                Hantar Permohonan
-                            </button>
+                    <div class="col-md-6">
+                        <label for="netSalary" class="form-label">Gaji Bersih Sebulan Kakitangan</label>
+                        <div class="input-group">
+                            <span class="input-group-text">RM</span>
+                            <input type="number" step="0.01" class="form-control" id="netSalary" name="netSalary" required>
                         </div>
                     </div>
                 </div>
-            </form>
-        </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="basicSalarySlip" class="form-label">Lampiran Slip Gaji Pokok</label>
+                        <input type="file" 
+                               class="form-control" 
+                               id="basicSalarySlip" 
+                               name="basicSalarySlip" 
+                               accept=".pdf"
+                               required>
+                        <div class="invalid-feedback">
+                            Sila muat naik slip gaji pokok
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="netSalarySlip" class="form-label">Lampiran Slip Gaji Bersih</label>
+                        <input type="file" 
+                               class="form-control" 
+                               id="netSalarySlip" 
+                               name="netSalarySlip" 
+                               accept=".pdf"
+                               required>
+                        <div class="invalid-feedback">
+                            Sila muat naik slip gaji bersih
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Agreement Section -->
+                <div class="agreement-section mt-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title mb-4">Terma dan Syarat</h5>
+                            
+                            <div class="form-check mb-4">
+                                <input class="form-check-input" type="checkbox" id="agreement1" name="agreement1" required>
+                                <label class="form-check-label" for="agreement1">
+                                    Saya mengesahkan bahawa semua maklumat yang diberikan dalam borang ini adalah tepat dan benar. Saya faham bahawa sebarang maklumat palsu yang diberikan boleh menyebabkan permohonan ditolak dan tindakan undang-undang boleh diambil.
+                                </label>
+                            </div>
+
+                            <div class="form-check mb-4">
+                                <input class="form-check-input" type="checkbox" id="agreement2" name="agreement2" required>
+                                <label class="form-check-label" for="agreement2">
+                                    Saya bersetuju untuk memberi kuasa kepada KOPERASI KAKITANGAN KADA KELANTAN BHD atau wakilnya yang sah untuk medapat apa-apa maklumat yang diperlukan dan juga medapatkan bayaran balik dari potongan gaji dan emolumen saya sebagaimana amaun yang dipinjamkan.
+                                </label>
+                            </div>
+
+                            <div class="form-check mb-4">
+                                <input class="form-check-input" type="checkbox" id="agreement3" name="agreement3" required>
+                                <label class="form-check-label" for="agreement3">
+                                    Saya bersetuju menerima sebarang keputusan dari KOPERASI ini untuk menolak permohonan tanpa memberi sebarang alasan.
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Navigation Buttons -->
+                    <div class="d-grid gap-3 mt-4">
+                        <button type="button" class="btn btn-secondary btn-lg" onclick="prevStep()">Kembali</button>
+                        <button type="submit" class="btn btn-success btn-lg">Hantar Permohonan</button>
+                    </div>
+                </div>
+            </div>
+        </form>
     </div>
 </div>
 
 <style>
-.form-control[readonly] {
+/* Main Container Styling */
+.container {
+    max-width: 1200px;
+    margin: 30px auto;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+/* Header Styling */
+.loan-header {
+    background: linear-gradient(135deg, #5CBA9B 0%, #3d8b6f 100%);
+    padding: 20px 30px;
+    border-radius: 12px 12px 0 0;
+}
+
+.loan-header h1 {
+    color: white;
+    font-size: 2.2rem;
+    margin: 0;
+    font-weight: 600;
+}
+
+/* Steps Navigation */
+.loan-steps {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 2.5rem 4rem;
+    background: #fff;
+    margin-bottom: 30px;
+}
+
+.step-item {
+    flex: 1;
+    text-align: center;
+    position: relative;
+}
+
+.step-circle {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: #f0f0f0;
+    color: #666;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 12px;
+    font-weight: 600;
+    font-size: 1.2rem;
+    position: relative;
+    z-index: 2;
+    transition: all 0.3s ease;
+}
+
+.step-line {
+    position: absolute;
+    top: 25px;
+    left: 50%;
+    width: 100%;
+    height: 3px;
+    background: #e0e0e0;
+    transform: translateY(-50%);
+    z-index: 1;
+}
+
+.step-item:last-child .step-line {
+    display: none;
+}
+
+.step-label {
+    color: #666;
+    font-size: 1rem;
+    font-weight: 500;
+    margin-top: 0.8rem;
+    transition: all 0.3s ease;
+}
+
+/* Active State */
+.step-item.active .step-circle {
+    background: #5CBA9B;
+    color: white;
+    box-shadow: 0 0 0 4px rgba(92,186,155,0.2);
+    transform: scale(1.1);
+}
+
+/* Completed State */
+.step-item.completed .step-circle {
+    background: #5CBA9B;
+    color: white;
+}
+
+.step-item.completed .step-line {
+    background: #5CBA9B;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .progress-steps {
+        padding: 2rem 1.5rem;
+    }
+
+    .step-circle {
+        width: 45px;
+        height: 45px;
+        font-size: 1.1rem;
+    }
+
+    .step-label {
+        font-size: 0.9rem;
+    }
+
+    .loan-header h1 {
+        font-size: 1.5rem;
+    }
+}
+
+/* Animation */
+.step-item {
+    transition: all 0.3s ease;
+}
+
+.step-item:hover .step-circle {
+    transform: scale(1.1);
+    box-shadow: 0 0 0 3px rgba(92,186,155,0.1);
+}
+
+/* Form Styling */
+.form-section {
+    padding: 30px;
+    background: #fff;
+}
+
+.form-group {
+    margin-bottom: 25px;
+}
+
+.form-label {
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 8px;
+}
+
+.form-control {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 12px 15px;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: #5CBA9B;
+    box-shadow: 0 0 0 0.2rem rgba(92,186,155,0.25);
+}
+
+/* Button Styling */
+.btn {
+    padding: 12px 25px;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-success {
+    background-color: #5CBA9B;
+    border-color: #5CBA9B;
+}
+
+.btn-success:hover {
+    background-color: #4a9c82;
+    border-color: #4a9c82;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(92,186,155,0.2);
+}
+
+/* Card Styling */
+.card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    margin-bottom: 25px;
+}
+
+.card-header {
     background-color: #f8f9fa;
-    border-color: #dee2e6;
+    border-bottom: 1px solid #eee;
+    padding: 15px 20px;
+    border-radius: 12px 12px 0 0;
+}
+
+.card-body {
+    padding: 20px;
+}
+
+/* Input Group Styling */
+.input-group-text {
+    background-color: #f8f9fa;
+    border: 1px solid #ddd;
+    border-radius: 8px 0 0 8px;
+}
+
+/* File Upload Styling */
+.custom-file-input {
+    cursor: pointer;
+}
+
+.custom-file-label {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 12px 15px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .loan-steps {
+        padding: 15px 20px;
+    }
+    
+    .step-title {
+        font-size: 0.85rem;
+    }
+}
+
+/* Agreement Section Styling */
+.agreement-section .card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+}
+
+.agreement-section .card-title {
+    color: #2c3e50;
+    font-weight: 600;
+}
+
+.form-check {
+    padding: 1rem;
+    border-radius: 8px;
+    background-color: #f8f9fa;
+    margin-bottom: 1rem;
+    transition: all 0.2s ease;
+}
+
+.form-check:hover {
+    background-color: #e9ecef;
+}
+
+.form-check-input {
+    width: 1.2em;
+    height: 1.2em;
+    margin-top: 0.2em;
+}
+
+.form-check-label {
+    color: #495057;
+    font-size: 0.95rem;
+    margin-left: 0.5rem;
+    line-height: 1.5;
+}
+
+.btn-success {
+    background-color: #5CBA9B;
+    border-color: #5CBA9B;
+    font-weight: 500;
+    padding: 1rem;
+}
+
+.btn-success:hover {
+    background-color: #4a9c82;
+    border-color: #4a9c82;
+    transform: translateY(-1px);
+}
+
+.btn-secondary {
+    font-weight: 500;
+    padding: 1rem;
+}
+
+@media (max-width: 768px) {
+    .form-check-label {
+        font-size: 0.9rem;
+    }
+}
+
+/* Success Modal */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.4);
+}
+
+.modal-dialog {
+    margin: 15% auto;
+    width: 80%;
+}
+
+.modal-content {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.modal-header {
+    background-color: #5CBA9B;
+    color: #fff;
+    border-bottom: none;
+}
+
+.modal-title {
+    font-weight: 600;
+}
+
+.close {
+    color: #fff;
+}
+
+.close:hover {
+    color: #ccc;
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+.success-icon {
+    animation: scaleIn 0.3s ease-in-out;
+}
+
+@keyframes scaleIn {
+    from {
+        transform: scale(0.5);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.loan-container {
+    background: #fff;
+    border-radius: 15px;
+    box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+    overflow: hidden;
+    margin-bottom: 2rem;
+}
+
+.loan-header {
+    background: linear-gradient(135deg, #5CBA9B 0%, #3d8b6f 100%);
+    padding: 2rem;
+    text-align: center;
+}
+
+.loan-header h1 {
+    color: white;
+    margin: 0;
+    font-size: 2rem;
+    font-weight: 600;
 }
 
 .progress-steps {
     display: flex;
     justify-content: space-between;
-    margin: 20px;
-    padding: 20px;
-    background-color: #f8f9fa;
-    border-radius: 8px;
+    padding: 2.5rem 4rem;
+    background: #fff;
 }
 
-.step {
-    text-align: center;
+.step-item {
     flex: 1;
-}
-
-.step.active {
-    color: #0d6efd;
-    font-weight: bold;
-}
-
-.step-number {
-    width: 30px;
-    height: 30px;
-    line-height: 30px;
-    border-radius: 50%;
-    background-color: #dee2e6;
-    margin: 0 auto 10px;
-}
-
-.step.active .step-number {
-    background-color: #0d6efd;
-    color: white;
-}
-
-.form-step {
-    transition: all 0.3s ease;
-}
-
-.step {
+    text-align: center;
     position: relative;
 }
 
-.step::after {
-    content: '';
-    position: absolute;
-    top: 15px;
-    left: 60%;
-    width: 80%;
-    height: 2px;
-    background-color: #dee2e6;
+.step-circle {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: #f0f0f0;
+    color: #666;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 12px;
+    font-weight: 600;
+    font-size: 1.2rem;
+    position: relative;
+    z-index: 2;
+    transition: all 0.3s ease;
 }
 
-.step:last-child::after {
+.step-line {
+    position: absolute;
+    top: 25px;
+    left: 50%;
+    width: 100%;
+    height: 3px;
+    background: #e0e0e0;
+    transform: translateY(-50%);
+    z-index: 1;
+}
+
+.step-item:last-child .step-line {
     display: none;
 }
 
-.step.active::after {
-    background-color: #0d6efd;
+.step-label {
+    color: #666;
+    font-size: 1rem;
+    font-weight: 500;
+    margin-top: 0.8rem;
+    transition: all 0.3s ease;
+}
+
+/* Active State */
+.step-item.active .step-circle {
+    background: #5CBA9B;
+    color: white;
+    box-shadow: 0 0 0 4px rgba(92,186,155,0.2);
+    transform: scale(1.1);
+}
+
+.step-item.active .step-label {
+    color: #5CBA9B;
+    font-weight: 600;
+}
+
+/* Completed State */
+.step-item.completed .step-circle {
+    background: #5CBA9B;
+    color: white;
+}
+
+.step-item.completed .step-line {
+    background: #5CBA9B;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .progress-steps {
+        padding: 2rem 1.5rem;
+    }
+
+    .step-circle {
+        width: 45px;
+        height: 45px;
+        font-size: 1.1rem;
+    }
+
+    .step-label {
+        font-size: 0.9rem;
+    }
+
+    .loan-header h1 {
+        font-size: 1.5rem;
+    }
+}
+
+/* Animation */
+.step-item {
+    transition: all 0.3s ease;
+}
+
+.step-item:hover .step-circle {
+    transform: scale(1.1);
+    box-shadow: 0 0 0 3px rgba(92,186,155,0.1);
+}
+
+/* Section Styling */
+.guarantor-section {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.05);
+    margin-bottom: 2rem;
+    padding: 1rem;
+}
+
+.section-header {
+    background: #5CBA9B;
+    color: white;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+}
+
+.section-header h4 {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.form-container {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 1.5rem;
+}
+
+.form-title {
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.form-title h5 {
+    color: #2c3e50;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.form-row {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.form-group {
+    flex: 1;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #4a5568;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.form-control {
+    width: 100%;
+    height: 38px;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.9rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    background-color: #fff;
+}
+
+.input-group {
+    display: flex;
 }
 
 .input-group-text {
-    background-color: #f8f9fa;
+    padding: 0.375rem 0.75rem;
+    background: #f8f9fa;
+    border: 1px solid #e2e8f0;
+    border-right: none;
+    border-radius: 6px 0 0 6px;
+    color: #4a5568;
 }
 
-.form-text {
-    font-size: 0.875em;
-    color: #6c757d;
+.input-group .form-control {
+    border-radius: 0 6px 6px 0;
 }
 
-.form-check-input:checked {
-    background-color: #75B798;
-    border-color: #75B798;
+@media (max-width: 768px) {
+    .form-row {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .form-container {
+        padding: 1rem;
+    }
 }
 
-.form-check-label {
-    color: #6c757d;
-    font-size: 0.95rem;
-    line-height: 1.5;
+.modal-content {
+    border: none;
+    border-radius: 12px;
+}
+
+.success-icon {
+    animation: scaleIn 0.3s ease-in-out;
+}
+
+.btn-success {
+    background-color: #5CBA9B;
+    border: none;
+    padding: 0.75rem 2.5rem;
+    font-size: 1rem;
+    font-weight: 500;
+    border-radius: 8px;
 }
 
 .btn-success:hover {
-    background-color: #5c9178 !important;
-    border-color: #5c9178 !important;
+    background-color: #4a9c82;
 }
 
-.form-check {
-    padding-left: 2rem;
-}
-
-.form-check-input {
-    margin-left: -1.5rem;
-}
-
-.is-invalid {
-    border-color: #dc3545 !important;
-}
-
-.is-invalid:focus {
-    box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25) !important;
+@keyframes scaleIn {
+    from {
+        transform: scale(0.5);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
 }
 </style>
-
 <script>
 $(document).ready(function() {
     let currentStep = 1;
     const totalSteps = 4;
 
+    function updateSteps(step) {
+        // Update step indicators
+        $('.step-item').removeClass('active completed');
+        for(let i = 1; i <= totalSteps; i++) {
+            if(i < step) {
+                $(`.step-item:nth-child(${i})`).addClass('completed');
+            } else if(i === step) {
+                $(`.step-item:nth-child(${i})`).addClass('active');
+            }
+        }
+
+        // Show/hide form steps
+        $('.form-step').hide(); // Hide all steps
+        $(`#step${step}`).fadeIn(); // Show current step
+    }
+
     // Next button click
     $('.next-step').click(function() {
-        console.log('Current step:', currentStep); // Debug log
-        
-        if (currentStep < totalSteps) {
-            // Validate current step
-            if (validateStep(currentStep)) {
-                $(`#step${currentStep}`).hide();
-                currentStep++;
-                $(`#step${currentStep}`).show();
-                updateProgressBar();
-            } else {
-                Swal.fire({
-                    title: 'Perhatian!',
-                    text: 'Sila isi semua maklumat yang diperlukan.',
-                    icon: 'warning',
-                    confirmButtonColor: '#75B798'
-                });
-            }
+        if(currentStep < totalSteps) {
+            currentStep++;
+            updateSteps(currentStep);
         }
     });
 
     // Previous button click
     $('.prev-step').click(function() {
-        if (currentStep > 1) {
-            $(`#step${currentStep}`).hide();
+        if(currentStep > 1) {
             currentStep--;
-            $(`#step${currentStep}`).show();
-            updateProgressBar();
+            updateSteps(currentStep);
         }
-    });
-
-    // Update progress bar
-    function updateProgressBar() {
-        $('.step').removeClass('active');
-        for (let i = 1; i <= currentStep; i++) {
-            $(`.step[data-step="${i}"]`).addClass('active');
-        }
-    }
-
-    // Validate each step
-    function validateStep(step) {
-        let valid = true;
-        const inputs = $(`#step${step} input[required], #step${step} select[required]`);
-        
-        inputs.each(function() {
-            if (!$(this).val()) {
-                $(this).addClass('is-invalid');
-                valid = false;
-            } else {
-                $(this).removeClass('is-invalid');
-            }
-        });
-
-        // Debug log
-        console.log('Step validation:', step, valid);
-        return valid;
-    }
-
-    // Remove invalid class on input change
-    $('input, select').on('change', function() {
-        $(this).removeClass('is-invalid');
     });
 
     // Initialize first step
-    updateProgressBar();
-
-    // Calculate monthly payment when loan amount or period changes
-    $('#jumlah_pinjaman, #tempoh_pembayaran').on('input', function() {
-        calculateMonthlyPayment();
-    });
-
-    function calculateMonthlyPayment() {
-        const loanAmount = parseFloat($('#jumlah_pinjaman').val()) || 0;
-        const loanPeriod = parseInt($('#tempoh_pembayaran').val()) || 0;
-        
-        if (loanAmount > 0 && loanPeriod > 0) {
-            // Simple calculation: loan amount divided by period
-            // You can modify this formula based on your interest rate requirements
-            const monthlyPayment = loanAmount / loanPeriod;
-            
-            // Round to 2 decimal places
-            const roundedPayment = Math.round(monthlyPayment * 100) / 100;
-            
-            // Update the monthly payment field
-            $('#ansuran_bulanan').val(roundedPayment);
-        } else {
-            $('#ansuran_bulanan').val('');
-        }
-    }
+    updateSteps(1);
 });
 </script>
 
@@ -602,21 +1095,141 @@ $(document).ready(function() {
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
-document.getElementById('loanForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    // Show loading message
-    Swal.fire({
-        title: 'Sila Tunggu',
-        text: 'Sedang memproses permohonan anda...',
-        allowOutsideClick: false,
-        showConfirmButton: false,
-        willOpen: () => {
-            Swal.showLoading();
+$(document).ready(function() {
+    $('#loanForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        // Check if files are selected
+        if (!$('#basicSalarySlip')[0].files[0]) {
+            Swal.fire({
+                title: 'Ralat!',
+                text: 'Sila muat naik slip gaji pokok',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
+            return;
         }
+
+        if (!$('#netSalarySlip')[0].files[0]) {
+            Swal.fire({
+                title: 'Ralat!',
+                text: 'Sila muat naik slip gaji bersih',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
+            return;
+        }
+
+        let formData = new FormData(this);
+        
+        $.ajax({
+            url: 'loanApplicationProcess.php',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                try {
+                    const data = JSON.parse(response);
+                    if (data.status === 'success') {
+                        Swal.fire({
+                            title: 'Berjaya!',
+                            text: 'Permohonan pinjaman anda telah berjaya dihantar.',
+                            icon: 'success',
+                            confirmButtonText: 'OK'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                window.location.href = 'success2.php';
+                            }
+                        });
+                    } else {
+                        Swal.fire({
+                            title: 'Tidak Berjaya!',
+                            text: data.message,
+                            icon: 'error',
+                            confirmButtonText: 'OK'
+                        });
+                    }
+                } catch (e) {
+                    console.error('Error:', e);
+                    Swal.fire({
+                        title: 'Ralat!',
+                        text: 'Terdapat masalah semasa menghantar permohonan.',
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
+                }
+            },
+            error: function() {
+                Swal.fire({
+                    title: 'Ralat!',
+                    text: 'Terdapat masalah semasa menghantar permohonan.',
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
+            }
+        });
+    });
+});
+</script>
+
+<script>
+$(document).ready(function() {
+    // Function to calculate monthly payment
+    function calculateMonthlyPayment() {
+        const loanAmount = parseFloat($('#jumlah_pinjaman').val()) || 0;
+        const loanTerm = parseFloat($('#tempoh_pembayaran').val()) || 0;
+        
+        // Simple calculation: loan amount divided by number of months
+        // You can modify this formula based on your interest rate requirements
+        if (loanAmount > 0 && loanTerm > 0) {
+            const monthlyPayment = loanAmount / loanTerm;
+            $('#ansuran_bulanan').val(monthlyPayment.toFixed(2));
+        } else {
+            $('#ansuran_bulanan').val('');
+        }
+    }
+
+    // Add event listeners to trigger calculation
+    $('#jumlah_pinjaman, #tempoh_pembayaran').on('input', calculateMonthlyPayment);
+});
+</script>
+
+<!-- Success Modal -->
+<div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center p-5">
+                <div class="success-icon mb-4">
+                    <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+                        <circle cx="40" cy="40" r="38" stroke="#5CBA9B" stroke-width="4"/>
+                        <path d="M25 40L35 50L55 30" stroke="#5CBA9B" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <h3 class="modal-title mb-3">Berjaya!</h3>
+                <p class="text-muted mb-4">Permohonan pinjaman anda telah berjaya dihantar.</p>
+                <button type="button" class="btn btn-success px-5" onclick="window.location.href='mainpage.php'">
+                    OK
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    // Form submission handler
+    $('#loanForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        // Your AJAX form submission logic here
+        // On success:
+        $('#successModal').modal('show');
     });
 
-    // Submit the form
-    this.submit();
+    // Remove any duplicate modals if they exist
+    if ($('#successModal').length > 1) {
+        $('#successModal').slice(1).remove();
+    }
 });
 </script>

@@ -1,46 +1,10 @@
 <?php
 session_start();
-<<<<<<< HEAD
 
 // Check if user is logged in
 if (!isset($_SESSION['employeeID'])) {
     header('Location: login.php');
     exit();
-=======
-include"headermember.php";
-include "footer.php";
-// Assuming you have a database connection and user session management
-
-?>
-
-<!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script> -->
-
-<div class="container mt-5">
-
-<?php
-// Simple function to get user data
-function getUserData($user_id) {
-    // Replace these database credentials with your own
-    $host = 'localhost';
-    $dbname = 'your_database';
-    $username = 'your_username';
-    $password = 'your_password';
-
-    try {
-        $pdo = new PDO("mysql:host=$host;dbname=$dbname", $username, $password);
-        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-        $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
-        $stmt->execute([$user_id]);
-        return $stmt->fetch(PDO::FETCH_ASSOC);
-    } catch(PDOException $e) {
-        // For development, you might want to see the error
-        // echo "Error: " . $e->getMessage();
-        return false;
-    }
->>>>>>> b1d39d84883b0d8de7217623c3479b95afbb6c0f
 }
 
 include "headermember.php";
