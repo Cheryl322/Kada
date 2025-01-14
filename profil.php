@@ -34,10 +34,24 @@ $memberData = mysqli_fetch_assoc($result);
 ?>
 
 <?php
-session_start();
-include "dbconnect.php";
 
-// 添加这行来防止页面缓存
+try {
+    $host = "localhost";
+    $dbname = "db_kada";
+    $username = "root";
+    $password = "";
+
+    $pdo = new PDO(
+        "mysql:host=$host;dbname=$dbname;charset=utf8",
+        $username,
+        $password,
+        [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
+    );
+} catch(PDOException $e) {
+    die("Connection failed: " . $e->getMessage());
+}
+
+// 防止页面缓存
 header("Cache-Control: no-cache, must-revalidate");
 
 // 获取最新的用户数据
@@ -59,6 +73,19 @@ if(isset($_SESSION['success_message'])): ?>
         </button>
     </div>
 <?php endif; ?>
+
+<?php if(isset($_SESSION['error_message'])): ?>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <?php 
+            echo $_SESSION['error_message'];
+            unset($_SESSION['error_message']);
+        ?>
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+<?php endif; ?>
+
 
     <div class="container">
 
