@@ -22,7 +22,7 @@
 
 .circle-container {
   display: flex;
-  justify-content: space-evenly;
+  justify-content: center;
   align-items: center;
   min-height: 40vh;
   width: calc(100% - 20px);
@@ -32,7 +32,7 @@
   margin-top: 60px;
   padding: 0 10px;
   flex-wrap: wrap;
-  gap: 20px;
+  gap: 80px;
   transition: all 0.3s ease-in-out;
 }
 
@@ -61,6 +61,7 @@
   border: 4px solid white;
   box-shadow: 0 0 15px rgba(0,0,0,0.1);
   overflow: hidden;
+  margin: 10px 20px;
 }
 
 .circle:hover {
@@ -434,7 +435,7 @@
         <button class="menu-button" id="menuButton">
             <i class="fas fa-bars"></i>
         </button>
-        <a href="headeradminmain.php" class="home-button">
+        <a href="adminmainpage.php" class="home-button">
             <i class="fas fa-home"></i>
         </a>
     </div>
@@ -467,13 +468,10 @@
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" href="#">Ahli Semasa</a>
+        <a class="nav-link" href="senaraiahli.php">Ahli Semasa</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" href="#">Pendaftaran Ahli</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="#">Permohonan Pinjaman</a>
+        <a class="nav-link" href="senaraipembiayaan.php">Permohonan Pinjaman</a>
       </li>
       <li class="nav-item">
         <a class="nav-link" href="hasilreport.php">Hasil Laporan</a>
@@ -495,19 +493,13 @@
 </div>
 
 <div class="circle-container">
-  <a href="page1.php" class="circle">
+  <a href="senaraiahli.php" class="circle">
     <div class="circle-content">
       <i class="fas fa-users mb-2"></i>
       <span>Ahli Semasa</span>
     </div>
   </a>
-  <a href="page2.php" class="circle">
-    <div class="circle-content">
-      <i class="fas fa-user-plus mb-2"></i>
-      <span>Pendaftaran Ahli</span>
-    </div>
-  </a>
-  <a href="page3.php" class="circle">
+  <a href="senaraipembiayaan.php" class="circle">
     <div class="circle-content">
       <i class="fas fa-hand-holding-usd mb-2"></i>
       <span>Permohonan Pinjaman</span>
@@ -531,7 +523,7 @@
     <div class="table-wrapper">
         <div class="table-header">
             <h3>Senarai Ahli Semasa</h3>
-            <a href="senarai_ahli.php" class="see-more-link">
+            <a href="senaraiahli.php" class="see-more-link">
                 Lihat Semua <i class="fas fa-arrow-right"></i>
             </a>
         </div>
@@ -570,7 +562,7 @@
     <div class="table-wrapper">
         <div class="table-header">
             <h3>Senarai Pinjaman Terkini</h3>
-            <a href="senarai_pinjaman.php" class="see-more-link">
+            <a href="senaraipembiayaan.php" class="see-more-link">
                 Lihat Semua <i class="fas fa-arrow-right"></i>
             </a>
         </div>
