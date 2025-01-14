@@ -64,7 +64,7 @@ $memberData = mysqli_fetch_assoc($result);
             <!-- Right Content -->
             <div class="col-md-9">
                 <div class="card">
-                <form id="profileForm" method="POST" action="update_profil.php">
+                <form id="profileForm" method="POST" ><!-- action="update_profil.php" -->
                     <div class="card-header bg-primary text-white">
                         <h4 class="mb-0">MAKLUMAT PERIBADI</h4>
                     </div>
@@ -170,11 +170,15 @@ $memberData = mysqli_fetch_assoc($result);
     <script>
 // 修改 JavaScript 代码
 function editProfile() {
-    // 移除所有输入框的 readonly 属性
+    // 移除所有输入框的 readonly 属性（除了某些不可编辑的字段）
     const inputs = document.querySelectorAll('#profileForm input[type="text"]');
     inputs.forEach(input => {
-        input.removeAttribute('readonly');
-        input.style.backgroundColor = '#ffffff';
+        if (input.name !== 'employeeID' && 
+            input.name !== 'ic' && 
+            input.name !== 'memberName') {
+            input.removeAttribute('readonly');
+            input.style.backgroundColor = '#ffffff';
+        }
     });
 
     // 显示/隐藏按钮
@@ -185,16 +189,33 @@ function editProfile() {
 
 function cancelEdit() {
     if(confirm('Adakah anda pasti untuk membatalkan?')) {
-        document.location = 'profil.php';
+        window.location.reload(true);
     }
 }
 
-// 移除 fetch，使用传统表单提交
 document.getElementById('profileForm').addEventListener('submit', function(e) {
     e.preventDefault();
     
     if(confirm('Adakah anda pasti untuk menyimpan perubahan ini?')) {
-        this.submit(); // 直接提交表单
+        const formData = new FormData(this);
+        
+        fetch('update_profil.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if(data.success) {
+                alert('Profil berjaya dikemaskini!');
+                window.location.reload(true);
+            } else {
+                alert('Ralat: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Ralat semasa mengemaskini profil');
+        });
     }
 });
 </script>
