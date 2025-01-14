@@ -276,13 +276,10 @@ body.sidebar-open .pagination-container {
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" href="#">Ahli Semasa</a>
+        <a class="nav-link" href="senaraiahli.php">Ahli Semasa</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" href="#">Pendaftaran Ahli</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="#">Permohonan Pinjaman</a>
+        <a class="nav-link" href="senaraipembiayaan.php">Permohonan Pinjaman</a>
       </li>
       <li class="nav-item">
         <a class="nav-link" href="hasilreport.php">Hasil Laporan</a>
