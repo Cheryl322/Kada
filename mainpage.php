@@ -6,6 +6,10 @@ include "footer.php";
 ?>
 
 <style>
+.main-container {
+    padding: 40px 0;
+}
+
 body {
     background: url('img/padi.jpg') no-repeat center center fixed;
     background-size: cover;
@@ -13,6 +17,7 @@ body {
     font-family: 'Poppins', sans-serif;
     color: #2C3E50;
 }
+
 
 body::before {
     content: '';
@@ -25,9 +30,7 @@ body::before {
     z-index: -1;
 }
 
-.main-container {
-    padding: 40px 0;
-}
+
 
 .content-card {
     background: rgba(255, 255, 255, 0.9);
