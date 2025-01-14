@@ -20,90 +20,6 @@
    text-align: center;
 }
 
-.circle-container {
-  display: flex;
-  justify-content: space-evenly;
-  align-items: center;
-  min-height: 40vh;
-  width: calc(100% - 20px);
-  margin-left: 0;
-  position: relative;
-  top: -5vh;
-  margin-top: 60px;
-  padding: 0 10px;
-  flex-wrap: wrap;
-  gap: 20px;
-  transition: all 0.3s ease-in-out;
-}
-
-.circle-container.sidebar-closed {
-  margin-left: 0;
-  width: 100%;
-}
-
-.circle {
-  width: 180px;
-  height: 180px;
-  border-radius: 50%;
-  background-color: MediumAquamarine;
-  cursor: pointer;
-  transition: transform 0.3s ease, background-color 0.3s ease;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  text-decoration: none;
-  color: white;
-  font-size: 1.2rem;
-  font-weight: bold;
-  text-align: center;
-  padding: 15px;
-  line-height: 1.2;
-  border: 4px solid white;
-  box-shadow: 0 0 15px rgba(0,0,0,0.1);
-  overflow: hidden;
-}
-
-.circle:hover {
-  transform: scale(1.1);
-  background-color: rgb(34, 119, 210);
-  border-color: rgba(255, 255, 255, 0.9);
-}
-
-/* Make circles responsive */
-@media screen and (max-width: 1200px) {
-  .circle {
-    width: 150px;
-    height: 150px;
-    font-size: 1.1rem;
-    padding: 12px;
-  }
-
-  .circle i {
-    font-size: 1.5rem;
-  }
-
-  .circle span {
-    font-size: 0.85em;
-  }
-}
-
-@media screen and (max-width: 800px) {
-  .circle {
-    width: 130px;
-    height: 130px;
-    font-size: 1rem;
-    padding: 10px;
-  }
-
-  .circle i {
-    font-size: 1.3rem;
-  }
-
-  .circle span {
-    font-size: 0.8em;
-  }
-}
-
 .navbar {
     position: fixed;
     top: 0;
@@ -326,17 +242,6 @@
 
 /* Add responsive styles */
 @media screen and (max-width: 1400px) {
-    .circle-container {
-        min-height: auto;
-        padding: 20px 10px;
-        margin-bottom: 0;
-        top: 0;
-    }
-
-    .circle {
-        margin: 10px;
-    }
-
     .tables-container {
         flex-direction: row;
         margin-top: 0;
@@ -344,7 +249,7 @@
         padding-top: 0;
     }
 
-    .sidebar-open .circle-container {
+    .sidebar-open .tables-container {
         width: calc(100% - 270px);
         margin-left: 250px;
     }
@@ -415,14 +320,11 @@
 }
 
 /* Add these new styles for when sidebar is open */
-.sidebar-open .circle-container {
+.sidebar-open .tables-container,
+.sidebar-open .content-wrapper {
+    margin-left: 250px;
     width: calc(100% - 270px);
-    margin-left: 250px;
-}
-
-.sidebar-open .tables-container {
-    margin-left: 250px;
-    max-width: calc(100% - 270px);
+    transition: all 0.3s ease-in-out;
 }
 
 /* Header styles */
