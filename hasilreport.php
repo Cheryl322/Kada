@@ -263,6 +263,17 @@
 
 
 }
+
+/* Add these new styles */
+.invalid-feedback {
+    display: none;
+    color: #dc3545;
+    margin-top: 0.25rem;
+}
+
+.required-field.is-invalid {
+    border-color: #dc3545;
+}
 </style>
 </head>
 
@@ -300,170 +311,185 @@
 </div>
 
 <div class="content-container">
-    <h2>Hasil Report</h2>
-    <hr style="margin-top: 10px; margin-bottom: 20px;">
-    
-    <div class="report-boxes">
-        <div class="report-box">
-            <h4>1. Pilih Jenis Laporan</h4>
-            <div class="form-check mt-3">
-                <input class="form-check-input" type="radio" name="reportType" id="ahli" value="ahli">
-                <label class="form-check-label" for="ahli">
-                    Ahli
-                </label>
+    <!-- Add form wrapper -->
+    <form id="reportForm" method="POST" action="adminviewreport.php">
+        <h2>Hasil Report</h2>
+        <hr style="margin-top: 10px; margin-bottom: 20px;">
+        
+        <div class="report-boxes">
+            <div class="report-box">
+                <h4>1. Pilih Jenis Laporan</h4>
+                <div class="form-check mt-3">
+                    <input class="form-check-input required-field" type="radio" name="reportType" id="ahli" value="ahli">
+                    <label class="form-check-label" for="ahli">
+                        Ahli
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="reportType" id="pembiayaan" value="pembiayaan">
+                    <label class="form-check-label" for="pembiayaan">
+                        Pembiayaan
+                    </label>
+                </div>
+                <div class="invalid-feedback">
+                    Sila pilih jenis laporan
+                </div>
             </div>
-            <div class="form-check">
-                <input class="form-check-input" type="radio" name="reportType" id="pembiayaan" value="pembiayaan">
-                <label class="form-check-label" for="pembiayaan">
-                    Pembiayaan
-                </label>
-            </div>
-        </div>
-        <div class="report-box">
-            <h4>2. Pilih Julat Tarikh</h4>
-            <div class="row mt-3">
-                <div class="col-12">
-                    <div class="d-flex align-items-center">
-                        <label class="me-2">Dalam:</label>
-                        <div class="dropdown">
-                            <button class="btn btn-secondary dropdown-toggle" type="button" id="dateRangeDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                                Select Range
-                            </button>
-                            <ul class="dropdown-menu" aria-labelledby="dateRangeDropdown">
-                                <li><a class="dropdown-item" href="#">Past 7 days</a></li>
-                                <li><a class="dropdown-item" href="#">Past 30 days</a></li>
-                            </ul>
+            <div class="report-box">
+                <h4>2. Pilih Julat Tarikh</h4>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="d-flex align-items-center">
+                            <label class="me-2">Dalam:</label>
+                            <div class="dropdown">
+                                <button class="btn btn-secondary dropdown-toggle" type="button" id="dateRangeDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                    Select Range
+                                </button>
+                                <ul class="dropdown-menu" aria-labelledby="dateRangeDropdown">
+                                    <li><a class="dropdown-item" href="#">Past 7 days</a></li>
+                                    <li><a class="dropdown-item" href="#">Past 30 days</a></li>
+                                </ul>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-            <div class="row mt-3">
-                <div class="col-md-6">
-                    <div class="d-flex align-items-center">
-                        <label class="me-2">Dari:</label>
-                        <input type="date" class="form-control" id="fromDate">
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center">
+                            <label class="me-2">Dari:</label>
+                            <input type="date" class="form-control" id="fromDate">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center">
+                            <label class="me-2">Hingga:</label>
+                            <input type="date" class="form-control" id="toDate">
+                        </div>
                     </div>
                 </div>
-                <div class="col-md-6">
-                    <div class="d-flex align-items-center">
-                        <label class="me-2">Hingga:</label>
-                        <input type="date" class="form-control" id="toDate">
+                <div class="invalid-feedback">
+                    Sila pilih tarikh
+                </div>
+            </div>
+            <div class="report-box">
+                <h4>3. Pilih Ahli</h4>
+                <div class="d-flex justify-content-between align-items-center mt-3 mb-2">
+                    <div class="alert alert-info mb-0" id="selectedCount">
+
+                    Jumlah ahli dipilih: <span>0</span>
+
+                    </div>
+                    <div class="search-container">
+                        <div class="input-group" style="width: 250px;">
+                            <input type="text" class="form-control" id="searchInput" placeholder="Cari ahli...">
+                            <button class="btn btn-outline-secondary" type="button" id="searchButton">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+
                     </div>
                 </div>
-            </div>
-        </div>
-        <div class="report-box">
-            <h4>3. Pilih Ahli</h4>
-            <div class="d-flex justify-content-between align-items-center mt-3 mb-2">
-                <div class="alert alert-info mb-0" id="selectedCount">
-
-                Jumlah ahli dipilih: <span>0</span>
-
+                <div class="table-responsive mt-3">
+                    <table class="table table-bordered table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col" width="50">
+                                    <input type="checkbox" class="form-check-input" id="selectAll">
+                                </th>
+                                <th scope="col">No.</th>
+                                <th scope="col">Nama</th>
+                                <th scope="col">Status</th>
+                                <th scope="col">Tarikh Daftar</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="text-center">
+                                    <input type="checkbox" class="form-check-input member-checkbox" name="selected_members[]" value="1">
+                                </td>
+                                <td>1</td>
+                                <td>Ahmad bin Abdullah</td>
+                                <td>Aktif</td>
+                                <td>01/03/2024</td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">
+                                    <input type="checkbox" class="form-check-input member-checkbox" name="selected_members[]" value="2">
+                                </td>
+                                <td>2</td>
+                                <td>Siti binti Rahman</td>
+                                <td>Aktif</td>
+                                <td>05/03/2024</td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">
+                                    <input type="checkbox" class="form-check-input member-checkbox" name="selected_members[]" value="3">
+                                </td>
+                                <td>3</td>
+                                <td>Mohamed bin Ismail</td>
+                                <td>Aktif</td>
+                                <td>08/03/2024</td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">
+                                    <input type="checkbox" class="form-check-input member-checkbox" name="selected_members[]" value="4">
+                                </td>
+                                <td>4</td>
+                                <td>Nurul binti Hassan</td>
+                                <td>Aktif</td>
+                                <td>10/03/2024</td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">
+                                    <input type="checkbox" class="form-check-input member-checkbox" name="selected_members[]" value="5">
+                                </td>
+                                <td>5</td>
+                                <td>Kamal bin Zain</td>
+                                <td>Aktif</td>
+                                <td>12/03/2024</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <nav aria-label="Page navigation" class="mt-3">
+                        <ul class="pagination justify-content-end">
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Previous</a>
+                            </li>
+                            <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                            <li class="page-item"><a class="page-link" href="#">2</a></li>
+                            <li class="page-item"><a class="page-link" href="#">3</a></li>
+                            <li class="page-item">
+                                <a class="page-link" href="#">Next</a>
+                            </li>
+                        </ul>
+                    </nav>
                 </div>
-                <div class="search-container">
-                    <div class="input-group" style="width: 250px;">
-                        <input type="text" class="form-control" id="searchInput" placeholder="Cari ahli...">
-                        <button class="btn btn-outline-secondary" type="button" id="searchButton">
-                            <i class="fas fa-search"></i>
-                        </button>
-                    </div>
-
+                <div class="invalid-feedback">
+                    Sila pilih sekurang-kurangnya seorang ahli
                 </div>
             </div>
-            <div class="table-responsive mt-3">
-                <table class="table table-bordered table-hover">
-                    <thead class="table-light">
-                        <tr>
-                            <th scope="col" width="50">
-                                <input type="checkbox" class="form-check-input" id="selectAll">
-                            </th>
-                            <th scope="col">No.</th>
-                            <th scope="col">Nama</th>
-                            <th scope="col">Status</th>
-                            <th scope="col">Tarikh Daftar</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td class="text-center">
-                                <input type="checkbox" class="form-check-input member-checkbox" name="selected_members[]" value="1">
-                            </td>
-                            <td>1</td>
-                            <td>Ahmad bin Abdullah</td>
-                            <td>Aktif</td>
-                            <td>01/03/2024</td>
-                        </tr>
-                        <tr>
-                            <td class="text-center">
-                                <input type="checkbox" class="form-check-input member-checkbox" name="selected_members[]" value="2">
-                            </td>
-                            <td>2</td>
-                            <td>Siti binti Rahman</td>
-                            <td>Aktif</td>
-                            <td>05/03/2024</td>
-                        </tr>
-                        <tr>
-                            <td class="text-center">
-                                <input type="checkbox" class="form-check-input member-checkbox" name="selected_members[]" value="3">
-                            </td>
-                            <td>3</td>
-                            <td>Mohamed bin Ismail</td>
-                            <td>Aktif</td>
-                            <td>08/03/2024</td>
-                        </tr>
-                        <tr>
-                            <td class="text-center">
-                                <input type="checkbox" class="form-check-input member-checkbox" name="selected_members[]" value="4">
-                            </td>
-                            <td>4</td>
-                            <td>Nurul binti Hassan</td>
-                            <td>Aktif</td>
-                            <td>10/03/2024</td>
-                        </tr>
-                        <tr>
-                            <td class="text-center">
-                                <input type="checkbox" class="form-check-input member-checkbox" name="selected_members[]" value="5">
-                            </td>
-                            <td>5</td>
-                            <td>Kamal bin Zain</td>
-                            <td>Aktif</td>
-                            <td>12/03/2024</td>
-                        </tr>
-                    </tbody>
-                </table>
-                <nav aria-label="Page navigation" class="mt-3">
-                    <ul class="pagination justify-content-end">
-                        <li class="page-item disabled">
-                            <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Previous</a>
-                        </li>
-                        <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                        <li class="page-item"><a class="page-link" href="#">2</a></li>
-                        <li class="page-item"><a class="page-link" href="#">3</a></li>
-                        <li class="page-item">
-                            <a class="page-link" href="#">Next</a>
-                        </li>
-                    </ul>
-                </nav>
-            </div>
-        </div>
-        <div class="report-box">
-            <h4>4. Hasil Report</h4>
-            <div class="form-check mt-3">
-                <input class="form-check-input" type="radio" name="reportFormat" id="pdf" value="pdf">
-                <label class="form-check-label" for="pdf">
-                    PDF
-                </label>
-            </div>
-            <div class="form-check mb-3">
-                <input class="form-check-input" type="radio" name="reportFormat" id="excel" value="excel">
-                <label class="form-check-label" for="excel">
-                    Excel
-                </label>
-            </div>
+            <div class="report-box">
+                <h4>4. Hasil Report</h4>
+                <div class="form-check mt-3">
+                    <input class="form-check-input required-field" type="radio" name="reportFormat" id="pdf" value="pdf">
+                    <label class="form-check-label" for="pdf">
+                        PDF
+                    </label>
+                </div>
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="radio" name="reportFormat" id="excel" value="excel">
+                    <label class="form-check-label" for="excel">
+                        Excel
+                    </label>
+                </div>
+                <div class="invalid-feedback">
+                    Sila pilih format laporan
+                </div>
 
-            <button type="button" class="btn btn-primary" onclick="showLoadingScreen()">Hasil Report</button>
+                <button type="button" class="btn btn-primary" onclick="validateAndSubmit()">Hasil Report</button>
+            </div>
         </div>
-    </div>
+    </form>
 </div>
 
 <div class="navbar initial-state closed" id="sidebar">
@@ -676,6 +702,61 @@ function downloadReport() {
     window.location.href = 'adminviewreport.php';
 
 }
+
+// Add these new functions
+function validateAndSubmit() {
+    const form = document.getElementById('reportForm');
+    let isValid = true;
+
+    // Check report type
+    const reportType = document.querySelector('input[name="reportType"]:checked');
+    if (!reportType) {
+        isValid = false;
+        document.querySelector('.report-box:nth-child(1) .invalid-feedback').style.display = 'block';
+    }
+
+    // Check dates
+    const fromDate = document.getElementById('fromDate').value;
+    const toDate = document.getElementById('toDate').value;
+    if (!fromDate || !toDate) {
+        isValid = false;
+        document.querySelector('.report-box:nth-child(2) .invalid-feedback').style.display = 'block';
+    }
+
+    // Check member selection
+    const selectedMembers = document.querySelectorAll('.member-checkbox:checked');
+    if (selectedMembers.length === 0) {
+        isValid = false;
+        document.querySelector('.report-box:nth-child(3) .invalid-feedback').style.display = 'block';
+    }
+
+    // Check report format
+    const reportFormat = document.querySelector('input[name="reportFormat"]:checked');
+    if (!reportFormat) {
+        isValid = false;
+        document.querySelector('.report-box:nth-child(4) .invalid-feedback').style.display = 'block';
+    }
+
+    if (isValid) {
+        showLoadingScreen();
+        form.submit();
+    } else {
+        alert('Sila lengkapkan semua maklumat yang diperlukan.');
+    }
+}
+
+// Add event listeners to hide validation messages when user makes selections
+document.querySelectorAll('input[name="reportType"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+        document.querySelector('.report-box:nth-child(1) .invalid-feedback').style.display = 'none';
+    });
+});
+
+document.querySelectorAll('#fromDate, #toDate').forEach(input => {
+    input.addEventListener('change', () => {
+        document.querySelector('.report-box:nth-child(2) .invalid-feedback').style.display = 'none';
+    });
+});
 </script>
 
 <?php include 'footer.php';?>
