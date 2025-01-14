@@ -1,99 +1,32 @@
 <?php
 session_start();
+ob_start();
+
+// Check if user is logged in
+if (!isset($_SESSION['employeeID'])) {
+    header("Location: login.php");
+    exit();
+}
+
 include "headermember.php";
-include "footer.php";
-include "dbconnect.php";
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     try {
-        $conn->begin_transaction();
+        // Just store the form data in session
+        $_SESSION['member_form_data'] = $_POST;
         
-        $employeeID = $_POST['no_anggota'];
-
-        // Insert home address
-        $insertHomeAddress = "INSERT INTO tb_member_homeaddress (
-            employeeID, 
-            homeAddress, 
-            homePostcode, 
-            homeState
-        ) VALUES (?, ?, ?, ?)";
-
-        $stmt = $conn->prepare($insertHomeAddress);
-        if (!$stmt) {
-            throw new Exception("Error preparing home address statement: " . $conn->error);
-        }
-
-        $stmt->bind_param("isss",
-            $employeeID,
-            $_POST['homeAddress'],
-            $_POST['homePostcode'],
-            $_POST['homeState']
-        );
-
-        if (!$stmt->execute()) {
-            throw new Exception("Error inserting home address: " . $stmt->error);
-        }
-
-        // Insert office address
-        $insertOfficeAddress = "INSERT INTO tb_member_officeaddress (
-            employeeID, 
-            officeAddress, 
-            officePostcode, 
-            officeState
-        ) VALUES (?, ?, ?, ?)";
-
-        $stmt = $conn->prepare($insertOfficeAddress);
-        if (!$stmt) {
-            throw new Exception("Error preparing office address statement: " . $conn->error);
-        }
-
-        $stmt->bind_param("isis",
-            $employeeID,
-            $_POST['officeAddress'],
-            $_POST['officePostcode'],
-            $_POST['officeState']
-        );
-
-        if (!$stmt->execute()) {
-            throw new Exception("Error inserting office address: " . $stmt->error);
-        }
-
-        // Store all form data in session
-        $_SESSION['personal_info'] = [
-            'no_anggota' => $employeeID,
-            'nama_penuh' => $_POST['nama_penuh'],
-            'alamat_emel' => $_POST['alamat_emel'],
-            'ic' => $_POST['ic'],
-            'maritalStatus' => $_POST['maritalStatus'],
-            'homeAddress' => $_POST['homeAddress'],
-            'homePostcode' => $_POST['homePostcode'],
-            'homeState' => $_POST['homeState'],
-            'officeAddress' => $_POST['officeAddress'],
-            'officePostcode' => $_POST['officePostcode'],
-            'officeState' => $_POST['officeState'],
-            'sex' => $_POST['sex'],
-            'religion' => $_POST['religion'],
-            'nation' => $_POST['nation'],
-            'no_pf' => $_POST['no_pf'],
-            'position' => $_POST['position'],
-            'phoneNumber' => $_POST['phoneNumber'],
-            'phoneHome' => $_POST['phoneHome'],
-            'monthlySalary' => $_POST['monthlySalary']
-        ];
-
-        $conn->commit();
-
-        // Redirect after successful submission
+        // Redirect to next page without database insertion
         header("Location: maklumat_tambahan.php");
         exit();
-        
     } catch (Exception $e) {
-        $conn->rollback();
-        echo "<div class='alert alert-danger'>Error: " . $e->getMessage() . "</div>";
+        $_SESSION['error'] = $e->getMessage();
+        header("Location: daftar_ahli.php");
+        exit();
     }
 }
 
-$formData = isset($_SESSION['personal_info']) ? $_SESSION['personal_info'] : [];
+// Clear any previous errors
+unset($_SESSION['error']);
 ?>
 
 <style>

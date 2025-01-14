@@ -7,16 +7,12 @@ include 'dbconnect.php';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     try {
-        // Debug log
-        error_log("Starting loan application process");
-        
         if (!isset($_SESSION['employeeID'])) {
             throw new Exception("No employee ID found in session");
         }
         
         $employeeID = $_SESSION['employeeID'];
         
-        // Start transaction
         mysqli_begin_transaction($conn);
 
         // First insert into tb_loan
@@ -38,16 +34,25 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             throw new Exception("Error preparing loan statement: " . mysqli_error($conn));
         }
 
-        mysqli_stmt_bind_param($stmtLoan, 'sdddssdd',
+        // Convert numeric values to proper format
+        $amountRequested = floatval($_POST['amountRequested']);
+        $financingPeriod = intval($_POST['financingPeriod']);
+        $monthlyPayment = floatval($_POST['monthlyPayment']);
+        $basicSalary = floatval($_POST['basicSalary']);
+        $netSalary = floatval($_POST['netSalary']);
+
+        if (!mysqli_stmt_bind_param($stmtLoan, 'sdddssddd',
             $employeeID,
-            $_POST['amountRequested'],
-            $_POST['financingPeriod'],
-            $_POST['monthlyPayment'],
+            $amountRequested,
+            $financingPeriod,
+            $monthlyPayment,
             $_POST['employerName'],
             $_POST['employerIC'],
-            $_POST['basicSalary'],
-            $_POST['netSalary']
-        );
+            $basicSalary,
+            $netSalary
+        )) {
+            throw new Exception("Error binding loan parameters: " . mysqli_stmt_error($stmtLoan));
+        }
 
         if (!mysqli_stmt_execute($stmtLoan)) {
             throw new Exception("Error executing loan statement: " . mysqli_stmt_error($stmtLoan));
@@ -62,34 +67,30 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             throw new Exception("Error preparing bank statement: " . mysqli_error($conn));
         }
 
-        mysqli_stmt_bind_param($stmtBank, 'sss',
+        if (!mysqli_stmt_bind_param($stmtBank, 'sss',
             $employeeID,
             $_POST['bankName'],
             $_POST['bankAccountNo']
-        );
+        )) {
+            throw new Exception("Error binding bank parameters: " . mysqli_stmt_error($stmtBank));
+        }
 
         if (!mysqli_stmt_execute($stmtBank)) {
             throw new Exception("Error executing bank statement: " . mysqli_stmt_error($stmtBank));
         }
 
-        // If we get here, commit the transaction
         mysqli_commit($conn);
         
         $_SESSION['status'] = "success";
         $_SESSION['message'] = "Permohonan anda telah berjaya dihantar!";
         
-        error_log("Transaction successful - redirecting to success2.php");
-        
-        // Make sure nothing has been output before this point
-        if (headers_sent($filename, $linenum)) {
-            error_log("Headers already sent in $filename on line $linenum");
-        }
-
         header("Location: success2.php");
         exit();
 
     } catch (Exception $e) {
-        mysqli_rollback($conn);
+        if (isset($conn)) {
+            mysqli_rollback($conn);
+        }
         error_log("Error in loan application: " . $e->getMessage());
         
         $_SESSION['status'] = "error";
@@ -100,7 +101,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     } finally {
         if (isset($stmtLoan)) mysqli_stmt_close($stmtLoan);
         if (isset($stmtBank)) mysqli_stmt_close($stmtBank);
-        mysqli_close($conn);
+        if (isset($conn)) mysqli_close($conn);
     }
 } else {
     header("Location: permohonanloan.php");
