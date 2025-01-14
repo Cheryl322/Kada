@@ -12,7 +12,7 @@
   <style>
 .footer {
    position: fixed;
-   left: 0; 
+   left: 0;
    bottom: 0;
    width: 100%;
    background-color: MediumAquamarine;
@@ -450,4 +450,46 @@
             <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Profile" class="profile-pic">
         </div>
     </div>
+</div>
+
+<div class="navbar initial-state closed" id="sidebar">
+  <div class="container-fluid">
+    <div style="display: flex; width: 100%; align-items: center; margin-bottom: 20px;">
+      <i class="fas fa-arrow-left" id="closeSidebar" style="cursor:pointer; font-size: 24px; color: white; position: absolute; left: 20px; top: 20px;"></i>
+      <a class="navbar-brand" href="index.php" style="margin: 0 auto;">
+        <img src="img/kadalogo.jpg" alt="logo" height="60">
+      </a>
+    </div>
+    <ul class="navbar-nav">
+      <li class="nav-item">
+        <a class="nav-link active" href="adminmainpage.php">Laman Utama
+          <span class="visually-hidden">(current)</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#">Ahli Semasa</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="senaraiPermohonanAhli.php">Pendaftaran Ahli</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="senaraiPermohonanPinjaman.php">Permohonan Pinjaman</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="hasilreport.php">Hasil Laporan</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="adminviewreport.php">Cek Laporan</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#">Info KADA</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#">Media</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#">Hubungi Kami</a>
+      </li>
+    </ul>
+  </div>
 </div>

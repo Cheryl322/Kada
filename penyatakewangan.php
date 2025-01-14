@@ -1,35 +1,92 @@
 <?php
+session_start();
+include "dbconnect.php";
+include "headermember.php";
 
-include"headermember.php";
-include "footer.php";
+if (!isset($_SESSION['employeeID'])) {
+    header("Location: login.php");
+    exit();
+}
 
+$employeeID = $_SESSION['employeeID'];
+
+// Fetch financial data
+$sql = "SELECT f.* FROM tb_financialstatus f
+        WHERE f.accountID IN (
+            SELECT accountID 
+            FROM tb_member_financialstatus 
+            WHERE employeeID = ?
+        )
+        ORDER BY f.dateUpdated DESC LIMIT 1";
+
+$stmt = mysqli_prepare($conn, $sql);
+mysqli_stmt_bind_param($stmt, 's', $employeeID);
+mysqli_stmt_execute($stmt);
+$result = mysqli_stmt_get_result($stmt);
+$financialData = mysqli_fetch_assoc($result);
 ?>
 
-		<div class="container" style="max-width: 800px;">
-            <div class="row align-items-center">
-                <div class="col-3">
-                    <img src="img/kadalogo.jpg" alt="Logo" class="img-fluid" style="width: 100px; height: 100px;">
+<div class="container mt-4">
+    <!-- Navigation Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <a href="transaction_history.php" class="card text-decoration-none">
+                <div class="card-body text-center">
+                    <i class="fas fa-history fa-2x mb-2 text-primary"></i>
+                    <h5 class="card-title">Rekod Transaksi</h5>
                 </div>
-                <div class="col-9">
-                    <div class="border p-6 rounded">
-                        <div class="row">
-                            <div class="col-12">
-                            	<div class="row">
-                            		<div class="col-8">
-                                		<label><b>NAMA: </b> YUNA LIEW MEI MEI</label>
-                                	</div>
-                                	<div class="col-4">
-                                		<label><b>NO. AHLI: </b> 1234</label>
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a href="monthly_statements.php" class="card text-decoration-none">
+                <div class="card-body text-center">
+                    <i class="fas fa-file-alt fa-2x mb-2 text-success"></i>
+                    <h5 class="card-title">Penyata Bulanan</h5>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a href="financial_statement.php" class="card text-decoration-none">
+                <div class="card-body text-center">
+                    <i class="fas fa-file-invoice fa-2x mb-2 text-info"></i>
+                    <h5 class="card-title">Penyata Kewangan</h5>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Financial Summary -->
+    <div class="row">
+        <!-- Savings & Shares Section -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Saham & Simpanan</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <div class="border rounded p-3">
+                                <h6>Modal Saham</h6>
+                                <h4 class="text-primary">RM <?php echo number_format($financialData['memberSaving'] ?? 0, 2); ?></h4>
                             </div>
-                            <div class="col-12">
-                                <div class="row">
-                                    <div class="col-8">
-                                        <label><b>NO. K/P: </b>000000-00-0000</label>
-                                    </div>
-                                    <div class="col-4">
-                                        <label><b>NO. PF: </b>001</label>
-                                    </div>
-                                </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="border rounded p-3">
+                                <h6>Modal Yuran</h6>
+                                <h4 class="text-primary">RM <?php echo number_format($financialData['feeCapital'] ?? 0, 2); ?></h4>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="border rounded p-3">
+                                <h6>Simpanan Tetap</h6>
+                                <h4 class="text-primary">RM <?php echo number_format($financialData['fixedDeposit'] ?? 0, 2); ?></h4>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="border rounded p-3">
+                                <h6>Tabung Anggota</h6>
+                                <h4 class="text-primary">RM <?php echo number_format($financialData['contribution'] ?? 0, 2); ?></h4>
                             </div>
                         </div>
                     </div>
@@ -37,89 +94,75 @@ include "footer.php";
             </div>
         </div>
 
-        <P>Tuan/Puan, <br><br>
-            	<u>PENGESAHAN PENYATA KEWANGAN AHLI KOPERASI KAKITANGAN KADA KELANTAN BERHAD BAGI TAHUN BERAKHIR 2 JAN 2024</u> <br><br>
+        <!-- Loans Section -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">Maklumat Pinjaman</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <div class="border rounded p-3">
+                                <h6>Al-Bai</h6>
+                                <h4 class="text-success">RM <?php echo number_format($financialData['alBai'] ?? 0, 2); ?></h4>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="border rounded p-3">
+                                <h6>Al-Innah</h6>
+                                <h4 class="text-success">RM <?php echo number_format($financialData['alnnah'] ?? 0, 2); ?></h4>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="border rounded p-3">
+                                <h6>B/Pulih Kenderaan</h6>
+                                <h4 class="text-success">RM <?php echo number_format($financialData['bPulihKenderaan'] ?? 0, 2); ?></h4>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="border rounded p-3">
+                                <h6>Road Tax & Insuran</h6>
+                                <h4 class="text-success">RM <?php echo number_format($financialData['roadTaxInsurance'] ?? 0, 2); ?></h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-            	Untuk penentuan Juruaudit, kami dengan ini menyatakan bagi akaun tuan/puan adalah sebagaimana berikut: <br><br>
+<!-- Add Font Awesome for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 
-            	<u>MAKLUMAT SAHAM AHLI: </u>
+<style>
+.card {
+    transition: transform 0.2s;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
 
-            	<div class="container mt-2">
-				  <div class="row">
-				    <div class="col p-3 bg-white text-black">
-				    	<p>Modah Syeh:<br><b>RM 55.00</b></p>
-				    </div>
-				    <div class="col p-3 bg-white text-black">
-				    	<p>Modal Yuran:<br><b>RM 55.00</b></p>
-				    </div>
-				    <div class="col p-3 bg-white text-black">
-				    	<p>Simpanan Tetap:<br><b>RM 55.00</b></p>
-				    </div>
-				    <div class="col p-3 bg-white text-black">
-				    	<p>Tabung Anggota:<br><b>RM 55.00</b></p>
-				    </div>
-				    <div class="col p-3 bg-white text-black">
-				    	<p>Simpanan Anggota:<br><b>RM 55.00</b></p>
-				    </div>
-				  </div>
-				</div>
+.card:hover {
+    transform: translateY(-5px);
+}
 
-				<u>MAKLUMAT PINJAMAN AHLI:</u> <br>
+.border.rounded {
+    transition: all 0.3s;
+}
 
-				<div class="container mt-2">
-				  <div class="row">
-				    <div class="col p-3 bg-white text-black">
-				    	<p>Al-Bai:<br><b>RM 0.00</b></p>
-				    </div>
-				    <div class="col p-3 bg-white text-black">
-				    	<p>Al-Innah:<br><b>RM 0.00</b></p>
-				    </div>
-				    <div class="col p-3 bg-white text-black">
-				    	<p>B/Pulih Kenderaan:<br><b>RM 0.00</b></p>
-				    </div>
-				    <div class="col p-3 bg-white text-black">
-				    	<p>Road Tax & Insuran:<br><b>RM 0.00</b></p>
-				    </div>
-				    <div class="col p-3 bg-white text-black">
-				    	<p>Khas:<br><b>RM 0.00</b></p>
-				    </div>
-				    <div class="col p-3 bg-white text-black">
-				    	<p>Al-Qadrul Hassan:<br><b>RM 0.00</b></p>
-				    </div>
-				  </div>
-				</div>
+.border.rounded:hover {
+    background-color: #f8f9fa;
+}
 
-				<div class="container mt-2">
-				  <hr class="border border-dark border-1">
-				</div>
+h4 {
+    margin-bottom: 0;
+}
 
-				<p><b>PENGESAHAN BAGI PENYATA KEWANGAN <br>
-					AHLI KOPERASI KAKITANGAN KADA KELANTAN BERHAD BAGI TAHUN BERAKHIR 2 JAN 2024 <br><br></b>
-
-				Saya <b>YUNA LIEW MEI MEI</b> No. Ahli: <b>1234</b> mengesahkan bahawa Penyata Kewangan Koperasi Kakitangan KADA Kelantan Berhad bagi tahun berakhir 2 Jan 2024 adalah benar: </p>
-
-				
-
-				<ul class="list-unstyled mb-0">
-				    <li class="mb-1">
-				        <input class="form-check-input border border-2" type="checkbox" value="" id="confirm1">
-				        <label class="form-check-label" for="confirm1">
-				            Setuju
-				        </label>
-				    </li>
-				    <li>
-				        <input class="form-check-input border border-2" type="checkbox" value="" id="confirm2">
-				        <label class="form-check-label" for="confirm2">
-				            Tidak Setuju (Nyatakan sebabnya ...........................)
-				        </label>
-				    </li>
-				</ul>
-
-				<!-- <div class="d-grid">
-                        <a class="btn btn-primary btn-lg" href="penyatakewangan.php" role="button">Hantar</a>
-                </div> -->
-
-				<br><br><br><br><br><br><br><br><br>
+h6 {
+    color: #6c757d;
+    margin-bottom: 0.5rem;
+}
+</style>
 
 
 

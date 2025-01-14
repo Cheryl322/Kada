@@ -1,17 +1,30 @@
 <?php
 session_start();
 
+<<<<<<< HEAD
 // Check if user is logged in
+=======
+session_start();
+
+// Redirect if not logged in
+>>>>>>> b1d39d84883b0d8de7217623c3479b95afbb6c0f
 if (!isset($_SESSION['employeeID'])) {
     header('Location: login.php');
     exit();
 }
 
+<<<<<<< HEAD
 include "headermember.php";
 include "dbconnect.php";
 
 // Get member data including addresses
 $employeeId = $_SESSION['employeeID'];
+=======
+include "dbconnect.php";
+include "headermember.php";
+
+// Keep only one database query - remove the duplicate PDO query
+>>>>>>> b1d39d84883b0d8de7217623c3479b95afbb6c0f
 $sql = "SELECT m.*, 
                h.homeAddress, h.homePostcode, h.homeState,
                o.officeAddress, o.officePostcode, o.officeState
@@ -25,6 +38,7 @@ mysqli_stmt_bind_param($stmt, "i", $employeeId);
 mysqli_stmt_execute($stmt);
 $result = mysqli_stmt_get_result($stmt);
 $memberData = mysqli_fetch_assoc($result);
+<<<<<<< HEAD
 ?>
 
 <div class="container">
@@ -38,6 +52,29 @@ $memberData = mysqli_fetch_assoc($result);
                 </div>
 
                 <!-- Navigation Menu -->
+=======
+
+include "footer.php";
+
+?>
+
+    <div class="container">
+
+    <div class="my-3"></div>
+    <p style="text-align: center; font-size:30px;"><b>Maklumat Peribadi</b></p>
+    <div class="my-4"></div>
+
+   <div class="row">
+       <!-- Left Sidebar -->
+       <div class="col-md-3">
+           <div class="profile-sidebar">
+               <div class="profile-image">
+                   <img src="img/profile.jpeg" class="rounded-circle" alt="Profile Picture">
+                   <h3 class="text-left mt-3"><?php echo htmlspecialchars($memberData['memberName']); ?></h3>
+               </div>
+
+                <!-- Navigation Menu-->
+>>>>>>> b1d39d84883b0d8de7217623c3479b95afbb6c0f
                 <div class="profile-nav">
                     <ul class="nav flex-column gap-2">
                         <li class="nav-item w-100">
@@ -50,6 +87,12 @@ $memberData = mysqli_fetch_assoc($result);
                             <a class="btn btn-info w-75" href="statuspermohonanloan.php">Permohonan</a>
                         </li>
                         <li class="nav-item w-100">
+<<<<<<< HEAD
+=======
+                            <a class="btn btn-info w-75" href="penyatakewangan.php">Penyata Kewangan</a>
+                        </li>
+                        <li class="nav-item w-100">
+>>>>>>> b1d39d84883b0d8de7217623c3479b95afbb6c0f
                             <a class="btn btn-info w-75" href="logout.php">Daftar Keluar</a>
                         </li>
                     </ul>
@@ -119,6 +162,7 @@ $memberData = mysqli_fetch_assoc($result);
                         </div>
                     </div>
 
+<<<<<<< HEAD
                     <div class="card mt-4">
                         <div class="card-header bg-info text-white">
                             <h5 class="mb-0">Alamat Pejabat</h5>
@@ -134,3 +178,7 @@ $memberData = mysqli_fetch_assoc($result);
         </div>
     </div>
 </div>
+=======
+<br><br><br><br><br>
+
+>>>>>>> b1d39d84883b0d8de7217623c3479b95afbb6c0f

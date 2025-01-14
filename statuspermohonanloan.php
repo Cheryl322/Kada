@@ -1,62 +1,18 @@
 <?php
+session_start();
 include"headermember.php";
 include "footer.php";
-// Assuming you have a database connection and user session management
-session_start();
 ?>
 
 <div class="container mt-5">
-
-<?php
-// Simple function to get user data
-function getUserData($user_id) {
-    // Replace these database credentials with your own
-    $host = 'localhost';
-    $dbname = 'your_database';
-    $username = 'your_username';
-    $password = 'your_password';
-
-    try {
-        $pdo = new PDO("mysql:host=$host;dbname=$dbname", $username, $password);
-        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-        $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
-        $stmt->execute([$user_id]);
-        return $stmt->fetch(PDO::FETCH_ASSOC);
-    } catch(PDOException $e) {
-        // For development, you might want to see the error
-        // echo "Error: " . $e->getMessage();
-        return false;
-    }
-}
-
-// Get user data if user is logged in
-$userData = isset($_SESSION['user_id']) ? getUserData($_SESSION['user_id']) : null;
-
-// If no user data, you might want to set default values
-if (!$userData) {
-    $userData = [
-        'nama' => 'Yuna Liew Mei Mei',
-        'email' => 'yuna@example.com',
-        'ic_passport' => '000000-00-0000',
-        'marital_status' => 'Kahwin',
-        'address' => '33, Jalan Bunga Tulip',
-        'postcode' => '00000',
-        'state' => 'Johor',
-        'gender' => 'Perempuan',
-        'religion' => 'Buddhist'
-    ];
-}
-?>
-<div class="container">
-   <div class="row">
-       <!-- Left Sidebar -->
-       <div class="col-md-3">
-           <div class="profile-sidebar">
-               <div class="profile-image">
-                   <img src="img/profile.jpeg" class="rounded-circle" alt="Profile Picture">
-                   <h3 class="text-left mt-3">Yuna Liew</h3>
-               </div>
+    <div class="row">
+        <!-- Left Sidebar -->
+        <div class="col-md-3">
+            <div class="profile-sidebar">
+                <div class="profile-image">
+                    <img src="img/profile.jpeg" class="rounded-circle" alt="Profile Picture">
+                    <h3 class="text-left mt-3">Yuna Liew</h3>
+                </div>
 
                 <!-- Navigation Menu-->
                 <div class="profile-nav">
@@ -75,41 +31,140 @@ if (!$userData) {
                         </li>
                     </ul>
                 </div>
+            </div>
+        </div>
 
-           </div>
-       </div>
-
-       <div class="col-md-9">
-            <div class="container mt-3">
-              <table class="table">
-                <h3>Status Permohonan Pembiayaan </h3>
-                <thead class="table-dark">
-                  <tr>
-                    <th>No. Permohonan</th>
-                    <th>Nama</th>
-                    <th>IC</th>
-                    <th>Tarikh Penyerahan</th>
-                    <th>Status</th>        
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>#001</td>
-                    <td>Yuna Liew</td>
-                    <td>000000-00-0000</td>
-                    <td>6 Jun 2024</td>
-                    <td>Ditolak</td>
-                  </tr>
-                  <tr>
-                    <td>#002</td>
-                    <td>Yuna Liew</td>
-                    <td>000000-00-0000</td>
-                    <td>20 Dec 2024</td>
-                    <td>Dilulus</td>
-                  </tr>
-                </tbody>
-              </table>
+        <!-- Main Content -->
+        <div class="col-md-9">
+            <h5>Status permohonan pembiayaan</h5>
+            
+            <!-- Status Steps -->
+            <div class="status-container mt-4">
+                <div class="status-steps">
+                    <div class="step">
+                        <div class="circle">1</div>
+                        <div class="label">Permohonan serahkan</div>
+                    </div>
+                    <div class="step">
+                        <div class="circle">2</div>
+                        <div class="label">Permohonan diteliti oleh pengurusan lembaga</div>
+                    </div>
+                    <div class="step">
+                        <div class="circle">3</div>
+                        <div class="label">Permohonan lulus / gagal</div>
+                    </div>
+                    <div class="step">
+                        <div class="circle">4</div>
+                        <div class="label">Keputusan pembentangan</div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+.status-container {
+    padding: 20px;
+}
+
+.status-steps {
+    display: flex;
+    justify-content: space-between;
+    position: relative;
+    margin-bottom: 40px;
+}
+
+.status-steps::before {
+    content: '';
+    position: absolute;
+    top: 25px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: #4CAF50;
+    z-index: 1;
+}
+
+.step {
+    text-align: center;
+    position: relative;
+    z-index: 2;
+    width: 120px;
+}
+
+.circle {
+    width: 50px;
+    height: 50px;
+    background-color: #4CAF50;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    color: white;
+    font-weight: bold;
+    font-size: 18px;
+}
+
+.label {
+    margin-top: 10px;
+    font-size: 12px;
+    color: #333;
+}
+
+/* For Ditolak status */
+.step.failed .circle {
+    background-color: #ff0000;
+}
+
+.step.pending .circle {
+    background-color: #808080;
+}
+
+/* Add some spacing between steps */
+.step:not(:last-child) {
+    margin-right: 20px;
+}
+</style>
+
+<script>
+// Function to update status based on application status from database
+function updateApplicationStatus(status) {
+    const steps = document.querySelectorAll('.step');
+    const statusLine = document.querySelector('.status-steps::before');
+    
+    if (status === 'Diluluskan') {
+        steps.forEach(step => {
+            step.querySelector('.circle').style.backgroundColor = '#4CAF50';
+        });
+        statusLine.style.backgroundColor = '#4CAF50';
+    } else if (status === 'Ditolak') {
+        steps.forEach((step, index) => {
+            const circle = step.querySelector('.circle');
+            if (index < 2) {
+                circle.style.backgroundColor = '#4CAF50';
+            } else if (index === 2) {
+                circle.style.backgroundColor = '#ff0000';
+            } else {
+                circle.style.backgroundColor = '#808080';
+            }
+        });
+        
+        // Update line gradient
+        statusLine.style.background = 'linear-gradient(to right, ' +
+            '#4CAF50 0%, ' +
+            '#4CAF50 50%, ' +
+            '#ff0000 50%, ' +
+            '#808080 75%, ' +
+            '#808080 100%)';
+    }
+}
+
+// Call this when page loads with the current application status
+document.addEventListener('DOMContentLoaded', function() {
+    // You would typically get this from your PHP/database
+    const currentStatus = 'Diluluskan'; // or 'Ditolak'
+    updateApplicationStatus(currentStatus);
+});
+</script>
