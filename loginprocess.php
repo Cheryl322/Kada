@@ -7,7 +7,7 @@ if ($_SERVER['REQUEST_METHOD'] != 'POST') {
     exit;
 }
 
-$employeeID = mysqli_real_escape_string($conn, trim($_POST['employeeID']));
+$employeeID = (int)mysqli_real_escape_string($conn, trim($_POST['employeeID']));
 $password = trim($_POST['password']);
 
 try {
@@ -52,4 +52,9 @@ try {
     if (isset($stmt)) mysqli_stmt_close($stmt);
     mysqli_close($conn);
 }
+
+// Debug lines (add these temporarily)
+error_log("Login attempt - EmployeeID: " . $employeeID);
+error_log("Role: " . $user['role']);
+error_log("Session data: " . print_r($_SESSION, true));
 ?>
