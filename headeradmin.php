@@ -424,6 +424,100 @@
     margin-left: 250px;
     max-width: calc(100% - 270px);
 }
+
+/* Header styles */
+.main-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background-color: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    z-index: 999;
+}
+
+.menu-button {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: rgb(34, 119, 210);
+    cursor: pointer;
+    padding: 10px;
+    transition: transform 0.3s ease;
+}
+
+.menu-button:hover {
+    transform: scale(1.1);
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.home-button {
+    color: rgb(34, 119, 210);
+    font-size: 24px;
+    text-decoration: none;
+    transition: transform 0.3s ease;
+}
+
+.home-button:hover {
+    transform: scale(1.1);
+}
+
+/* Add these for proper sidebar behavior with content */
+.sidebar-open .circle-container,
+.sidebar-open .tables-container,
+.sidebar-open .content-wrapper {
+    margin-left: 250px;
+    width: calc(100% - 270px);
+    transition: all 0.3s ease-in-out;
+}
+
+body {
+    transition: all 0.3s ease-in-out;
+}
+
+/* Add these new styles for the profile dropdown */
+.profile-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    padding: 5px;
+    display: none;
+    z-index: 1000;
+    min-width: 120px;
+}
+
+.profile-dropdown.show {
+    display: block;
+}
+
+.profile-dropdown a {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    color: #333;
+    text-decoration: none;
+    transition: background-color 0.3s ease;
+    font-size: 0.9rem;
+}
+
+.profile-dropdown a:hover {
+    background-color: #f5f5f5;
+    border-radius: 4px;
+}
 </style>
 </head>
 
@@ -434,7 +528,7 @@
         <button class="menu-button" id="menuButton">
             <i class="fas fa-bars"></i>
         </button>
-        <a href="headeradminmain.php" class="home-button">
+        <a href="adminmainpage.php" class="home-button">
             <i class="fas fa-home"></i>
         </a>
     </div>
@@ -446,8 +540,90 @@
             <i class="fas fa-bell"></i>
             <span class="notification-badge">3</span>
         </div>
-        <div class="icon-button">
-            <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Profile" class="profile-pic">
+        <div class="icon-button" style="position: relative;">
+            <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Profile" class="profile-pic" id="profileButton">
+            <div class="profile-dropdown" id="profileDropdown">
+                <a href="logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </div>
         </div>
     </div>
 </div>
+
+<div class="navbar initial-state closed" id="sidebar">
+  <div class="container-fluid">
+    <div style="display: flex; width: 100%; align-items: center; margin-bottom: 20px;">
+      <i class="fas fa-arrow-left" id="closeSidebar" style="cursor:pointer; font-size: 24px; color: white; position: absolute; left: 20px; top: 20px;"></i>
+      <a class="navbar-brand" href="index.php" style="margin: 0 auto;">
+        <img src="img/kadalogo.jpg" alt="logo" height="60">
+      </a>
+    </div>
+    <ul class="navbar-nav">
+      <li class="nav-item">
+        <a class="nav-link active" href="adminmainpage.php">Laman Utama
+          <span class="visually-hidden">(current)</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="senaraiahli.php">Ahli Semasa</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="senaraipembiayaan.php">Permohonan Pinjaman</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="hasilreport.php">Hasil Laporan</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="adminviewreport.php">Cek Laporan</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#">Info KADA</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#">Media</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#">Hubungi Kami</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="logout.php">Log Out</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const sidebar = document.getElementById('sidebar');
+    const menuButton = document.getElementById('menuButton');
+    const closeSidebar = document.getElementById('closeSidebar');
+    const mainContent = document.body;
+    const profileButton = document.getElementById('profileButton');
+    const profileDropdown = document.getElementById('profileDropdown');
+
+    // Remove initial-state class after a brief delay
+    setTimeout(() => {
+        sidebar.classList.remove('initial-state');
+    }, 100);
+
+    function toggleSidebar() {
+        sidebar.classList.toggle('closed');
+        mainContent.classList.toggle('sidebar-open');
+    }
+
+    // Toggle profile dropdown
+    profileButton.addEventListener('click', function(e) {
+        e.stopPropagation();
+        profileDropdown.classList.toggle('show');
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!profileButton.contains(e.target) && !profileDropdown.contains(e.target)) {
+            profileDropdown.classList.remove('show');
+        }
+    });
+
+    menuButton.addEventListener('click', toggleSidebar);
+    closeSidebar.addEventListener('click', toggleSidebar);
+});
+</script>

@@ -507,48 +507,6 @@ if (!isset($_SESSION['employeeID']) || $_SESSION['role'] !== 'admin') {
     </div>
 </div>
 
-<div class="navbar initial-state closed" id="sidebar">
-  <div class="container-fluid">
-    <div style="display: flex; width: 100%; align-items: center; margin-bottom: 20px;">
-      <i class="fas fa-arrow-left" id="closeSidebar" style="cursor:pointer; font-size: 24px; color: white; position: absolute; left: 20px; top: 20px;"></i>
-      <a class="navbar-brand" href="index.php" style="margin: 0 auto;">
-        <img src="img/kadalogo.jpg" alt="logo" height="60">
-      </a>
-    </div>
-    <ul class="navbar-nav">
-      <li class="nav-item">
-        <a class="nav-link active" href="adminmainpage.php">Laman Utama
-          <span class="visually-hidden">(current)</span>
-        </a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="senaraiahli.php">Ahli Semasa</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="senaraipembiayaan.php">Permohonan Pinjaman</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="hasilreport.php">Hasil Laporan</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="adminviewreport.php">Cek Laporan</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="#">Info KADA</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="#">Media</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="#">Hubungi Kami</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="logout.php">Log Out</a>
-      </li>
-    </ul>
-  </div>
-</div>
-
 <div class="circle-container">
   <a href="senaraiahli.php" class="circle">
     <div class="circle-content">
@@ -654,46 +612,3 @@ if (!isset($_SESSION['employeeID']) || $_SESSION['role'] !== 'admin') {
             </tbody>
         </table>
     </div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const sidebar = document.getElementById('sidebar');
-    const menuButton = document.getElementById('menuButton');
-    const closeSidebar = document.getElementById('closeSidebar');
-    const mainContent = document.body;
-    const circleContainer = document.querySelector('.circle-container');
-
-    // Remove initial-state class after a brief delay
-    setTimeout(() => {
-        sidebar.classList.remove('initial-state');
-    }, 100);
-    function toggleSidebar() {
-        sidebar.classList.toggle('closed');
-        mainContent.classList.toggle('sidebar-open');
-        
-        // Add transition class to ensure smooth animation
-        circleContainer.style.transition = 'all 0.3s ease-in-out';
-    }
-
-    menuButton.addEventListener('click', toggleSidebar);
-    closeSidebar.addEventListener('click', toggleSidebar);
-
-    // Add this new code for profile dropdown
-    const profileButton = document.getElementById('profileButton');
-    const profileDropdown = document.getElementById('profileDropdown');
-
-    profileButton.addEventListener('click', function(e) {
-        e.stopPropagation();
-        profileDropdown.classList.toggle('show');
-    });
-
-    // Close dropdown when clicking outside
-    document.addEventListener('click', function(e) {
-        if (!profileButton.contains(e.target)) {
-            profileDropdown.classList.remove('show');
-        }
-    });
-});
-</script>
-
-<?php include 'footer.php';?>
