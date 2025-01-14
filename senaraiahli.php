@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>Sistem Koperasi KADA</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="css/bootstrap.min (1).css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <style>
+.footer {
+   position: fixed;
+   left: 0;
+   bottom: 0;
+   width: 100%;
+   background-color: MediumAquamarine;
+   color: white;
+   text-align: center;
+}
+
+.navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 250px;
+    background-color: rgb(34, 119, 210);
+    padding-top: 20px;
+    margin-top: 60px;
+    transform: translateX(-250px);
+    transition: transform 0.3s ease-in-out;
+}
+
+.navbar.closed {
+    transform: translateX(-250px);
+}
+
+.navbar:not(.closed) {
+    transform: translateX(0);
+}
+
+.navbar.initial-state {
+    transition: none !important;
+}
+
+.container-fluid {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.navbar-nav {
+    flex-direction: column;
+    width: 100%;
+}
+.nav-item {
+    width: 100%;
+}
+.nav-link {
+    color: white;
+    padding: 10px 15px;
+}
+
+#sidebarToggle {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 1000;
+    display: none;
+}
+
+.navbar.closed + #sidebarToggle {
+    display: block;
+}
+
+#closeSidebar {
+    transition: transform 0.3s ease;
+}
+
+#closeSidebar:hover {
+    transform: scale(1.2);
+}
+
+.main-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background-color: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    z-index: 999;
+}
+
+.menu-button {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: rgb(34, 119, 210);
+    cursor: pointer;
+    padding: 10px;
+    transition: transform 0.3s ease;
+}
+
+.menu-button:hover {
+    transform: scale(1.1);
+}
+
+.top-right-icons {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+}
+
+.icon-button {
+    color: rgb(34, 119, 210);
+    font-size: 24px;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    position: relative;
+}
+
+.icon-button:hover {
+    transform: scale(1.1);
+}
+
+.profile-pic {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgb(34, 119, 210);
+}
+
+.notification-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background-color: red;
+    color: white;
+    border-radius: 50%;
+    padding: 2px 6px;
+    font-size: 12px;
+}
+
+/* Add these new styles */
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.home-button {
+    color: rgb(34, 119, 210);
+    font-size: 24px;
+    text-decoration: none;
+    transition: transform 0.3s ease;
+}
+
+.home-button:hover {
+    transform: scale(1.1);
+}
+
+/* Add this new style */
+.navbar.initial-state {
+    transform: translateX(-250px);
+}
+
+/* Add these new styles for when sidebar is open */
+.sidebar-open .circle-container {
+    width: calc(100% - 250px);
+    margin-left: 250px;
+}
+
+.sidebar-open .tables-container {
+    margin-left: 250px;
+    max-width: calc(100% - 270px);
+}
+</style>
+</head>
+
+<body>
+
+<div class="main-header">
+    <div class="header-left">
+        <button class="menu-button" id="menuButton">
+            <i class="fas fa-bars"></i>
+        </button>
+        <a href="adminmainpage.php" class="home-button">
+            <i class="fas fa-home"></i>
+        </a>
+    </div>
+    <div class="top-right-icons">
+        <div class="icon-button">
+            <i class="fas fa-envelope"></i>
+        </div>
+        <div class="icon-button">
+            <i class="fas fa-bell"></i>
+            <span class="notification-badge">3</span>
+        </div>
+        <div class="icon-button">
+            <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Profile" class="profile-pic">
+        </div>
+    </div>
+</div>
+
+<div class="navbar initial-state closed" id="sidebar">
+  <div class="container-fluid">
+    <div style="display: flex; width: 100%; align-items: center; margin-bottom: 20px;">
+      <i class="fas fa-arrow-left" id="closeSidebar" style="cursor:pointer; font-size: 24px; color: white; position: absolute; left: 20px; top: 20px;"></i>
+      <a class="navbar-brand" href="index.php" style="margin: 0 auto;">
+        <img src="img/kadalogo.jpg" alt="logo" height="60">
+      </a>
+    </div>
+    <ul class="navbar-nav">
+      <li class="nav-item">
+        <a class="nav-link active" href="adminmainpage.php">Laman Utama
+          <span class="visually-hidden">(current)</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="senaraiahli.php">Ahli Semasa</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="senaraipembiayaan.php">Permohonan Pinjaman</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="hasilreport.php">Hasil Laporan</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="adminviewreport.php">Cek Laporan</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#">Info KADA</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#">Media</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#">Hubungi Kami</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="tables-container" style="margin-top: 80px; padding: 20px;">
+    <!-- Add search bar -->
+    <div class="search-container" style="margin-bottom: 20px; text-align: right;">
+        <input type="text" id="searchInput" class="form-control" style="width: 300px; display: inline-block;" placeholder="Cari...">
+    </div>
+    <div class="table-responsive">
+        <table class="table table-striped table-bordered" id="dataTable">
+            <thead>
+                <tr>
+                    <th>No.</th>
+                    <th>Nama</th>
+                    <th>No. Kad Pengenalan</th>
+                    <th>Emel</th>
+                    <th>No. Telefon</th>
+                    <th>No. Telefon Rumah</th>
+                    <th>Jantina</th>
+                    <th>Agama</th>
+                    <th>Tarikh Lahir</th>
+                    <th>Status Perkahwinan</th>
+                    <th>Warganegara</th>
+                    <th>Alamat</th>
+                    <th>Jawatan</th>
+                    <th>Gaji Bulanan</th>
+                    <th>No. PF</th>
+                    <th>Status</th>
+                    <th>Tarikh Daftar</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Table content will go here -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Add this JavaScript code before the closing body tag -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const sidebar = document.getElementById('sidebar');
+    const menuButton = document.getElementById('menuButton');
+    const closeSidebar = document.getElementById('closeSidebar');
+    
+    // Remove initial-state class after a brief delay
+    setTimeout(() => {
+        sidebar.classList.remove('initial-state');
+    }, 100);
+
+    menuButton.addEventListener('click', function() {
+        sidebar.classList.toggle('closed');
+        document.body.classList.toggle('sidebar-open');
+    });
+
+    closeSidebar.addEventListener('click', function() {
+        sidebar.classList.add('closed');
+        document.body.classList.remove('sidebar-open');
+    });
+
+    // Add search functionality
+    const searchInput = document.getElementById('searchInput');
+    const table = document.getElementById('dataTable');
+
+    searchInput.addEventListener('keyup', function() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const rows = table.getElementsByTagName('tr');
+
+        for (let i = 1; i < rows.length; i++) { // Start from 1 to skip header row
+            const row = rows[i];
+            const cells = row.getElementsByTagName('td');
+            let found = false;
+
+            for (let cell of cells) {
+                if (cell.textContent.toLowerCase().includes(searchTerm)) {
+                    found = true;
+                    break;
+                }
+            }
+
+            row.style.display = found ? '' : 'none';
+        }
+    });
+});
+</script>
+
+<?php include 'footer.php';?>
+
