@@ -450,7 +450,7 @@ if (!isset($_SESSION['employeeID']) || $_SESSION['role'] !== 'admin') {
     border-radius: 8px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     display: none;
-    min-width: 150px;
+    min-width: 120px;
     z-index: 1000;
 }
 
@@ -460,20 +460,21 @@ if (!isset($_SESSION['employeeID']) || $_SESSION['role'] !== 'admin') {
 
 .profile-dropdown a {
     display: block;
-    padding: 10px 15px;
+    padding: 8px 12px;
     color: #333;
     text-decoration: none;
     transition: background-color 0.3s;
+    font-size: 14px;
 }
-
 
 .profile-dropdown a:hover {
     background-color: #f5f5f5;
 }
 
 .profile-dropdown a i {
-    margin-right: 8px;
+    margin-right: 6px;
     color: rgb(34, 119, 210);
+    font-size: 12px;
 }
 </style>
 </head>
