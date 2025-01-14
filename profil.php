@@ -1,15 +1,17 @@
 <?php
 
-// Assuming you have a database connection and user session management
-include "headermember.php";
-include "dbconnect.php";
+session_start();
 
+// Redirect if not logged in
 if (!isset($_SESSION['employeeID'])) {
     header('Location: login.php');
     exit();
 }
 
-// 获取会员数据
+include "dbconnect.php";
+include "headermember.php";
+
+// Keep only one database query - remove the duplicate PDO query
 $sql = "SELECT m.*, 
                h.homeAddress, h.homePostcode, h.homeState,
                o.officeAddress, o.officePostcode, o.officeState
@@ -24,61 +26,9 @@ mysqli_stmt_execute($stmt);
 $result = mysqli_stmt_get_result($stmt);
 $memberData = mysqli_fetch_assoc($result);
 
-
 include "footer.php";
+
 ?>
-
-<?php
-
-try {
-    $host = "localhost";
-    $dbname = "db_kada";
-    $username = "root";
-    $password = "";
-
-    $pdo = new PDO(
-        "mysql:host=$host;dbname=$dbname;charset=utf8",
-        $username,
-        $password,
-        [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
-    );
-} catch(PDOException $e) {
-    die("Connection failed: " . $e->getMessage());
-}
-
-// 防止页面缓存
-header("Cache-Control: no-cache, must-revalidate");
-
-$employeeId = $_SESSION['employeeID'];
-$query = "SELECT * FROM tb_member WHERE employeeId = ?";
-$stmt = $pdo->prepare($query);
-$stmt->execute([$employeeId]);
-$row = $stmt->fetch(PDO::FETCH_ASSOC);
-
-if(isset($_SESSION['success_message'])): ?>
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        <?php 
-            echo $_SESSION['success_message'];
-            unset($_SESSION['success_message']);
-        ?>
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-        </button>
-    </div>
-<?php endif; ?>
-
-<?php if(isset($_SESSION['error_message'])): ?>
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        <?php 
-            echo $_SESSION['error_message'];
-            unset($_SESSION['error_message']);
-        ?>
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-        </button>
-    </div>
-<?php endif; ?>
-
 
     <div class="container">
 
@@ -108,7 +58,7 @@ if(isset($_SESSION['success_message'])): ?>
                             <a class="btn btn-info w-75" href="statuspermohonanloan.php">Permohonan</a>
                         </li>
                         <li class="nav-item w-100">
-                            <a class="btn btn-info w-75" href="viewfinancialstatus.php">Penyata Kewangan</a>
+                            <a class="btn btn-info w-75" href="penyatakewangan.php">Penyata Kewangan</a>
                         </li>
                         <li class="nav-item w-100">
                             <a class="btn btn-info w-75" href="logout.php">Daftar Keluar</a>
@@ -267,3 +217,4 @@ document.getElementById('profileForm').addEventListener('submit', function(e) {
 </script>
 
 <br><br><br><br><br>
+

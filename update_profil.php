@@ -13,23 +13,29 @@ file_put_contents('debug.txt', "SESSION data: " . print_r($_SESSION, true) . "\n
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     try {
-        // 数据库连接
-        $host = "localhost";
-        $dbname = "kada";
-        $username = "root";
-        $password = "";
+        // 记录接收到的数据
+        file_put_contents('debug.txt', "Received POST data:\n" . print_r($_POST, true) . "\n", FILE_APPEND);
 
-        $pdo = new PDO(
-            "mysql:host=$host;dbname=$dbname;charset=utf8",
-            $username,
-            $password,
-            [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
-        );
+        // 准备更新数据
+        $updateData = [
+            ':memberName' => $_POST['memberName'] ?? null,
+            ':email' => $_POST['email'] ?? null,
+            ':ic' => $_POST['ic'] ?? null,
+            ':maritalStatus' => $_POST['maritalStatus'] ?? null,
+            ':sex' => $_POST['sex'] ?? null,
+            ':religion' => $_POST['religion'] ?? null,
+            ':nation' => $_POST['nation'] ?? null,
+            ':no_pf' => $_POST['no_pf'] ?? null,
+            ':position' => $_POST['position'] ?? null,
+            ':phoneNumber' => $_POST['phoneNumber'] ?? null,
+            ':phoneHome' => $_POST['phoneHome'] ?? null,
+            ':employeeId' => $_SESSION['employeeID']
+        ];
 
-        // 开始事务
-        $pdo->beginTransaction();
+        // 记录要更新的数据
+        file_put_contents('debug.txt', "Update data:\n" . print_r($updateData, true) . "\n", FILE_APPEND);
 
-        // 更新会员信息
+        // 更新查询
         $sql = "UPDATE tb_member SET 
                 memberName = :memberName,
                 email = :email,
@@ -45,21 +51,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 WHERE employeeId = :employeeId";
 
         $stmt = $pdo->prepare($sql);
-        
-        $result = $stmt->execute([
-            ':memberName' => $_POST['memberName'],
-            ':email' => $_POST['email'],
-            ':ic' => $_POST['ic'],
-            ':maritalStatus' => $_POST['maritalStatus'],
-            ':sex' => $_POST['sex'],
-            ':religion' => $_POST['religion'],
-            ':nation' => $_POST['nation'],
-            ':no_pf' => $_POST['no_pf'],
-            ':position' => $_POST['position'],
-            ':phoneNumber' => $_POST['phoneNumber'],
-            ':phoneHome' => $_POST['phoneHome'],
-            ':employeeId' => $_SESSION['employeeID']
-        ]);
+        $result = $stmt->execute($updateData);
+
+        // 记录更新结果
+        file_put_contents('debug.txt', "Update result: " . ($result ? "Success" : "Failed") . "\n", FILE_APPEND);
 
         if ($result) {
             $pdo->commit();
@@ -71,9 +66,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             // 强制刷新
             header("Cache-Control: no-cache, must-revalidate");
             header("Location: profil.php");
-                exit();
-            }
-
+            exit();
+        }
     } catch (Exception $e) {
         // 如果出错，回滚事务
         if (isset($pdo)) {
