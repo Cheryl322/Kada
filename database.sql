@@ -50,3 +50,19 @@ CREATE TABLE member_fees (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE reports (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    report_type VARCHAR(50) NOT NULL,
+    from_date DATE NOT NULL,
+    to_date DATE NOT NULL,
+    report_format VARCHAR(20) NOT NULL,
+    created_at DATETIME NOT NULL
+);
+
+CREATE TABLE report_members (
+    report_id INT,
+    member_id INT,
+    PRIMARY KEY (report_id, member_id),
+    FOREIGN KEY (report_id) REFERENCES reports(id)
+);
