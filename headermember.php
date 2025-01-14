@@ -109,8 +109,10 @@ body::before {
           <li class="nav-item">
           <a class="nav-link" href="profil.php">Profil</a>
           </li>
+    
         </ul>
       </ul>
+      <br><br
   </div>
 </nav>
 

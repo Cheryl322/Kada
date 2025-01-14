@@ -1,5 +1,45 @@
 <?php
-include 'headermain.php';
+session_start();
+include "headermain.php";
+
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    require_once "dbconnect.php";
+    
+    $employeeID = $_POST['employeeID'];
+    $password = $_POST['password'];
+
+    // First check if employeeID exists in employee table
+    $checkEmployee = "SELECT * FROM tb_employee WHERE employeeID = ?";
+    $stmt = mysqli_prepare($conn, $checkEmployee);
+    mysqli_stmt_bind_param($stmt, 's', $employeeID);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+
+    if (mysqli_num_rows($result) == 0) {
+        // EmployeeID not found in employee table
+        $_SESSION['error_message'] = "ID Pekerja tidak wujud. Sila daftar akaun terlebih dahulu.";
+        header("Location: login.php");
+        exit();
+    }
+
+    // If employeeID exists, proceed with password check
+    $sql = "SELECT * FROM tb_employee WHERE employeeID = ? AND password = ?";
+    $stmt = mysqli_prepare($conn, $sql);
+    mysqli_stmt_bind_param($stmt, 'ss', $employeeID, $password);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+
+    if (mysqli_num_rows($result) > 0) {
+        $row = mysqli_fetch_assoc($result);
+        $_SESSION['employeeID'] = $row['employeeID'];
+        header("Location: mainpage.php");
+        exit();
+    } else {
+        $_SESSION['error_message'] = "ID Pekerja atau kata laluan tidak sah.";
+        header("Location: login.php");
+        exit();
+    }
+}
 ?>
 
 <style>
@@ -94,30 +134,28 @@ body::before {
                     </div>
                 <?php endif; ?>
 
-                <h2 class="text-center mb-4" style="color: #2c5282;">Log Masuk</h2>
-                
                 <?php if(isset($_SESSION['error_message'])): ?>
-                    <div class="alert alert-danger">
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="fas fa-exclamation-circle me-2"></i>
                         <?php 
                             echo $_SESSION['error_message']; 
                             unset($_SESSION['error_message']);
                         ?>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
                 <?php endif; ?>
 
-                <form action="loginprocess.php" method="POST">
+                <h2 class="text-center mb-4" style="color: #2c5282;">Log Masuk</h2>
+
+                <form action="" method="POST">
                     <div class="form-group">
-                        <label for="employeeID" class="form-label">
-                            <i class="fas fa-user me-2"></i>Employee ID
-                        </label>
+                        <label for="employeeID" class="form-label">Employee ID</label>
                         <input type="text" class="form-control" id="employeeID" name="employeeID" 
                                placeholder="Masukkan employee ID" required>
                     </div>
 
                     <div class="form-group">
-                        <label for="password" class="form-label">
-                            <i class="fas fa-lock me-2"></i>Kata Laluan
-                        </label>
+                        <label for="password" class="form-label">Kata Laluan</label>
                         <div class="input-group">
                             <input type="password" class="form-control" id="password" name="password" 
                                    placeholder="Masukkan kata laluan" required>
@@ -125,19 +163,15 @@ body::before {
                                 <i class="fas fa-eye"></i>
                             </button>
                         </div>
-                        <a href="forgot-password.php" class="forgot-password">
-                            <i class="fas fa-question-circle me-1"></i>Lupa kata laluan?
-                        </a>
+                        <a href="forgot-password.php" class="forgot-password">Lupa kata laluan?</a>
                     </div>
 
-                    <button type="submit" class="btn btn-login">
-                        <i class="fas fa-sign-in-alt me-2"></i>Log Masuk
-                    </button>
+                    <button type="submit" class="btn btn-login">Log Masuk</button>
 
                     <div class="text-center mt-4">
                         <p class="mb-0">Belum mempunyai akaun? 
                             <a href="register.php" class="text-decoration-none" style="color: #2c5282;">
-                                <i class="fas fa-user-plus me-1"></i>Daftar Sekarang
+                                Daftar Sekarang
                             </a>
                         </p>
                     </div>
@@ -146,21 +180,5 @@ body::before {
         </div>
     </div>
 </div>
-
-<script>
-// Add this to show a modal popup for success message
-document.addEventListener('DOMContentLoaded', function() {
-    <?php if(isset($_SESSION['success_message'])): ?>
-        Swal.fire({
-            title: 'Berjaya!',
-            text: '<?php echo $_SESSION['success_message']; ?>',
-            icon: 'success',
-            confirmButtonText: 'OK',
-            confirmButtonColor: '#2c5282'
-        });
-        <?php unset($_SESSION['success_message']); ?>
-    <?php endif; ?>
-});
-</script>
 
 <?php include 'footer.php'; ?>

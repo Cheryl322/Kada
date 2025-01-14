@@ -5,17 +5,12 @@ $username = "root";
 $password = "";
 $dbname = "db_kada";
 
-// Create connection with increased timeout
-$conn = mysqli_init();
+// Create connection using mysqli
+$conn = mysqli_connect($servername, $username, $password, $dbname);
+
+// Check connection
 if (!$conn) {
-    die("mysqli_init failed");
-}
-
-mysqli_options($conn, MYSQLI_OPT_CONNECT_TIMEOUT, 300);
-mysqli_options($conn, MYSQLI_INIT_COMMAND, "SET FOREIGN_KEY_CHECKS=1;");
-
-if (!mysqli_real_connect($conn, $servername, $username, $password, $dbname)) {
-    die("Connect Error: " . mysqli_connect_error());
+    die("Connection failed: " . mysqli_connect_error());
 }
 
 // Set charset and other important settings

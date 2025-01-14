@@ -4,29 +4,172 @@ ob_start();
 
 // Check if user is logged in
 if (!isset($_SESSION['employeeID'])) {
+    $_SESSION['error'] = "Sila log masuk terlebih dahulu";
     header("Location: login.php");
     exit();
 }
 
 include "headermember.php";
 
+// Check if employee is already registered
+require_once "dbconnect.php";
+$employeeID = $_SESSION['employeeID'];
+$checkSql = "SELECT employeeID FROM tb_member WHERE employeeID = ?";
+$stmt = mysqli_prepare($conn, $checkSql);
+mysqli_stmt_bind_param($stmt, 'i', $employeeID);
+mysqli_stmt_execute($stmt);
+mysqli_stmt_store_result($stmt);
+
+if (mysqli_stmt_num_rows($stmt) > 0) {
+    // Employee already registered
+    echo '<div class="alert alert-warning alert-dismissible fade show" role="alert">
+            <strong>Perhatian!</strong> Anda telah mendaftar sebagai ahli.
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>';
+    // You might want to redirect them somewhere else
+    // header("Location: dashboard.php");
+    // exit();
+}
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    // Debug: Print form data
+    error_log("Form Data: " . print_r($_POST, true));
+    
     try {
-        // Just store the form data in session
-        $_SESSION['member_form_data'] = $_POST;
+        mysqli_begin_transaction($conn);
         
-        // Redirect to next page without database insertion
-        header("Location: maklumat_tambahan.php");
-        exit();
+        // Get employeeID from the form
+        $employeeID = $_POST['no_anggota'];
+        
+        // Debug: Print employeeID
+        error_log("EmployeeID: " . $employeeID);
+
+        // First insert member data
+        $memberQuery = "INSERT INTO tb_member (
+            employeeID, 
+            memberName, 
+            email, 
+            ic, 
+            maritalStatus, 
+            sex, 
+            religion, 
+            nation, 
+            no_pf, 
+            position, 
+            phoneNumber,
+            phoneHome,
+            monthlySalary
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        
+        $memberStmt = mysqli_prepare($conn, $memberQuery);
+        mysqli_stmt_bind_param($memberStmt, "isssssssssssd", 
+            $_POST['no_anggota'],      // employeeID
+            $_POST['nama_penuh'],      // memberName
+            $_POST['alamat_emel'],     // email
+            $_POST['ic'],              // ic
+            $_POST['maritalStatus'],   // maritalStatus
+            $_POST['sex'],             // sex
+            $_POST['religion'],        // religion
+            $_POST['nation'],          // nation
+            $_POST['no_pf'],          // no_pf
+            $_POST['position'],        // position
+            $_POST['phoneNumber'],     // phoneNumber
+            $_POST['phoneHome'],       // phoneHome
+            $_POST['monthlySalary']    // monthlySalary
+        );
+        
+        if (mysqli_stmt_execute($memberStmt)) {
+            // Debug: Member inserted successfully
+            error_log("Member inserted successfully");
+            
+            // Insert home address
+            $homeQuery = "INSERT INTO tb_member_homeaddress (employeeID, homeAddress, homePostcode, homeState) 
+                         VALUES (?, ?, ?, ?)";
+            $homeStmt = mysqli_prepare($conn, $homeQuery);
+            
+            // Debug: Print home address data
+            error_log("Home Address Data: " . print_r([
+                'employeeID' => $employeeID,
+                'homeAddress' => $_POST['homeAddress'],
+                'homePostcode' => $_POST['homePostcode'],
+                'homeState' => $_POST['homeState']
+            ], true));
+            
+            mysqli_stmt_bind_param($homeStmt, "isss", 
+                $employeeID,
+                $_POST['homeAddress'],
+                $_POST['homePostcode'],
+                $_POST['homeState']
+            );
+            
+            if (!mysqli_stmt_execute($homeStmt)) {
+                throw new Exception("Error saving home address: " . mysqli_error($conn));
+            }
+            
+            // Debug: Home address inserted successfully
+            error_log("Home address inserted successfully");
+
+            // Insert office address
+            $officeQuery = "INSERT INTO tb_member_officeaddress (employeeID, officeAddress, officePostcode, officeState) 
+                           VALUES (?, ?, ?, ?)";
+            $officeStmt = mysqli_prepare($conn, $officeQuery);
+            
+            // Debug: Print office address data
+            error_log("Office Address Data: " . print_r([
+                'employeeID' => $employeeID,
+                'officeAddress' => $_POST['officeAddress'],
+                'officePostcode' => $_POST['officePostcode'],
+                'officeState' => $_POST['officeState']
+            ], true));
+            
+            mysqli_stmt_bind_param($officeStmt, "isss", 
+                $employeeID,
+                $_POST['officeAddress'],
+                $_POST['officePostcode'],
+                $_POST['officeState']
+            );
+            
+            if (!mysqli_stmt_execute($officeStmt)) {
+                throw new Exception("Error saving office address: " . mysqli_error($conn));
+            }
+            
+            // Debug: Office address inserted successfully
+            error_log("Office address inserted successfully");
+
+            mysqli_commit($conn);
+            $_SESSION['employeeID'] = $employeeID;
+            
+            // Debug: Transaction committed
+            error_log("Transaction committed successfully");
+            
+            header("Location: maklumat_tambahan.php");
+            exit();
+        }
     } catch (Exception $e) {
+        mysqli_rollback($conn);
+        error_log("Error occurred: " . $e->getMessage());
         $_SESSION['error'] = $e->getMessage();
         header("Location: daftar_ahli.php");
         exit();
     }
 }
 
-// Clear any previous errors
-unset($_SESSION['error']);
+// Show success/error messages if they exist
+if (isset($_SESSION['success'])) {
+    echo '<div class="alert alert-success alert-dismissible fade show" role="alert">
+            ' . $_SESSION['success'] . '
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>';
+    unset($_SESSION['success']);
+}
+
+if (isset($_SESSION['error'])) {
+    echo '<div class="alert alert-danger alert-dismissible fade show" role="alert">
+            ' . $_SESSION['error'] . '
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>';
+    unset($_SESSION['error']);
+}
 ?>
 
 <style>
@@ -118,6 +261,20 @@ unset($_SESSION['error']);
         margin-bottom: 1rem;
     }
 }
+
+.alert {
+    margin: 20px;
+    padding: 15px;
+    border-radius: 4px;
+    position: relative;
+}
+
+.alert-dismissible .btn-close {
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding: 1.25rem;
+}
 </style>
 
 <div class="container mt-4">
@@ -183,8 +340,7 @@ unset($_SESSION['error']);
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label class="form-label">Poskod <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" name="homePostcode" required 
-                           pattern="[0-9]{5}" maxlength="5">
+                    <input type="text" class="form-control" name="homePostcode" required>
                 </div>
 
                 <div class="col-md-6 mb-3">
@@ -286,8 +442,7 @@ unset($_SESSION['error']);
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label class="form-label">Poskod <span class="text-danger">*</span></label>
-                    <input type="number" class="form-control" name="officePostcode" required 
-                           min="10000" max="99999">
+                    <input type="text" class="form-control" name="officePostcode" required>
                 </div>
 
                 <div class="col-md-6 mb-3">
@@ -317,28 +472,18 @@ unset($_SESSION['error']);
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label class="form-label">No. Tel Bimbit <span class="text-danger">*</span></label>
-                    <div class="input-group">
-                        <span class="input-group-text">+60</span>
-                        <input type="tel" class="form-control" name="phoneNumber" required
-                               pattern="[0-9]{9,11}" 
-                               placeholder="Contoh: 123456789">
-                    </div>
-                    <small class="text-muted">Masukkan nombor telefon tanpa (-) atau ruang</small>
+                    <input type="tel" class="form-control" name="phoneNumber" required>
                 </div>
 
                 <div class="col-md-6 mb-3">
                     <label class="form-label">No. Tel Rumah <span class="text-danger">*</span></label>
-                    <input type="tel" class="form-control" name="phoneHome" required
-                           pattern="[0-9]{9,11}"
-                           placeholder="Contoh: 0312345678">
+                    <input type="tel" class="form-control" name="phoneHome" required>
                 </div>
             </div>
 
             <div class="mb-3">
                 <label class="form-label">Gaji Bulanan (RM) <span class="text-danger">*</span></label>
-                <input type="number" class="form-control" name="monthlySalary" required
-                       min="0" step="0.01"
-                       placeholder="Contoh: 3000.00">
+                <input type="number" class="form-control" name="monthlySalary" required step="0.01">
             </div>
         </div>
 
