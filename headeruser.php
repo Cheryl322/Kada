@@ -66,7 +66,7 @@
           <a class="nav-link" href="#">Pemberitahuan</a>
           </li>
           <li>
-          <a class="nav-link" href="#login">Profil</a>
+          <a class="nav-link" href="profil2.php">Profil</a>
           </li>
         </li>
       </ul>
