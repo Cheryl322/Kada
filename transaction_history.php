@@ -29,6 +29,11 @@ $transactions = mysqli_fetch_all($result, MYSQLI_ASSOC);
 ?>
 
 <div class="container mt-5">
+    <div class="mb-4">
+        <a href="penyatakewangan.php" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Kembali
+        </a>
+    </div>
     <h2>Rekod Transaksi</h2>
 
     <!-- Month/Year Filter -->

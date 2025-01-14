@@ -16,7 +16,7 @@ if (!isset($conn)) {
 }
 
 // Fetch all monthly statements
-$sql = "SELECT * FROM tb_transaction
+$sql = "SELECT * FROM tb_transaction 
         WHERE employeeID = ? 
         -- ORDER BY reportMonth DESC";
 
@@ -45,6 +45,11 @@ try {
 ?>
 
 <div class="container mt-5">
+    <div class="mb-4">
+        <a href="penyatakewangan.php" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Kembali
+        </a>
+    </div>
     <h2>Penyata Bulanan</h2>
 
     <div class="card">

@@ -35,6 +35,11 @@ $financialData = mysqli_fetch_assoc($result);
 ?>
 
 <div class="container" style="max-width: 800px; background-color: white; padding: 20px; box-shadow: 0 0 10px rgba(0,0,0,0.1);">
+    <div class="mb-4">
+        <a href="penyatakewangan.php" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Kembali
+        </a>
+    </div>
     <!-- Header with Logo and Member Info -->
     <div class="row align-items-center mb-4">
         <div class="col-3">
@@ -44,10 +49,10 @@ $financialData = mysqli_fetch_assoc($result);
             <div class="border p-3 rounded">
                 <div class="row">
                     <div class="col-8">
-                        <label><b>NAMA: </b><?php echo htmlspecialchars($memberData['name']); ?></label>
+                        <label><b>NAMA: </b><?php echo htmlspecialchars($memberData['memberName']); ?></label>
                     </div>
                     <div class="col-4">
-                        <label><b>NO. AHLI: </b><?php echo htmlspecialchars($memberData['membershipNo']); ?></label>
+                        <label><b>NO. AHLI: </b><?php echo htmlspecialchars($memberData['employeeID']); ?></label>
                     </div>
                 </div>
                 <div class="row">
@@ -55,7 +60,7 @@ $financialData = mysqli_fetch_assoc($result);
                         <label><b>NO. K/P: </b><?php echo htmlspecialchars($memberData['ic']); ?></label>
                     </div>
                     <div class="col-4">
-                        <label><b>NO. PF: </b><?php echo htmlspecialchars($memberData['pfNo']); ?></label>
+                        <label><b>NO. PF: </b><?php echo htmlspecialchars($memberData['no_pf']); ?></label>
                     </div>
                 </div>
             </div>
@@ -121,7 +126,7 @@ $financialData = mysqli_fetch_assoc($result);
     <!-- Confirmation Section -->
     <div class="mt-5">
         <p><b>PENGESAHAN BAGI PENYATA KEWANGAN</b></p>
-        <p>Saya <b><?php echo htmlspecialchars($memberData['name']); ?></b> No. Ahli: <b><?php echo htmlspecialchars($memberData['membershipNo']); ?></b> mengesahkan bahawa Penyata Kewangan Koperasi Kakitangan KADA Kelantan Berhad adalah benar:</p>
+        <p>Saya <b><?php echo htmlspecialchars($memberData['memberName']); ?></b> No. Ahli: <b><?php echo htmlspecialchars($memberData['employeeID']); ?></b> mengesahkan bahawa Penyata Kewangan Koperasi Kakitangan KADA Kelantan Berhad adalah benar:</p>
         
         <form method="post" action="submit_confirmation.php" class="mt-3">
             <div class="form-check mb-2">
@@ -132,7 +137,7 @@ $financialData = mysqli_fetch_assoc($result);
                 <input class="form-check-input" type="radio" name="confirmation" id="disagree" value="disagree">
                 <label class="form-check-label" for="disagree">Tidak Setuju</label>
             </div>
-            <button type="submit" class="btn btn-primary">Hantar Pengesahan</button>
+            <!-- <button type="submit" class="btn btn-primary">Hantar Pengesahan</button> -->
         </form>
     </div>
 
