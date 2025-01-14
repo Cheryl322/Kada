@@ -107,7 +107,7 @@ body::before {
             </svg>
           </li>
           <li class="nav-item">
-          <a class="nav-link" href="profil.php">Profil</a>
+          <a class="nav-link" href="profil2.php">Profil</a>
           </li>
     
         </ul>
