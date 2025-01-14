@@ -12,7 +12,6 @@ if (!isset($_SESSION['employeeID']) || $_SESSION['role'] !== 'admin') {
     exit();
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 
@@ -39,24 +38,20 @@ if (!isset($_SESSION['employeeID']) || $_SESSION['role'] !== 'admin') {
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 40vh;
-  width: calc(100% - 20px);
-  margin-left: 0;
-  position: relative;
-  top: -5vh;
-  margin-top: 60px;
-  padding: 0 10px;
-  flex-wrap: wrap;
-  gap: 80px;
-  transition: all 0.3s ease-in-out;
-}
-
-.circle-container.sidebar-closed {
-  margin-left: 0;
+  min-height: 20vh;
   width: 100%;
+  margin: 80px auto 40px;
+  padding: 0 40px;
+  flex-wrap: wrap;
+  gap: 40px;
+  position: relative;
+  transition: all 0.3s ease-in-out;
+  transition: padding-left 0.3s ease-in-out;
 }
 
 .circle {
+  flex: 0 0 180px;
+  margin: 10px;
   width: 180px;
   height: 180px;
   border-radius: 50%;
@@ -76,11 +71,10 @@ if (!isset($_SESSION['employeeID']) || $_SESSION['role'] !== 'admin') {
   border: 4px solid white;
   box-shadow: 0 0 15px rgba(0,0,0,0.1);
   overflow: hidden;
-  margin: 10px 20px;
 }
 
 .circle:hover {
-  transform: scale(1.1);
+  transform: scale(1.05);
   background-color: rgb(34, 119, 210);
   border-color: rgba(255, 255, 255, 0.9);
 }
@@ -88,10 +82,9 @@ if (!isset($_SESSION['employeeID']) || $_SESSION['role'] !== 'admin') {
 /* Make circles responsive */
 @media screen and (max-width: 1200px) {
   .circle {
+    flex: 0 0 150px;
     width: 150px;
     height: 150px;
-    font-size: 1.1rem;
-    padding: 12px;
   }
 
   .circle i {
@@ -105,10 +98,9 @@ if (!isset($_SESSION['employeeID']) || $_SESSION['role'] !== 'admin') {
 
 @media screen and (max-width: 800px) {
   .circle {
+    flex: 0 0 130px;
     width: 130px;
     height: 130px;
-    font-size: 1rem;
-    padding: 10px;
   }
 
   .circle i {
@@ -120,154 +112,28 @@ if (!isset($_SESSION['employeeID']) || $_SESSION['role'] !== 'admin') {
   }
 }
 
-.navbar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    height: 100%;
-    width: 250px;
-    background-color: rgb(34, 119, 210);
-    padding-top: 20px;
-    margin-top: 60px;
-    transform: translateX(-250px);
-    transition: transform 0.3s ease-in-out;
-}
-
-.navbar.closed {
-    transform: translateX(-250px);
-}
-
-.navbar:not(.closed) {
-    transform: translateX(0);
-}
-
-.navbar.initial-state {
-    transition: none !important;
-}
-
-.container-fluid {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-.navbar-nav {
-    flex-direction: column;
-    width: 100%;
-}
-.nav-item {
-    width: 100%;
-}
-.nav-link {
-    color: white;
-    padding: 10px 15px;
-}
-
-#sidebarToggle {
-    position: fixed;
-    top: 20px;
-    left: 20px;
-    z-index: 1000;
-    display: none;
-}
-
-.navbar.closed + #sidebarToggle {
-    display: block;
-}
-
-#closeSidebar {
-    transition: transform 0.3s ease;
-}
-
-#closeSidebar:hover {
-    transform: scale(1.2);
-}
-
-.main-header {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 60px;
-    background-color: white;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 20px;
-    z-index: 999;
-}
-
-.menu-button {
-    background: none;
-    border: none;
-    font-size: 24px;
-    color: rgb(34, 119, 210);
-    cursor: pointer;
-    padding: 10px;
-    transition: transform 0.3s ease;
-}
-
-.menu-button:hover {
-    transform: scale(1.1);
-}
-
-.top-right-icons {
-    display: flex;
-    gap: 20px;
-    align-items: center;
-}
-
-.icon-button {
-    color: rgb(34, 119, 210);
-    font-size: 24px;
-    cursor: pointer;
-    transition: transform 0.3s ease;
-    position: relative;
-}
-
-.icon-button:hover {
-    transform: scale(1.1);
-}
-
-.profile-pic {
-    width: 35px;
-    height: 35px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 2px solid rgb(34, 119, 210);
-}
-
-.notification-badge {
-    position: absolute;
-    top: -5px;
-    right: -5px;
-    background-color: red;
-    color: white;
-    border-radius: 50%;
-    padding: 2px 6px;
-    font-size: 12px;
-}
-
 /* Add these table styles */
 .tables-container {
     display: flex;
-    gap: 30px;
-    padding: 20px;
-    margin-left: 0;
-    margin-top: -50px;
-    justify-content: space-between;
-    max-width: 100%;
+    gap: 100px;
+    padding: 20px 40px;
+    width: calc(100% - 80px);
+    margin: 0 auto;
+    justify-content: flex-start;
     flex-wrap: nowrap;
-    transition: all 0.3s ease-in-out;
+    transition: transform 0.3s ease-in-out;
+    position: relative;
 }
 
 .table-wrapper {
-    flex: 1;
+    flex: 0 0 calc(50% - 15px);
+    width: calc(50% - 15px);
+    max-width: calc(50% - 15px);
+    min-width: 0;
     background: white;
     padding: 20px;
     border-radius: 10px;
     box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    min-width: 0;
 }
 
 .table-header {
@@ -345,42 +211,35 @@ if (!isset($_SESSION['employeeID']) || $_SESSION['role'] !== 'admin') {
     .circle-container {
         min-height: auto;
         padding: 20px 10px;
-        margin-bottom: 0;
-        top: 0;
-    }
-
-    .circle {
-        margin: 10px;
+        margin-bottom: 40px;
     }
 
     .tables-container {
         flex-direction: row;
         margin-top: 0;
         flex-wrap: nowrap;
-        padding-top: 0;
-    }
-
-    .sidebar-open .circle-container {
-        width: calc(100% - 270px);
-        margin-left: 250px;
+        padding-top: 20px;
     }
 }
 
 @media screen and (max-width: 1000px) {
     .tables-container {
         flex-direction: column;
+        width: calc(100% - 40px);
     }
     
     .table-wrapper {
-        flex: 1;
-        width: 100%;
         max-width: 100%;
+    }
+    
+    .sidebar-open .tables-container {
+        width: calc(100% - 290px);
     }
 }
 
 .tables-container.sidebar-closed {
     margin-left: 0;
-    max-width: 100%;
+    width: 100%;
 }
 
 /* Add these styles */
@@ -432,13 +291,14 @@ if (!isset($_SESSION['employeeID']) || $_SESSION['role'] !== 'admin') {
 
 /* Add these new styles for when sidebar is open */
 .sidebar-open .circle-container {
-    width: calc(100% - 270px);
-    margin-left: 250px;
+    transform: translateX(150px);
+    padding-left: 40px;
 }
 
 .sidebar-open .tables-container {
-    margin-left: 250px;
-    max-width: calc(100% - 270px);
+    transform: translateX(0px);
+    width: calc(100% - 250px);
+    margin-right: 40px;
 }
 
 /* Add these new styles for the dropdown */
@@ -476,139 +336,185 @@ if (!isset($_SESSION['employeeID']) || $_SESSION['role'] !== 'admin') {
     color: rgb(34, 119, 210);
     font-size: 12px;
 }
+
+/* Add styles for when sidebar is closed */
+.sidebar-closed .circle-container {
+  padding-left: 40px;
+}
+
+.sidebar-closed .tables-container {
+  padding-left: 40px;
+}
+
+/* Add container width constraints */
+@media screen and (min-width: 1200px) {
+  .circle-container {
+    max-width: 1000px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+/* Update media queries for responsiveness */
+@media screen and (max-width: 1400px) {
+  .sidebar-open .circle-container,
+  .sidebar-open .tables-container {
+    padding-left: 40px;
+  }
+}
+
+@media screen and (max-width: 1000px) {
+  .sidebar-open .circle-container,
+  .sidebar-open .tables-container {
+    padding-left: 40px;
+  }
+}
+
+/* Add transition for smooth movement */
+.circle-container,
+.tables-container {
+  transition: transform 0.3s ease-in-out;
+}
+
+/* Ensure table content doesn't overflow */
+.custom-table {
+  width: 100%;
+  table-layout: fixed;
+}
+
+.custom-table td {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Ensure the container doesn't overflow */
+@media screen and (min-width: 1001px) {
+  .tables-container {
+    max-width: calc(100vw - 80px);
+  }
+  
+  .sidebar-open .tables-container {
+    max-width: calc(100vw - 200px);
+  }
+}
 </style>
 </head>
 
 <body>
+    <?php
+    // Include header and footer
+    include "headeradmin.php";
+    ?>
 
-<div class="main-header">
-    <div class="header-left">
-        <button class="menu-button" id="menuButton">
-            <i class="fas fa-bars"></i>
-        </button>
-        <a href="adminmainpage.php" class="home-button">
-            <i class="fas fa-home"></i>
-        </a>
+    <div class="circle-container">
+      <a href="senaraiahli.php" class="circle">
+        <div class="circle-content">
+          <i class="fas fa-users mb-2"></i>
+          <span>Ahli Semasa</span>
+        </div>
+      </a>
+      <a href="senaraipembiayaan.php" class="circle">
+        <div class="circle-content">
+          <i class="fas fa-hand-holding-usd mb-2"></i>
+          <span>Permohonan Pinjaman</span>
+        </div>
+      </a>
+      <a href="hasilreport.php" class="circle">
+        <div class="circle-content">
+          <i class="fas fa-file-alt mb-2"></i>
+          <span>Hasil Laporan</span>
+        </div>
+      </a>
+      <a href="adminviewreport.php" class="circle">
+        <div class="circle-content">
+          <i class="fas fa-clipboard-check mb-2"></i>
+          <span>Cek Laporan</span>
+        </div>
+      </a>
     </div>
-    <div class="top-right-icons">
-        <div class="icon-button">
-            <i class="fas fa-envelope"></i>
-        </div>
-        <div class="icon-button">
-            <i class="fas fa-bell"></i>
-            <span class="notification-badge">3</span>
-        </div>
-        <div class="icon-button" style="position: relative;">
-            <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Profile" class="profile-pic" id="profileButton">
-            <div class="profile-dropdown" id="profileDropdown">
-                <a href="logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a>
+
+    <div class="tables-container">
+        <div class="table-wrapper">
+            <div class="table-header">
+                <h3>Senarai Ahli Semasa</h3>
+                <a href="senaraiahli.php" class="see-more-link">
+                    Lihat Semua <i class="fas fa-arrow-right"></i>
+                </a>
             </div>
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>No.</th>
+                        <th>Nama</th>
+                        <th>Status</th>
+                        <th>Tarikh Daftar</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>A001</td>
+                        <td>Ahmad bin Abdullah</td>
+                        <td>Lulus</td>
+                        <td>01/03/2024</td>
+                    </tr>
+                    <tr>
+                        <td>A002</td>
+                        <td>Siti Aminah</td>
+                        <td>Lulus</td>
+                        <td>02/03/2024</td>
+                    </tr>
+                    <tr>
+                        <td>A003</td>
+                        <td>Raj Kumar</td>
+                        <td>Lulus</td>
+                        <td>03/03/2024</td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
-    </div>
-</div>
 
-<div class="circle-container">
-  <a href="senaraiahli.php" class="circle">
-    <div class="circle-content">
-      <i class="fas fa-users mb-2"></i>
-      <span>Ahli Semasa</span>
-    </div>
-  </a>
-  <a href="senaraipembiayaan.php" class="circle">
-    <div class="circle-content">
-      <i class="fas fa-hand-holding-usd mb-2"></i>
-      <span>Permohonan Pinjaman</span>
-    </div>
-  </a>
-  <a href="hasilreport.php" class="circle">
-    <div class="circle-content">
-      <i class="fas fa-file-alt mb-2"></i>
-      <span>Hasil Laporan</span>
-    </div>
-  </a>
-  <a href="adminviewreport.php" class="circle">
-    <div class="circle-content">
-      <i class="fas fa-clipboard-check mb-2"></i>
-      <span>Cek Laporan</span>
-    </div>
-  </a>
-</div>
-
-<div class="tables-container">
-    <div class="table-wrapper">
-        <div class="table-header">
-            <h3>Senarai Ahli Semasa</h3>
-            <a href="senaraiahli.php" class="see-more-link">
-                Lihat Semua <i class="fas fa-arrow-right"></i>
-            </a>
+        <div class="table-wrapper">
+            <div class="table-header">
+                <h3>Senarai Pinjaman Terkini</h3>
+                <a href="senaraipembiayaan.php" class="see-more-link">
+                    Lihat Semua <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>No.</th>
+                        <th>Nama</th>
+                        <th>Status</th>
+                        <th>Tarikh Pinjaman</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>P001</td>
+                        <td>Muhammad Ali</td>
+                        <td>Dalam Proses</td>
+                        <td>01/03/2024</td>
+                    </tr>
+                    <tr>
+                        <td>P002</td>
+                        <td>Lee Wei Ming</td>
+                        <td>Lulus</td>
+                        <td>02/03/2024</td>
+                    </tr>
+                    <tr>
+                        <td>P003</td>
+                        <td>Sarah Abdullah</td>
+                        <td>Dalam Proses</td>
+                        <td>03/03/2024</td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
-        <table class="custom-table">
-            <thead>
-                <tr>
-                    <th>No.</th>
-                    <th>Nama</th>
-                    <th>Status</th>
-                    <th>Tarikh Daftar</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>A001</td>
-                    <td>Ahmad bin Abdullah</td>
-                    <td>Lulus</td>
-                    <td>01/03/2024</td>
-                </tr>
-                <tr>
-                    <td>A002</td>
-                    <td>Siti Aminah</td>
-                    <td>Lulus</td>
-                    <td>02/03/2024</td>
-                </tr>
-                <tr>
-                    <td>A003</td>
-                    <td>Raj Kumar</td>
-                    <td>Lulus</td>
-                    <td>03/03/2024</td>
-                </tr>
-            </tbody>
-        </table>
+
     </div>
 
-    <div class="table-wrapper">
-        <div class="table-header">
-            <h3>Senarai Pinjaman Terkini</h3>
-            <a href="senaraipembiayaan.php" class="see-more-link">
-                Lihat Semua <i class="fas fa-arrow-right"></i>
-            </a>
-        </div>
-        <table class="custom-table">
-            <thead>
-                <tr>
-                    <th>No.</th>
-                    <th>Nama</th>
-                    <th>Status</th>
-                    <th>Tarikh Pinjaman</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>P001</td>
-                    <td>Muhammad Ali</td>
-                    <td>Dalam Proses</td>
-                    <td>01/03/2024</td>
-                </tr>
-                <tr>
-                    <td>P002</td>
-                    <td>Lee Wei Ming</td>
-                    <td>Lulus</td>
-                    <td>02/03/2024</td>
-                </tr>
-                <tr>
-                    <td>P003</td>
-                    <td>Sarah Abdullah</td>
-                    <td>Dalam Proses</td>
-                    <td>03/03/2024</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
+    <?php include "footer.php"; ?>
+</body>
+</html>
