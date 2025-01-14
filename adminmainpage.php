@@ -1,3 +1,18 @@
+<?php
+session_start();
+
+// Debug lines
+error_log("Admin page access - Session data: " . print_r($_SESSION, true));
+
+// Check if user is logged in and is an admin
+if (!isset($_SESSION['employeeID']) || $_SESSION['role'] !== 'admin') {
+    error_log("Access denied - employeeID: " . (isset($_SESSION['employeeID']) ? $_SESSION['employeeID'] : 'not set'));
+    error_log("Access denied - role: " . (isset($_SESSION['role']) ? $_SESSION['role'] : 'not set'));
+    header('Location: login.php');
+    exit();
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -509,7 +524,10 @@
         <a class="nav-link" href="senaraiahli.php">Ahli Semasa</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" href="senaraipembiayaan.php">Permohonan Pinjaman</a>
+        <a class="nav-link" href="#">Pendaftaran Ahli</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#">Permohonan Pinjaman</a>
       </li>
       <li class="nav-item">
         <a class="nav-link" href="hasilreport.php">Hasil Laporan</a>
@@ -540,7 +558,13 @@
       <span>Ahli Semasa</span>
     </div>
   </a>
-  <a href="senaraipembiayaan.php" class="circle">
+  <a href="page2.php" class="circle">
+    <div class="circle-content">
+      <i class="fas fa-user-plus mb-2"></i>
+      <span>Pendaftaran Ahli</span>
+    </div>
+  </a>
+  <a href="page3.php" class="circle">
     <div class="circle-content">
       <i class="fas fa-hand-holding-usd mb-2"></i>
       <span>Permohonan Pinjaman</span>
@@ -681,4 +705,3 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <?php include 'footer.php';?>
-

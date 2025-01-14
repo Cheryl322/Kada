@@ -1,19 +1,16 @@
 <?php
-//Set DB Parameter
 
-$servername ="localhost";
-$username ="root";
-$password ="";
-$dbname ="db_kada";
+$host = "localhost";
+$user = "root";
+$password = "";
+$database = "db_kada";
 
-//Connect DB
-$con = mysqli_connect($servername, $username, $password, $dbname);
+$conn = mysqli_connect($host, $user, $password, $database);
 
-//Connection Check
-if (!$con) {
+if (!$conn) {
     die("Connection failed: " . mysqli_connect_error());
 }
 
-mysqli_set_charset($con, "utf8mb4");
+mysqli_set_charset($conn, "utf8mb4");
 
 ?>

@@ -2,69 +2,89 @@
 session_start();
 include "dbconnect.php";
 
+// 启用错误报告
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+// 记录请求数据
+file_put_contents('debug.txt', "Request received at " . date('Y-m-d H:i:s') . "\n", FILE_APPEND);
+file_put_contents('debug.txt', "POST data: " . print_r($_POST, true) . "\n", FILE_APPEND);
+file_put_contents('debug.txt', "SESSION data: " . print_r($_SESSION, true) . "\n", FILE_APPEND);
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Validate session and user authentication
-    if (!isset($_SESSION['user_id'])) {
-        $_SESSION['error_message'] = "Sesi tamat. Sila log masuk semula.";
-        header("Location: login.php");
-        exit();
-    }
+    try {
+        // 数据库连接
+        $host = "localhost";
+        $dbname = "kada";
+        $username = "root";
+        $password = "";
 
-    // Sanitize inputs
-    $name = trim(mysqli_real_escape_string($con, $_POST['nama']));
-    $email = filter_var($_POST['email'], FILTER_SANITIZE_EMAIL);
-    $ic = trim(mysqli_real_escape_string($con, $_POST['ic_passport']));
-    // ... rest of the data sanitization ...
+        $pdo = new PDO(
+            "mysql:host=$host;dbname=$dbname;charset=utf8",
+            $username,
+            $password,
+            [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
+        );
 
-    // Validate required fields
-    if (empty($name) || empty($email) || empty($ic)) {
-        $_SESSION['error_message'] = "Sila isi semua maklumat yang diperlukan.";
-        header("Location: profil.php");
-        exit();
-    }
+        // 开始事务
+        $pdo->beginTransaction();
 
+        // 更新会员信息
+        $sql = "UPDATE tb_member SET 
+                memberName = :memberName,
+                email = :email,
+                ic = :ic,
+                maritalStatus = :maritalStatus,
+                sex = :sex,
+                religion = :religion,
+                nation = :nation,
+                no_pf = :no_pf,
+                position = :position,
+                phoneNumber = :phoneNumber,
+                phoneHome = :phoneHome
+                WHERE employeeId = :employeeId";
 
-    // Prepare the update query using prepared statements
-    $sql = "UPDATE tb_member SET 
-            p_name=?, p_email=?, p_ic=?, p_marital=?, 
-            p_address=?, p_poskod=?, p_country=?, p_sex=?, 
-            p_agama=?, p_bangsa=?, p_nostaff=?, p_nopf=?, 
-            p_jawatan=?, p_addpejabat=?, p_notel=?, p_notelhome=?
-            WHERE id=?"; // Add your WHERE condition based on your table structure
-
-    $stmt = mysqli_prepare($con, $sql);
-    
-    // Bind parameters
-    mysqli_stmt_bind_param($stmt, "ssssssssssssssssi", 
-        $name, $email, $ic, $marital, 
-        $address, $poskod, $country, $sex, 
-        $agama, $bangsa, $nostaff, $nopf, 
-        $jawatan, $addpejabat, $notel, $notelhome,
-        $_SESSION['user_id'] // Assuming you have user_id in session
-    );
-
-  
-
-    if (mysqli_stmt_execute($stmt)) {
-        mysqli_stmt_close($stmt);
-        $_SESSION['success_message'] = "Profil berjaya dikemaskini!";
+        $stmt = $pdo->prepare($sql);
         
-        // Fetch the updated profile data
-        $sql_select = "SELECT * FROM tb_profile WHERE id = ?";
-        $stmt_select = mysqli_prepare($con, $sql_select);
-        mysqli_stmt_bind_param($stmt_select, "i", $_SESSION['user_id']);
-        mysqli_stmt_execute($stmt_select);
-        $result = mysqli_stmt_get_result($stmt_select);
-        
-        if ($row = mysqli_fetch_assoc($result)) {
-            $_SESSION['profile_data'] = $row; // Store updated profile in session
+        $result = $stmt->execute([
+            ':memberName' => $_POST['memberName'],
+            ':email' => $_POST['email'],
+            ':ic' => $_POST['ic'],
+            ':maritalStatus' => $_POST['maritalStatus'],
+            ':sex' => $_POST['sex'],
+            ':religion' => $_POST['religion'],
+            ':nation' => $_POST['nation'],
+            ':no_pf' => $_POST['no_pf'],
+            ':position' => $_POST['position'],
+            ':phoneNumber' => $_POST['phoneNumber'],
+            ':phoneHome' => $_POST['phoneHome'],
+            ':employeeId' => $_SESSION['employeeID']
+        ]);
+
+        if ($result) {
+            $pdo->commit();
+            $_SESSION['success_message'] = "Profil berjaya dikemaskini!";
+            
+            // 确保数据已经更新
+            $pdo = null; // 关闭当前连接
+            
+            // 强制刷新
+            header("Cache-Control: no-cache, must-revalidate");
+            header("Location: profil.php");
+                exit();
+            }
+
+    } catch (Exception $e) {
+        // 如果出错，回滚事务
+        if (isset($pdo)) {
+            $pdo->rollBack();
         }
-        
-        mysqli_stmt_close($stmt_select);
-        header("Location: profil.php");
-        exit();
+        $_SESSION['error_message'] = "Error: " . $e->getMessage();
+        file_put_contents('debug.txt', "Error: " . $e->getMessage() . "\n", FILE_APPEND);
     }
-
-
 }
+
+// 重定向回个人资料页面
+header('Location: profil.php');
+exit();
 ?>

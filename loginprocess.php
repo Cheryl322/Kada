@@ -2,53 +2,59 @@
 session_start();
 include "dbconnect.php";
 
-$employeeID = $_POST['employeeID'];
-$password = $_POST['password'];
+if ($_SERVER['REQUEST_METHOD'] != 'POST') {
+    header('Location: login.php');
+    exit;
+}
 
-// SQL query to select user
-$sql = "SELECT * FROM tb_employee 
-        WHERE employeeID = ?";
-$stmt = mysqli_prepare($con, $sql);
-mysqli_stmt_bind_param($stmt, "s", $employeeID);
-mysqli_stmt_execute($stmt);
-$result = mysqli_stmt_get_result($stmt);
+$employeeID = (int)mysqli_real_escape_string($conn, trim($_POST['employeeID']));
+$password = trim($_POST['password']);
 
-//$result=mysqli_query($con,$sql);
-
-//Retrieve data
-$row=mysqli_fetch_array($result);
-
-//Count result to check
-$count=mysqli_num_rows($result);
-
-// Rule-based AI login
-if ($count == 1) {
-    // Verify the password
-    if (password_verify($password, $row['password'])) {
-        // Set session
-        $_SESSION['employeeID'] = $row['employeeID'];
-        // $_SESSION['user_id'] = $row['id']; // Assuming 'id' is the primary key in tb_employee
-
-        // Check user type
-        if ($row['employeeID'] == '1234') {
-            // Admin
-            header('Location: adminpage.php');
+try {
+    // Get user data including role
+    $sql = "SELECT * FROM tb_employee WHERE employeeID = ?";
+    $stmt = mysqli_prepare($conn, $sql);
+    mysqli_stmt_bind_param($stmt, "s", $employeeID);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+    
+    if ($result && mysqli_num_rows($result) == 1) {
+        $user = mysqli_fetch_assoc($result);
+        
+        if (password_verify($password, $user['password'])) {
+            // Set session variables
+            $_SESSION['employeeID'] = $user['employeeID'];
+            $_SESSION['role'] = $user['role']; // Store the role in session
+            
+            // Redirect based on role
+            if ($user['role'] === 'admin') {
+                header('Location: adminmainpage.php');
+            } else {
+                header('Location: mainpage.php');
+            }
+            exit();
         } else {
-            // Regular user
-            header('Location: mainpage.php');
+            $_SESSION['error_message'] = "Kata laluan salah.";
+            header('Location: login.php');
+            exit();
         }
-        exit();
     } else {
-        $_SESSION['error_message'] = "Kata laluan salah.";
+        $_SESSION['error_message'] = "ID pekerja tidak wujud.";
         header('Location: login.php');
         exit();
     }
-} else {
-    $_SESSION['error_message'] = "ID pekerja tidak wujud.";
+
+} catch (Exception $e) {
+    $_SESSION['error_message'] = "Login failed: " . $e->getMessage();
     header('Location: login.php');
     exit();
+} finally {
+    if (isset($stmt)) mysqli_stmt_close($stmt);
+    mysqli_close($conn);
 }
 
-
-mysqli_close($con);
+// Debug lines (add these temporarily)
+error_log("Login attempt - EmployeeID: " . $employeeID);
+error_log("Role: " . $user['role']);
+error_log("Session data: " . print_r($_SESSION, true));
 ?>
