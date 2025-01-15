@@ -1,5 +1,5 @@
 <!-- for member who havent apply loan and user which havent apply member -->
-s<?php
+<?php
 session_start();
 
 // Check if user is logged in
