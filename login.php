@@ -32,7 +32,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if (mysqli_num_rows($result) > 0) {
         $row = mysqli_fetch_assoc($result);
         $_SESSION['employeeID'] = $row['employeeID'];
-        header("Location: mainpage.php");
+        $_SESSION['role'] = $row['role'];
+        
+        // Redirect based on role
+        if ($row['role'] === 'admin') {
+            header("Location: adminmainpage.php");
+        } else {
+            header("Location: mainpage.php");
+        }
         exit();
     } else {
         $_SESSION['error_message'] = "ID Pekerja atau kata laluan tidak sah.";
