@@ -59,7 +59,7 @@
         </li>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="#">Hubungi Kami</a>
+          <a class="nav-link" href="hubungikami.php">Hubungi Kami</a>
         </li>
         <li class="nav navbar-nav navbar-right">
           <li>
