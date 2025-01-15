@@ -9,6 +9,7 @@ if (!isset($_SESSION['employeeID'])) {
 
 include "headermember.php";
 include "dbconnect.php";
+// include "footer.php";
 
 // Get member data including addresses
 $employeeId = $_SESSION['employeeID'];

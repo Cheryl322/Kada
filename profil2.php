@@ -9,6 +9,7 @@ if (!isset($_SESSION['employeeID'])) {
 
 include "headermember.php";
 include "dbconnect.php";
+// include "footer";
 
 $employeeId = $_SESSION['employeeID'];
 
@@ -66,7 +67,7 @@ $userData = mysqli_fetch_assoc($result);
                         <?php else: ?>
                         <!-- 非会员菜单选项 -->
                         <li class="nav-item w-100">
-                            <a class="btn btn-info w-75" href="apply_member.php">Mohon Keahlian</a>
+                            <a class="btn btn-info w-75" href="daftar_ahli.php">Mohon Keahlian</a>
                         </li>
                         <?php endif; ?>
                         <li class="nav-item w-100">
@@ -187,7 +188,7 @@ $userData = mysqli_fetch_assoc($result);
                         <div class="alert alert-info mt-4">
                             <i class="fas fa-info-circle"></i>
                             Untuk mengakses lebih banyak fungsi, sila mohon keahlian KADA.
-                            <a href="apply_member.php" class="alert-link" >Mohon Sekarang</a>
+                            <a href="daftar_ahli.php" class="alert-link" >Mohon Sekarang</a>
                         </div>
                         <?php endif; ?>
                     </div>
