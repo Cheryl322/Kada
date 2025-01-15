@@ -104,22 +104,13 @@ try {
     }
 
     // 3. Insert into tb_loan
-    $loanSql = "INSERT INTO tb_loan (
-        loanApplicationID,
-        employeeID,
-        amountRequested,
-        financingPeriod,
-        monthlyInstallments,
-        employerName,
-        employerIC,
-        basicSalary,
-        netSalary,
-        basicSalaryFile,
-        netSalaryFile
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    $loanType = $_POST['loanType'];
 
-    $stmt = mysqli_prepare($conn, $loanSql);
-    mysqli_stmt_bind_param($stmt, "iidddssddss", 
+    $sql = "INSERT INTO tb_loan (loanApplicationID, employeeID, amountRequested, financingPeriod, monthlyInstallments, employerName, employerIC, basicSalary, netSalary, basicSalaryFile, netSalaryFile, loanType) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("ssdddssddsss",
         $loanApplicationID,
         $_POST['employeeID'],
         $_POST['amountRequested'],
@@ -130,7 +121,8 @@ try {
         $_POST['basicSalary'],
         $_POST['netSalary'],
         $basicSalaryFile,
-        $netSalaryFile
+        $netSalaryFile,
+        $loanType
     );
 
     if (!mysqli_stmt_execute($stmt)) {

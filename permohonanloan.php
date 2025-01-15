@@ -204,7 +204,16 @@ mysqli_stmt_close($stmt);
                     </div>
                 </div>
 
-                <h6 class="mt-4">Maklumat Bank</h6>
+                
+
+                <div class="mt-3">
+                    <button type="button" class="btn btn-primary next-step">Seterusnya</button>
+                </div>
+            </div>
+
+            <!-- Step 2: Maklumat Pembiayaan -->
+            <div class="form-step" id="step2">
+            <h5 class="mt-3">Maklumat Bank</h5>
                 <div class="row mb-3">
                     <div class="col-md-6">
                         <label for="bankName" class="form-label">Nama Bank</label>
@@ -228,15 +237,21 @@ mysqli_stmt_close($stmt);
                     </div>
                 </div>
 
-                <div class="mt-3">
-                    <button type="button" class="btn btn-primary next-step">Seterusnya</button>
-                </div>
-            </div>
-
-            <!-- Step 2: Maklumat Pembiayaan -->
-            <div class="form-step" id="step2">
+                <br>
                 <h5>Maklumat Pembiayaan</h5>
                 <div class="row mb-3">
+                    <div class="mb-3">
+                        <label for="loanType" class="form-label">Jenis Pinjaman</label>
+                        <select class="form-select" id="loanType" name="loanType" required>
+                            <option value="">Pilih Jenis Pinjaman</option>
+                            <option value="AL-BAI">AL-BAI</option>
+                            <option value="AL-INAH">AL-INAH</option>
+                            <option value="SKIM KHAS">SKIM KHAS</option>
+                            <option value="KARNIVAL MUSIM ISTIMEWA">KARNIVAL MUSIM ISTIMEWA</option>
+                            <option value="BAIK PULIH KENDERAAN">BAIK PULIH KENDERAAN</option>
+                            <option value="CUKAI JALAN">CUKAI JALAN</option>
+                        </select>
+                    </div>
                     <div class="col-md-6">
                         <label for="jumlah_pinjaman" class="form-label">Jumlah Pinjaman</label>
                         <div class="input-group">
@@ -1221,7 +1236,7 @@ $(document).ready(function() {
     $('#jumlah_pinjaman, #tempoh_pembayaran').on('input', calculateMonthlyPayment);
 });
 </script>
-<!-- Success Modal -->
+<!-- Success Modal
 <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -1240,7 +1255,7 @@ $(document).ready(function() {
             </div>
         </div>
     </div>
-</div>
+</div> -->
 
 <script>
 $(document).ready(function() {
