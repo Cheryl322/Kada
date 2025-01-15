@@ -115,7 +115,7 @@ if (!isset($_SESSION['employeeID']) || $_SESSION['role'] !== 'admin') {
 /* Add these table styles */
 .tables-container {
     display: flex;
-    gap: 100px;
+    gap: 30px;
     padding: 20px 40px;
     width: calc(100% - 80px);
     margin: 0 auto;
@@ -291,12 +291,12 @@ if (!isset($_SESSION['employeeID']) || $_SESSION['role'] !== 'admin') {
 
 /* Add these new styles for when sidebar is open */
 .sidebar-open .circle-container {
-    transform: translateX(150px);
+    transform: translateX(250px);
     padding-left: 40px;
 }
 
 .sidebar-open .tables-container {
-    transform: translateX(0px);
+    transform: translateX(200px);
     width: calc(100% - 250px);
     margin-right: 40px;
 }
@@ -397,7 +397,7 @@ if (!isset($_SESSION['employeeID']) || $_SESSION['role'] !== 'admin') {
   .sidebar-open .tables-container {
     max-width: calc(100vw - 200px);
   }
-}
+  }
 </style>
 </head>
 
