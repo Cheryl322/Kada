@@ -1,3 +1,4 @@
+<!-- for member who havent apply loan and user which havent apply member -->
 <?php
 session_start();
 

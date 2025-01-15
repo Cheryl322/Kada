@@ -1,3 +1,4 @@
+<!-- for member that already apply loan -->
 <?php
 session_start();
 
