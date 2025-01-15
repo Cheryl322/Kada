@@ -265,21 +265,17 @@
                     <th>No. Telefon Rumah</th>
                     <th>Jantina</th>
                     <th>Agama</th>
-                    <th>Tarikh Lahir</th>
                     <th>Status Perkahwinan</th>
                     <th>Warganegara</th>
-                    <th>Alamat</th>
                     <th>Jawatan</th>
                     <th>Gaji Bulanan</th>
                     <th>No. PF</th>
-                    <th>Status</th>
-                    <th>Tarikh Daftar</th>
                 </tr>
             </thead>
             <tbody>
                 <?php
                 // Database connection
-                include 'dbconnect.php';  // Make sure you have your database configuration file
+                include 'dbconnect.php';
 
                 // Prepare and execute the query
                 $sql = "SELECT * FROM tb_member";
@@ -296,15 +292,11 @@
                     echo "<td>" . htmlspecialchars($row['phoneHome']) . "</td>";
                     echo "<td>" . htmlspecialchars($row['sex']) . "</td>";
                     echo "<td>" . htmlspecialchars($row['religion']) . "</td>";
-                    echo "<td>" . htmlspecialchars($row['birthdate']) . "</td>";
                     echo "<td>" . htmlspecialchars($row['maritalStatus']) . "</td>";
                     echo "<td>" . htmlspecialchars($row['nation']) . "</td>";
-                    echo "<td>" . htmlspecialchars($row['address']) . "</td>";
                     echo "<td>" . htmlspecialchars($row['position']) . "</td>";
                     echo "<td>RM " . number_format($row['monthlySalary'], 2) . "</td>";
                     echo "<td>" . htmlspecialchars($row['no_pf']) . "</td>";
-                    echo "<td>" . htmlspecialchars($row['status']) . "</td>";
-                    echo "<td>" . htmlspecialchars($row['registration_date']) . "</td>";
                     echo "</tr>";
                 }
                 mysqli_close($conn);
