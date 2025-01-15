@@ -258,22 +258,19 @@
             <thead>
                 <tr>
                     <th>No.</th>
-                    <th>Nama</th>
-                    <th>Kad Pengenalan</th>
-                    <th>Modah Syeh</th>
-                    <th>Modal Yuran</th>
-                    <th>Simpanan Tetap</th>
-                    <th>Tabung Anggota</th>
-                    <th>Simpanan Anggota</th>
-                    <th>Al-Bai</th>
-                    <th>Al-Innah</th>
-                    <th>B/Pulih Kenderaan</th>
-                    <th>Road Tax & Insuran</th>
-                    <th>Khas</th>
-                    <th>Al-Qadrul Hassan</th>
-                    <th>No. PF</th>
-                    <th>Status</th>
-                    <th>Tarikh Daftar</th>
+                    <th>Jenis Pinjaman</th>
+                    <th>ID Pinjaman</th>
+                    <th>ID Permohonan</th>
+                    <th>ID Pekerja</th>
+                    <th>Jumlah Dipohon</th>
+                    <th>Tempoh Pembiayaan</th>
+                    <th>Ansuran Bulanan</th>
+                    <th>Nama Majikan</th>
+                    <th>IC Majikan</th>
+                    <th>Gaji Pokok</th>
+                    <th>Gaji Bersih</th>
+                    <th>Fail Gaji Pokok</th>
+                    <th>Fail Gaji Bersih</th>
                 </tr>
             </thead>
             <tbody>
@@ -288,27 +285,24 @@
                     while($row = $result->fetch_assoc()) {
                         echo "<tr>";
                         echo "<td>" . $count . "</td>";
-                        echo "<td>" . $row['nama'] . "</td>";
-                        echo "<td>" . $row['ic'] . "</td>";
-                        echo "<td>" . $row['modah_syeh'] . "</td>";
-                        echo "<td>" . $row['modal_yuran'] . "</td>";
-                        echo "<td>" . $row['simpanan_tetap'] . "</td>";
-                        echo "<td>" . $row['tabung_anggota'] . "</td>";
-                        echo "<td>" . $row['simpanan_anggota'] . "</td>";
-                        echo "<td>" . $row['al_bai'] . "</td>";
-                        echo "<td>" . $row['al_innah'] . "</td>";
-                        echo "<td>" . $row['baik_pulih'] . "</td>";
-                        echo "<td>" . $row['roadtax_insurans'] . "</td>";
-                        echo "<td>" . $row['khas'] . "</td>";
-                        echo "<td>" . $row['al_qadrul_hassan'] . "</td>";
-                        echo "<td>" . $row['no_pf'] . "</td>";
-                        echo "<td>" . $row['status'] . "</td>";
-                        echo "<td>" . $row['tarikh_daftar'] . "</td>";
+                        echo "<td>" . $row['loanType'] . "</td>";
+                        echo "<td>" . $row['loanID'] . "</td>";
+                        echo "<td>" . $row['loanApplicationID'] . "</td>";
+                        echo "<td>" . $row['employeeID'] . "</td>";
+                        echo "<td>" . $row['amountRequested'] . "</td>";
+                        echo "<td>" . $row['financingPeriod'] . "</td>";
+                        echo "<td>" . $row['monthlyInstallments'] . "</td>";
+                        echo "<td>" . $row['employerName'] . "</td>";
+                        echo "<td>" . $row['employerIC'] . "</td>";
+                        echo "<td>" . $row['basicSalary'] . "</td>";
+                        echo "<td>" . $row['netSalary'] . "</td>";
+                        echo "<td>" . $row['basicSalaryFile'] . "</td>";
+                        echo "<td>" . $row['netSalaryFile'] . "</td>";
                         echo "</tr>";
                         $count++;
                     }
                 } else {
-                    echo "<tr><td colspan='17'>Tiada rekod ditemui</td></tr>";
+                    echo "<tr><td colspan='14'>Tiada rekod ditemui</td></tr>";
                 }
                 $conn->close();
                 ?>
