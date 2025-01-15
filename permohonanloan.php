@@ -121,7 +121,9 @@ mysqli_stmt_close($stmt);
             <input type="hidden" name="employeeID" value="<?php echo isset($_SESSION['employeeID']) ? $_SESSION['employeeID'] : ''; ?>">
             <!-- Step 1: Maklumat Peribadi -->
             <div class="form-step" id="step1">
-                <h5>Maklumat Peribadi</h5>
+            <div class="section-header">
+                        <h4>MAKLUMAT PERIBADI</h4>
+                    </div>
                 <!-- Personal Info -->
                 <div class="row mb-3">
                     <div class="col-md-6">
@@ -204,8 +206,19 @@ mysqli_stmt_close($stmt);
                     </div>
                 </div>
 
-                <h6 class="mt-4">Maklumat Bank</h6>
-                <div class="row mb-3">
+                
+
+                <div class="mt-3">
+                    <button type="button" class="btn btn-primary next-step">Seterusnya</button>
+                </div>
+            </div>
+
+            <!-- Step 2: Maklumat Pembiayaan -->
+            <div class="form-step" id="step2">
+            <div class="section-header">
+                        <h4>Maklumat Bank</h4>
+                    </div>
+                                    <div class="row mb-3">
                     <div class="col-md-6">
                         <label for="bankName" class="form-label">Nama Bank</label>
                         <select class="form-control" id="bankName" name="bankName" required>
@@ -228,15 +241,23 @@ mysqli_stmt_close($stmt);
                     </div>
                 </div>
 
-                <div class="mt-3">
-                    <button type="button" class="btn btn-primary next-step">Seterusnya</button>
-                </div>
-            </div>
-
-            <!-- Step 2: Maklumat Pembiayaan -->
-            <div class="form-step" id="step2">
-                <h5>Maklumat Pembiayaan</h5>
+                <br>
+                <div class="section-header">
+                        <h4>Maklumat Pembiayaan</h4>
+                    </div>
                 <div class="row mb-3">
+                    <div class="mb-3">
+                        <label for="loanType" class="form-label">Jenis Pinjaman</label>
+                        <select class="form-select" id="loanType" name="loanType" required>
+                            <option value="">Pilih Jenis Pinjaman</option>
+                            <option value="AL-BAI">AL-BAI</option>
+                            <option value="AL-INAH">AL-INAH</option>
+                            <option value="SKIM KHAS">SKIM KHAS</option>
+                            <option value="KARNIVAL MUSIM ISTIMEWA">KARNIVAL MUSIM ISTIMEWA</option>
+                            <option value="BAIK PULIH KENDERAAN">BAIK PULIH KENDERAAN</option>
+                            <option value="CUKAI JALAN">CUKAI JALAN</option>
+                        </select>
+                    </div>
                     <div class="col-md-6">
                         <label for="jumlah_pinjaman" class="form-label">Jumlah Pinjaman</label>
                         <div class="input-group">
@@ -280,7 +301,6 @@ mysqli_stmt_close($stmt);
 
             <!-- Step 3: Maklumat Penjamin -->
             <div class="form-step" id="step3">
-                <h5>Maklumat Penjamin</h5>
                 
                 <!-- Guarantor Information Section -->
                 <div class="guarantor-section">
@@ -380,7 +400,9 @@ mysqli_stmt_close($stmt);
 
             <!-- Step 4: Pengesahan Majikan -->
             <div class="form-step" id="step4">
-                <h5>Pengesahan Majikan</h5>
+                <div class="section-header">
+                        <h4>Pengesahan Majikan</h4>
+                    </div>
                 
                 <div class="row mb-3">
                     <div class="col-md-6">
@@ -467,9 +489,9 @@ mysqli_stmt_close($stmt);
                     </div>
 
                     <!-- Navigation Buttons -->
-                    <div class="d-grid gap-3 mt-4">
-                        <button type="button" class="btn btn-secondary btn-lg" onclick="prevStep()">Kembali</button>
-                        <button type="submit" class="btn btn-success btn-lg">Hantar Permohonan</button>
+                    <div class="button-group">
+                        <button type="button" class="btn btn-secondary" onclick="showStep(3)">Kembali</button>
+                        <button type="submit" class="btn btn-success">Hantar Permohonan</button>
                     </div>
                 </div>
             </div>
@@ -963,17 +985,19 @@ mysqli_stmt_close($stmt);
 }
 
 .section-header {
-    background: #5CBA9B;
-    color: white;
-    padding: 1rem;
-    border-radius: 8px;
-    margin-bottom: 1.5rem;
+    background-color: #ffe4e4;  /* Light pink background */
+    padding: 15px 20px;
+    border-radius: 8px 8px 0 0;
+    border-bottom: 1px solid #f8d7d7;
+    margin-bottom: 20px;
 }
 
 .section-header h4 {
     margin: 0;
-    font-size: 1.2rem;
+    color: #333;
+    font-size: 1.1rem;
     font-weight: 600;
+    text-transform: uppercase;
 }
 
 .form-container {
@@ -1083,6 +1107,95 @@ mysqli_stmt_close($stmt);
         transform: scale(1);
         opacity: 1;
     }
+}
+
+/* Button styling */
+.button-group {
+    display: flex;
+    gap: 15px;
+    margin-top: 20px;
+    padding: 20px 0;
+}
+
+.btn {
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    text-align: center;
+}
+
+.btn-secondary {
+    background-color: #e4a7a7;
+    color: white;
+    width: auto;
+    min-width: 120px;
+}
+
+.btn-secondary:hover {
+    background-color: #d89595;
+}
+
+.btn-success {
+    background-color: #5CBA9B;
+    color: white;
+    width: auto;
+    min-width: 120px;
+}
+
+.btn-success:hover {
+    background-color: #4ea085;
+}
+
+/* Form step visibility */
+.form-step {
+    display: none;
+}
+
+.form-step.active {
+    display: block;
+}
+
+/* Button styling */
+.button-group {
+    display: flex;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.btn {
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-secondary {
+    background-color: #e4a7a7;
+    color: white;
+    width: auto;
+    min-width: 120px;
+}
+
+.btn-secondary:hover {
+    background-color: #d89595;
+}
+
+.btn-success {
+    background-color: #5CBA9B;
+    color: white;
+    width: auto;
+    min-width: 120px;
+}
+
+.btn-success:hover {
+    background-color: #4ea085;
 }
 </style>
 <script>
@@ -1221,7 +1334,7 @@ $(document).ready(function() {
     $('#jumlah_pinjaman, #tempoh_pembayaran').on('input', calculateMonthlyPayment);
 });
 </script>
-<!-- Success Modal -->
+<!-- Success Modal
 <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -1240,7 +1353,7 @@ $(document).ready(function() {
             </div>
         </div>
     </div>
-</div>
+</div> -->
 
 <script>
 $(document).ready(function() {
@@ -1257,6 +1370,44 @@ $(document).ready(function() {
     if ($('#successModal').length > 1) {
         $('#successModal').slice(1).remove();
     }
+});
+</script>
+
+<script>
+// Function to show specific step and update progress
+function showStep(stepNumber) {
+    // Hide all steps first
+    const steps = document.querySelectorAll('.form-step');
+    steps.forEach(step => {
+        step.style.display = 'none';
+    });
+
+    // Show the target step
+    const targetStep = document.getElementById('step' + stepNumber);
+    if (targetStep) {
+        targetStep.style.display = 'block';
+    }
+
+    // Update progress indicator
+    updateProgress(stepNumber);
+}
+
+// Function to update progress indicator
+function updateProgress(stepNumber) {
+    const progressSteps = document.querySelectorAll('.step-item');
+    progressSteps.forEach((step, index) => {
+        if (index + 1 <= stepNumber) {
+            step.classList.add('active');
+        } else {
+            step.classList.remove('active');
+        }
+    });
+}
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    // Show step 4 initially (since we're on the final step)
+    showStep(4);
 });
 </script>
 

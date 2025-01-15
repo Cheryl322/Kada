@@ -434,7 +434,7 @@
         <button class="menu-button" id="menuButton">
             <i class="fas fa-bars"></i>
         </button>
-        <a href="headeradminmain.php" class="home-button">
+        <a href="adminmainpage.php" class="home-button">
             <i class="fas fa-home"></i>
         </a>
     </div>
