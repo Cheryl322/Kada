@@ -27,16 +27,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         
         // 1. Save Fees and Contribution
         $insertFees = "INSERT INTO tb_memberregistration_feesandcontribution 
-                      (employeeID, entryFee, modalShare, feeCapital, deposit, contribution, fixedDeposit, others) 
-                      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                      (employeeID, entryFee, modalShare, feeCapital, deposit, contribution, fixedDeposit) 
+                      VALUES (?, ?, ?, ?, ?, ?, ?)
                       ON DUPLICATE KEY UPDATE 
                       entryFee = VALUES(entryFee),
                       modalShare = VALUES(modalShare),
                       feeCapital = VALUES(feeCapital),
                       deposit = VALUES(deposit),
                       contribution = VALUES(contribution),
-                      fixedDeposit = VALUES(fixedDeposit),
-                      others = VALUES(others)";
+                      fixedDeposit = VALUES(fixedDeposit)";
 
         $stmt = $conn->prepare($insertFees);
         
@@ -47,17 +46,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $deposit = empty($_POST['wang_deposit']) ? 0 : (int)$_POST['wang_deposit'];
         $contribution = empty($_POST['sumbangan_tabung']) ? 0 : (int)$_POST['sumbangan_tabung'];
         $fixedDeposit = empty($_POST['simpanan_tetap']) ? 0 : (int)$_POST['simpanan_tetap'];
-        $others = empty($_POST['lain_lain']) ? 0 : (int)$_POST['lain_lain'];
 
-        $stmt->bind_param("iiiiiiii", 
+        $stmt->bind_param("iiiiiii", 
             $employeeID,
             $entryFee,
             $modalShare,
             $feeCapital,
             $deposit,
             $contribution,
-            $fixedDeposit,
-            $others
+            $fixedDeposit
         );
 
         if (!$stmt->execute()) {
@@ -336,11 +333,6 @@ if (isset($conn->error) && $conn->error) {
                             <td>SIMPANAN TETAP</td>
                             <td><input type="number" name="simpanan_tetap" class="form-control" min="0" step="1"></td>
                         </tr>
-                        <tr>
-                            <td>7</td>
-                            <td>LAIN-LAIN</td>
-                            <td><input type="number" name="lain_lain" class="form-control" min="0" step="1"></td>
-                        </tr>
                     </tbody>
                 </table>
                 <div class="text-muted mt-2">
@@ -472,8 +464,7 @@ function validateForm() {
         modal_yuran: document.querySelector('input[name="modal_yuran"]').value,
         wang_deposit: document.querySelector('input[name="wang_deposit"]').value,
         sumbangan_tabung: document.querySelector('input[name="sumbangan_tabung"]').value,
-        simpanan_tetap: document.querySelector('input[name="simpanan_tetap"]').value,
-        lain_lain: document.querySelector('input[name="lain_lain"]').value
+        simpanan_tetap: document.querySelector('input[name="simpanan_tetap"]').value
     };
 
     // Debug: Log fees data
