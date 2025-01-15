@@ -59,14 +59,14 @@
         </li>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="#">Hubungi Kami</a>
+          <a class="nav-link" href="hubungikami.php">Hubungi Kami</a>
         </li>
         <li class="nav navbar-nav navbar-right">
           <li>
           <a class="nav-link" href="#">Pemberitahuan</a>
           </li>
           <li>
-          <a class="nav-link" href="#login">Profil</a>
+          <a class="nav-link" href="profil2.php">Profil</a>
           </li>
         </li>
       </ul>

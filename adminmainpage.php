@@ -1,6 +1,8 @@
 <?php
 session_start();
 
+include "headeradmin.php";
+
 // Debug lines
 error_log("Admin page access - Session data: " . print_r($_SESSION, true));
 

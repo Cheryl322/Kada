@@ -2,6 +2,53 @@
 session_start();
 include 'headermain.php'; 
 
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    require_once "dbconnect.php";
+    
+    $employeeID = $_POST['employeeID'];
+    $password = $_POST['password'];
+    $admin_key = $_POST['admin_key'];
+
+    // Check if employeeID already exists
+    $checkSql = "SELECT * FROM tb_employee WHERE employeeID = ?";
+    $stmt = mysqli_prepare($conn, $checkSql);
+    mysqli_stmt_bind_param($stmt, 's', $employeeID);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+
+    if (mysqli_num_rows($result) > 0) {
+        $_SESSION['error_message'] = "Employee ID already exists!";
+        header("Location: register.php");
+        exit();
+    }
+
+    // If admin key is provided, verify it
+    if (!empty($admin_key)) {
+        if ($admin_key !== "your_admin_key") { // Replace with your actual admin key
+            $_SESSION['error_message'] = "Invalid admin key!";
+            header("Location: register.php");
+            exit();
+        }
+        $role = "admin";
+    } else {
+        $role = "user";
+    }
+
+    // Insert new user
+    $sql = "INSERT INTO tb_employee (employeeID, password, role) VALUES (?, ?, ?)";
+    $stmt = mysqli_prepare($conn, $sql);
+    mysqli_stmt_bind_param($stmt, 'sss', $employeeID, $password, $role);
+
+    if (mysqli_stmt_execute($stmt)) {
+        $_SESSION['success_message'] = "Pendaftaran berjaya! Sila log masuk.";
+        header("Location: login.php");
+        exit();
+    } else {
+        $_SESSION['error_message'] = "Error during registration. Please try again.";
+        header("Location: register.php");
+        exit();
+    }
+}
 ?>
 
 <style>
@@ -129,18 +176,18 @@ body::before {
                 <img src="img/kadalogo.jpg" alt="KADA Logo" class="logo">
                 <h2 class="text-center mb-4">Daftar Akaun</h2>
                 
-                <?php 
-                // Show error message if exists
-                if(isset($_SESSION['error_message'])): ?>
-                    <div class="alert alert-danger">
+                <?php if(isset($_SESSION['error_message'])): ?>
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="fas fa-exclamation-circle me-2"></i>
                         <?php 
                             echo $_SESSION['error_message']; 
                             unset($_SESSION['error_message']);
                         ?>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
                 <?php endif; ?>
 
-                <form action="registerprocess.php" method="POST" onsubmit="return validateForm()">
+                <form action="" method="POST">
                     <div class="mb-4">
                         <label for="employeeID" class="form-label">
                             <i class="fas fa-id-card"></i>
@@ -165,12 +212,12 @@ body::before {
                     </div>
                     
                     <div class="mb-4">
-                        <label for="adminKey" class="form-label">
+                        <label for="admin_key" class="form-label">
                             <i class="fas fa-key"></i>
                             Admin Key (Optional)
                         </label>
                         <div class="input-group">
-                            <input type="password" class="form-control" id="adminKey" name="adminKey" 
+                            <input type="password" class="form-control" id="admin_key" name="admin_key" 
                                    placeholder="Masukkan admin key jika mendaftar sebagai admin">
                             <button class="btn btn-outline-secondary" type="button" id="toggleAdminKey">
                                 <i class="fas fa-eye"></i>

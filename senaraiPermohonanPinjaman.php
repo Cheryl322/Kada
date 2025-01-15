@@ -24,18 +24,19 @@ $sql = "SELECT
 			la.loanApplicationID,
 			m.memberName,
 			m.ic,
-			mad.applicationDate,
+			la.loanApplicationDate as applicationDate,
 			la.loanStatus
 		FROM 
 			tb_loanapplication la
 		JOIN 
-			tb_memberapplicationdetails mad ON la.loanApplicationID = mad.emplyeeID
+			tb_loan l ON la.loanApplicationID = l.loanApplicationID
 		JOIN 
-			tb_member m ON mad.emplyeeID = m.employeeId";
+			tb_member m ON l.loanApplicationID = m.employeeID";
 
 $result = mysqli_query($conn, $sql);
 ?>
 
+<br><br><br>
 <div class="container mt-3">
 	<table class="table">
 		<thead class="table-dark">
@@ -77,43 +78,3 @@ $result = mysqli_query($conn, $sql);
 	</table>
 </div>
 
-
-
-<!-- <tbody>
-			<tr>
-			    <td>#001</td>
-			    <td>Yuna Liew</td>
-			    <td>000000-00-0000</td>
-			    <td>2 Jun 2024</td>
-				<td><div class="d-grid">
-                        <a class="btn btn-primary btn-lg" href="#" role="button">Ditolak</a>
-                </div></td>
-			</tr>
-			<tr>
-			    <td>#002</td>
-			    <td>Yuna Liew</td>
-			    <td>000000-00-0000</td>
-			    <td>20 Dec 2024</td>
-				<td><div class="d-grid">
-                        <a class="btn btn-primary btn-lg" href="penyatakewangan.php" role="button">Diluluskan</a>
-                </div></td>
-			</tr>
-			<tr>
-			    <td>#003</td>
-			   	<td>Jenny Ho</td>
-			    <td>000000-00-0001</td>
-			    <td>20 Dec 2024</td>
-				<td><div class="d-grid">
-                        <a class="btn btn-primary btn-lg" href="penyatakewangan.php" role="button">Diluluskan</a>
-                </div></td>
-			</tr>
-			<tr>
-			    <td>#004</td>
-			   	<td>Cherry Lim</td>
-			    <td>000000-00-0002</td>
-			    <td>25 Dec 2024</td>
-				<td><div class="d-grid">
-                        <a class="btn btn-primary btn-lg" href="#" role="button">Belum disemak</a>
-                </div></td>
-			</tr>
-		</tbody> -->

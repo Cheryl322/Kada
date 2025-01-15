@@ -93,7 +93,7 @@ body::before {
         </li>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="#">Hubungi Kami</a>
+          <a class="nav-link" href="hubungikami.php">Hubungi Kami</a>
         </li>
         
         </ul>
@@ -107,10 +107,12 @@ body::before {
             </svg>
           </li>
           <li class="nav-item">
-          <a class="nav-link" href="profil.php">Profil</a>
+          <a class="nav-link" href="profil2.php">Profil</a>
           </li>
+    
         </ul>
       </ul>
+      <br><br
   </div>
 </nav>
 

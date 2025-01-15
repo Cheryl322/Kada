@@ -100,7 +100,7 @@ include "headermember.php";
         </p>
         
         <!-- Action Button -->
-        <a href="login.php" class="btn btn-home">
+        <a href="mainpage.php" class="btn btn-home">
             <i class="fas fa-home me-2"></i>
             Kembali ke Halaman Utama
         </a>
