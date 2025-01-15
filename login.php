@@ -8,34 +8,27 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $employeeID = $_POST['employeeID'];
     $password = $_POST['password'];
 
-    // First check if employeeID exists in employee table
-    $checkEmployee = "SELECT * FROM tb_employee WHERE employeeID = ?";
-    $stmt = mysqli_prepare($conn, $checkEmployee);
-    mysqli_stmt_bind_param($stmt, 's', $employeeID);
-    mysqli_stmt_execute($stmt);
-    $result = mysqli_stmt_get_result($stmt);
-
-    if (mysqli_num_rows($result) == 0) {
-        // EmployeeID not found in employee table
-        $_SESSION['error_message'] = "ID Pekerja tidak wujud. Sila daftar akaun terlebih dahulu.";
-        header("Location: login.php");
-        exit();
-    }
-
-    // If employeeID exists, proceed with password check
+    // Query to check credentials and get role
     $sql = "SELECT * FROM tb_employee WHERE employeeID = ? AND password = ?";
     $stmt = mysqli_prepare($conn, $sql);
-    mysqli_stmt_bind_param($stmt, 'ss', $employeeID, $password);
+    mysqli_stmt_bind_param($stmt, "ss", $employeeID, $password);
     mysqli_stmt_execute($stmt);
     $result = mysqli_stmt_get_result($stmt);
 
-    if (mysqli_num_rows($result) > 0) {
-        $row = mysqli_fetch_assoc($result);
-        $_SESSION['employeeID'] = $row['employeeID'];
-        header("Location: mainpage.php");
+    if (mysqli_num_rows($result) == 1) {
+        $user = mysqli_fetch_assoc($result);
+        $_SESSION['employeeID'] = $employeeID;
+        $_SESSION['role'] = $user['role'];
+
+        // Redirect based on role
+        if ($user['role'] === 'admin') {
+            header("Location: adminmainpage.php");
+        } else {
+            header("Location: mainpage.php");
+        }
         exit();
     } else {
-        $_SESSION['error_message'] = "ID Pekerja atau kata laluan tidak sah.";
+        $_SESSION['error'] = "Invalid employee ID or password!";
         header("Location: login.php");
         exit();
     }
