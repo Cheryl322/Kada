@@ -182,6 +182,10 @@ try {
     // Commit transaction
     mysqli_commit($conn);
 
+    // Set session variables before sending response
+    $_SESSION['status'] = "success";
+    $_SESSION['message'] = "Permohonan berjaya dihantar";
+
     echo json_encode([
         "status" => "success",
         "message" => "Permohonan berjaya dihantar"
@@ -200,6 +204,10 @@ try {
     if (isset($netSalaryFile) && file_exists($netSalaryFile)) {
         unlink($netSalaryFile);
     }
+
+    // Set session variables for error
+    $_SESSION['status'] = "error";
+    $_SESSION['error'] = $e->getMessage();
 
     echo json_encode([
         "status" => "error",

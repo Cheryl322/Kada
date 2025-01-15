@@ -1,12 +1,48 @@
 <?php
 session_start();
-include 'dbconnect.php';
-include 'headermember.php';
 
+// Check if user is logged in
 if (!isset($_SESSION['employeeID'])) {
     header('Location: login.php');
     exit();
 }
+
+include 'dbconnect.php';
+
+// Check registration status
+$employeeID = $_SESSION['employeeID'];
+$sql = "SELECT COALESCE(mr.regisStatus, 'Belum Selesai') as regisStatus 
+        FROM tb_member m 
+        LEFT JOIN tb_memberregistration_memberapplicationdetails mr 
+        ON m.employeeID = mr.memberRegistrationID 
+        WHERE m.employeeID = ?";
+
+$stmt = mysqli_prepare($conn, $sql);
+mysqli_stmt_bind_param($stmt, "i", $employeeID);
+mysqli_stmt_execute($stmt);
+$result = mysqli_stmt_get_result($stmt);
+$row = mysqli_fetch_assoc($result);
+
+// Redirect if status is not 'Diluluskan'
+if ($row['regisStatus'] !== 'Diluluskan') {
+    // Show alert and redirect
+    echo "<script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>";
+    echo "<script>
+        document.addEventListener('DOMContentLoaded', function() {
+            Swal.fire({
+                title: 'Akses Ditolak!',
+                text: 'Anda perlu mendapat kelulusan pendaftaran dahulu sebelum membuat permohonan pinjaman.',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            }).then((result) => {
+                window.location.href = 'mainpage.php';
+            });
+        });
+    </script>";
+    exit();
+}
+
+include 'headermember.php';
 
 $employeeID = $_SESSION['employeeID'];
 
@@ -1132,16 +1168,7 @@ $(document).ready(function() {
                 try {
                     const data = JSON.parse(response);
                     if (data.status === 'success') {
-                        Swal.fire({
-                            title: 'Berjaya!',
-                            text: 'Permohonan pinjaman anda telah berjaya dihantar.',
-                            icon: 'success',
-                            confirmButtonText: 'OK'
-                        }).then((result) => {
-                            if (result.isConfirmed) {
-                                window.location.href = 'success2.php';
-                            }
-                        });
+                        window.location.href = 'success2.php'; // Direct redirect to success2.php
                     } else {
                         Swal.fire({
                             title: 'Tidak Berjaya!',
@@ -1194,7 +1221,6 @@ $(document).ready(function() {
     $('#jumlah_pinjaman, #tempoh_pembayaran').on('input', calculateMonthlyPayment);
 });
 </script>
-
 <!-- Success Modal -->
 <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -1233,3 +1259,4 @@ $(document).ready(function() {
     }
 });
 </script>
+

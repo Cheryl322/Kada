@@ -1,7 +1,83 @@
 <?php
+// Add error reporting at the top of the file
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
-include"headeradmin.php";
+include "headeradmin.php";
 include "footer.php";
+include "dbconnect.php";
+
+// Check database connection
+if (!$conn) {
+    die("Connection failed: " . mysqli_connect_error());
+}
+
+// Get employeeID from URL parameter
+$employeeID = null;
+if (isset($_GET['id'])) {
+    $employeeID = filter_var($_GET['id'], FILTER_VALIDATE_INT);
+} elseif (isset($_GET['ID'])) {
+    $employeeID = filter_var($_GET['ID'], FILTER_VALIDATE_INT);
+}
+
+if ($employeeID) {
+    try {
+        // Single comprehensive query to get all member data
+        $query = "SELECT 
+            m.*,
+            COALESCE(mha.homeAddress, '') as homeAddress, 
+            COALESCE(mha.homePostcode, '') as homePostcode, 
+            COALESCE(mha.homeState, '') as homeState,
+            COALESCE(moa.officeAddress, '') as officeAddress, 
+            COALESCE(moa.officePostcode, '') as officePostcode, 
+            COALESCE(moa.officeState, '') as officeState,
+            COALESCE(mfc.entryFee, 0) as entryFee, 
+            COALESCE(mfc.modalShare, 0) as modalShare, 
+            COALESCE(mfc.feeCapital, 0) as feeCapital, 
+            COALESCE(mfc.deposit, 0) as deposit, 
+            COALESCE(mfc.contribution, 0) as contribution, 
+            COALESCE(mfc.fixedDeposit, 0) as fixedDeposit, 
+            COALESCE(mfc.others, 0) as others
+        FROM tb_member m
+        LEFT JOIN tb_member_homeaddress mha ON m.employeeID = mha.employeeID
+        LEFT JOIN tb_member_officeaddress moa ON m.employeeID = moa.employeeID
+        LEFT JOIN tb_memberregistration_feesandcontribution mfc ON m.employeeID = mfc.employeeID
+        WHERE m.employeeID = ?";
+
+        $stmt = $conn->prepare($query);
+        if (!$stmt) {
+            throw new Exception("Database prepare failed: " . $conn->error);
+        }
+
+        $stmt->bind_param("i", $employeeID);
+        if (!$stmt->execute()) {
+            throw new Exception("Execute failed: " . $stmt->error);
+        }
+
+        $result = $stmt->get_result();
+        $memberData = $result->fetch_assoc();
+
+        if (!$memberData) {
+            throw new Exception("No member found with ID: " . $employeeID);
+        }
+
+        // Get family members
+        $familyQuery = "SELECT * FROM tb_memberregistration_familymemberinfo 
+                       WHERE employeeID = ?";
+        $stmt = $conn->prepare($familyQuery);
+        $stmt->bind_param("i", $employeeID);
+        $stmt->execute();
+        $familyResult = $stmt->get_result();
+        $familyMembers = $familyResult->fetch_all(MYSQLI_ASSOC);
+
+    } catch (Exception $e) {
+        echo "<div class='alert alert-danger'>Error: " . htmlspecialchars($e->getMessage()) . "</div>";
+        exit;
+    }
+} else {
+    echo "<div class='alert alert-danger'>Invalid employee ID provided</div>";
+    exit;
+}
 
 ?>
 
@@ -139,10 +215,21 @@ include "footer.php";
 							</tr>
 						</thead>
 						<tbody>
-							<tr> </tr>
-							<tr> </tr>
-							<tr> </tr>
-							<tr> </tr>
+							<?php 
+							if (isset($familyMembers) && !empty($familyMembers)) {
+								$counter = 1;
+								foreach ($familyMembers as $family) {
+									echo "<tr>";
+									echo "<td>" . $counter++ . "</td>";
+									echo "<td>" . htmlspecialchars($family['relationship']) . "</td>";
+									echo "<td>" . htmlspecialchars($family['name']) . "</td>";
+									echo "<td>" . htmlspecialchars($family['icFamilyMember']) . "</td>";
+									echo "</tr>";
+								}
+							} else {
+								echo "<tr><td colspan='4' class='text-center'>No family members found</td></tr>";
+							}
+							?>
 						</tbody>
 					</table>
 				</div>
@@ -164,37 +251,37 @@ include "footer.php";
 							<tr>
 								<td>1</td>
 								<td>Fee Masuk</td>
-								<td> </td>
+								<td><?php echo isset($memberData['entryFee']) ? number_format($memberData['entryFee'], 2) : '0.00'; ?></td>
 							</tr>
 							<tr>
 								<td>2</td>
 								<td>Modah Syer*</td>
-								<td> </td>
+								<td><?php echo isset($memberData['modalShare']) ? number_format($memberData['modalShare'], 2) : '0.00'; ?></td>
 							</tr>
 							<tr>
 								<td>3</td>
 								<td>Modal Yuran</td>
-								<td> </td>
+								<td><?php echo isset($memberData['feeCapital']) ? number_format($memberData['feeCapital'], 2) : '0.00'; ?></td>
 							</tr>
 							<tr>
 								<td>4</td>
 								<td>Wang Deposit Anggota</td>
-								<td> </td>
+								<td><?php echo isset($memberData['deposit']) ? number_format($memberData['deposit'], 2) : '0.00'; ?></td>
 							</tr>
 							<tr>
 								<td>5</td>
 								<td>Sumbangan Tabung Kebajikan (Al-Abrar)</td>
-								<td> </td>
+								<td><?php echo isset($memberData['contribution']) ? number_format($memberData['contribution'], 2) : '0.00'; ?></td>
 							</tr>
 							<tr>
 								<td>6</td>
 								<td>Simpanan Tetap</td>
-								<td> </td>
+								<td><?php echo isset($memberData['fixedDeposit']) ? number_format($memberData['fixedDeposit'], 2) : '0.00'; ?></td>
 							</tr>
 							<tr>
 								<td>7</td>
 								<td>Lain-lain</td>
-								<td> </td>
+								<td><?php echo isset($memberData['others']) ? number_format($memberData['others'], 2) : '0.00'; ?></td>
 							</tr>
 						</tbody>
 					</table>

@@ -1,170 +1,263 @@
 <?php
 session_start();
-include"headermember.php";
+
+if (!isset($_SESSION['employeeID'])) {
+    header('Location: login.php');
+    exit();
+}
+
+include "headermember.php";
 include "footer.php";
+include "dbconnect.php";
+
+$employeeID = $_SESSION['employeeID'];
+
+// Add this query to get member name
+$sqlMember = "SELECT memberName FROM tb_member WHERE employeeID = ?";
+$stmtMember = mysqli_prepare($conn, $sqlMember);
+mysqli_stmt_bind_param($stmtMember, "i", $employeeID);
+mysqli_stmt_execute($stmtMember);
+$resultMember = mysqli_stmt_get_result($stmtMember);
+$memberData = mysqli_fetch_assoc($resultMember);
+
+// Get all loan applications for the user
+$sql = "SELECT 
+            la.loanApplicationID,
+            la.loanStatus,
+            la.loanApplicationDate,
+            la.amountRequested,
+            la.financingPeriod,
+            la.monthlyInstallments
+        FROM tb_loanapplication la
+        WHERE la.employeeID = ? 
+        ORDER BY la.loanApplicationDate DESC";
+
+$stmt = mysqli_prepare($conn, $sql);
+mysqli_stmt_bind_param($stmt, "i", $employeeID);
+mysqli_stmt_execute($stmt);
+$result = mysqli_stmt_get_result($stmt);
 ?>
 
 <div class="container mt-5">
     <div class="row">
         <!-- Left Sidebar -->
         <div class="col-md-3">
-            <div class="profile-sidebar">
-                <div class="profile-image">
-                    <img src="img/profile.jpeg" class="rounded-circle" alt="Profile Picture">
-                    <h3 class="text-left mt-3">Yuna Liew</h3>
+            <div class="profile-sidebar text-center">
+                <div class="profile-image mb-4">
+                    <img src="img/profile.jpeg" class="rounded-circle img-fluid" alt="Profile Picture" style="width: 200px; height: 200px; object-fit: cover;">
+                    <h3 class="mt-3"><?php echo htmlspecialchars($memberData['memberName']); ?></h3>
                 </div>
 
-                <!-- Navigation Menu-->
-                <div class="profile-nav">
-                    <ul class="nav flex-column gap-2">
-                        <li class="nav-item w-100">
-                            <a class="btn btn-info w-75" href="profil.php">Profil</a>
-                        </li>
-                        <li class="nav-item w-100">
-                            <a class="btn btn-info w-75" href="statuskewangan.php">Pinjaman</a>
-                        </li>
-                        <li class="nav-item w-100">
-                            <a class="btn btn-primary w-75" href="statuspermohonanloan.php">Permohonan</a>
-                        </li>
-                        <li class="nav-item w-100">
-                            <a class="btn btn-info w-75" href="logout.php">Daftar Keluar</a>
-                        </li>
-                    </ul>
+                <div class="profile-nav d-flex flex-column gap-3">
+                    <a href="profil2.php" class="btn w-75 mx-auto" style="background-color: #75B798; color: white;">
+                        Profil
+                    </a>
+                    <a href="statuspermohonanloan.php" class="btn w-75 mx-auto" style="background-color: #8CD9B5; color: white;">
+                        Permohonan
+                    </a>
+                    <a href="logout.php" class="btn w-75 mx-auto" style="background-color: #75B798; color: white;">
+                        Daftar Keluar
+                    </a>
                 </div>
             </div>
         </div>
 
         <!-- Main Content -->
         <div class="col-md-9">
-            <h5>Status permohonan pembiayaan</h5>
-            
-            <!-- Status Steps -->
-            <div class="status-container mt-4">
-                <div class="status-steps">
-                    <div class="step">
-                        <div class="circle">1</div>
-                        <div class="label">Permohonan serahkan</div>
-                    </div>
-                    <div class="step">
-                        <div class="circle">2</div>
-                        <div class="label">Permohonan diteliti oleh pengurusan lembaga</div>
-                    </div>
-                    <div class="step">
-                        <div class="circle">3</div>
-                        <div class="label">Permohonan lulus / gagal</div>
-                    </div>
-                    <div class="step">
-                        <div class="circle">4</div>
-                        <div class="label">Keputusan pembentangan</div>
-                    </div>
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-history me-2"></i> Sejarah Permohonan Pembiayaan</h5>
+                </div>
+                <div class="card-body">
+                    <?php if (mysqli_num_rows($result) > 0): ?>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>No.</th>
+                                        <th>Tarikh Permohonan</th>
+                                        <th>Jumlah (RM)</th>
+                                        <th>Tempoh (Bulan)</th>
+                                        <th>Ansuran (RM)</th>
+                                        <th>Status</th>
+                                        <th>Tindakan</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php 
+                                    $i = 1;
+                                    while ($row = mysqli_fetch_assoc($result)): 
+                                    ?>
+                                        <tr>
+                                            <td><?php echo $i++; ?></td>
+                                            <td><?php echo date('d/m/Y', strtotime($row['loanApplicationDate'])); ?></td>
+                                            <td><?php echo number_format($row['amountRequested'], 2); ?></td>
+                                            <td><?php echo $row['financingPeriod']; ?></td>
+                                            <td><?php echo number_format($row['monthlyInstallments'], 2); ?></td>
+                                            <td>
+                                                <?php
+                                                $statusClass = '';
+                                                $statusIcon = '';
+                                                switch ($row['loanStatus']) {
+                                                    case 'Diluluskan':
+                                                        $statusClass = 'success';
+                                                        $statusIcon = 'check-circle';
+                                                        break;
+                                                    case 'Ditolak':
+                                                        $statusClass = 'danger';
+                                                        $statusIcon = 'times-circle';
+                                                        break;
+                                                    case 'Dalam Proses':
+                                                        $statusClass = 'warning';
+                                                        $statusIcon = 'clock';
+                                                        break;
+                                                    default:
+                                                        $statusClass = 'secondary';
+                                                        $statusIcon = 'hourglass-half';
+                                                }
+                                                ?>
+                                                <span class="badge bg-<?php echo $statusClass; ?>">
+                                                    <i class="fas fa-<?php echo $statusIcon; ?> me-1"></i>
+                                                    <?php echo $row['loanStatus']; ?>
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <a href="lihatStatus.php?id=<?php echo $row['loanApplicationID']; ?>" class="btn btn-sm btn-info">
+                                                    <i class="fas fa-eye"></i> Lihat
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    <?php endwhile; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    <?php else: ?>
+                        <div class="text-center py-5">
+                            <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">Tiada permohonan pembiayaan</h5>
+                            <a href="permohonanloan.php" class="btn btn-primary mt-3">
+                                <i class="fas fa-plus me-2"></i>Buat Permohonan Baru
+                            </a>
+                        </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
+<!-- Add required CSS and JS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
 <style>
-.status-container {
-    padding: 20px;
+.profile-sidebar {
+    background: transparent;
+    box-shadow: none;
 }
 
-.status-steps {
-    display: flex;
-    justify-content: space-between;
-    position: relative;
-    margin-bottom: 40px;
-}
-
-.status-steps::before {
-    content: '';
-    position: absolute;
-    top: 25px;
-    left: 0;
-    right: 0;
-    height: 2px;
-    background: #4CAF50;
-    z-index: 1;
-}
-
-.step {
-    text-align: center;
-    position: relative;
-    z-index: 2;
-    width: 120px;
-}
-
-.circle {
-    width: 50px;
-    height: 50px;
-    background-color: #4CAF50;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto;
-    color: white;
-    font-weight: bold;
+.profile-nav .btn {
+    border: none;
+    padding: 10px;
     font-size: 18px;
+    transition: all 0.3s ease;
 }
 
-.label {
-    margin-top: 10px;
-    font-size: 12px;
+.profile-nav .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    opacity: 0.9;
+}
+
+.profile-image img {
+    border: 3px solid #fff;
+    box-shadow: 0 0 15px rgba(0,0,0,0.1);
+}
+
+.profile-image h3 {
     color: #333;
+    font-weight: 500;
 }
 
-/* For Ditolak status */
-.step.failed .circle {
-    background-color: #ff0000;
+.list-group-item {
+    border: none;
+    padding: 12px 20px;
+    transition: all 0.3s ease;
 }
 
-.step.pending .circle {
-    background-color: #808080;
+.list-group-item:hover {
+    background-color: #f8f9fa;
+    transform: translateX(5px);
 }
 
-/* Add some spacing between steps */
-.step:not(:last-child) {
-    margin-right: 20px;
+.list-group-item.active {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+.table {
+    vertical-align: middle;
+}
+
+.badge {
+    padding: 8px 12px;
+    font-weight: 500;
+}
+
+.btn-sm {
+    padding: 5px 10px;
+}
+
+.card {
+    border: none;
+    box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    border-radius: 10px;
+}
+
+.card-header {
+    background-color: #5CBA9B !important;
+    border-radius: 10px 10px 0 0 !important;
+    padding: 15px 20px;
+}
+
+.table-responsive {
+    border-radius: 10px;
+}
+
+.table th {
+    font-weight: 600;
+    color: #495057;
 }
 </style>
 
 <script>
-// Function to update status based on application status from database
-function updateApplicationStatus(status) {
-    const steps = document.querySelectorAll('.step');
-    const statusLine = document.querySelector('.status-steps::before');
+// Remove or comment out this function as it's no longer needed
+/*
+function viewDetails(loanID) {
+    alert('View details for loan ID: ' + loanID);
+}
+*/
+
+function checkLoanStatus() {
+    const employeeID = <?php echo $employeeID; ?>;
     
-    if (status === 'Diluluskan') {
-        steps.forEach(step => {
-            step.querySelector('.circle').style.backgroundColor = '#4CAF50';
-        });
-        statusLine.style.backgroundColor = '#4CAF50';
-    } else if (status === 'Ditolak') {
-        steps.forEach((step, index) => {
-            const circle = step.querySelector('.circle');
-            if (index < 2) {
-                circle.style.backgroundColor = '#4CAF50';
-            } else if (index === 2) {
-                circle.style.backgroundColor = '#ff0000';
-            } else {
-                circle.style.backgroundColor = '#808080';
+    $.ajax({
+        url: 'check_loan_status.php',
+        method: 'POST',
+        data: { employeeID: employeeID },
+        success: function(response) {
+            try {
+                const data = JSON.parse(response);
+                if (data.status !== currentStatus) {
+                    location.reload();
+                }
+            } catch (e) {
+                console.error('Error parsing response:', e);
             }
-        });
-        
-        // Update line gradient
-        statusLine.style.background = 'linear-gradient(to right, ' +
-            '#4CAF50 0%, ' +
-            '#4CAF50 50%, ' +
-            '#ff0000 50%, ' +
-            '#808080 75%, ' +
-            '#808080 100%)';
-    }
+        }
+    });
 }
 
-// Call this when page loads with the current application status
-document.addEventListener('DOMContentLoaded', function() {
-    // You would typically get this from your PHP/database
-    const currentStatus = 'Diluluskan'; // or 'Ditolak'
-    updateApplicationStatus(currentStatus);
-});
+// Check for updates every 30 seconds
+setInterval(checkLoanStatus, 30000);
 </script>

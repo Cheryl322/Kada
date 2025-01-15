@@ -72,7 +72,7 @@ try {
     
     if ($successMember && $successHome && $successOffice) {
         $_SESSION['success_message'] = "Profil berjaya dikemaskini!";
-        header('Location: profil.php');
+        header('Location: profil2.php');
         exit();
     } else {
         throw new Exception("Ralat semasa mengemaskini data");
@@ -80,7 +80,7 @@ try {
     
 } catch (Exception $e) {
     $_SESSION['error_message'] = $e->getMessage();
-    header('Location: profil.php');
+    header('Location: profil2.php');
     exit();
 }
 
