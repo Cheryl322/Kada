@@ -277,7 +277,38 @@
                 </tr>
             </thead>
             <tbody>
-                <!-- Table content will go here -->
+                <?php
+                // Database connection
+                include 'dbconnect.php';  // Make sure you have your database configuration file
+
+                // Prepare and execute the query
+                $sql = "SELECT * FROM tb_member";
+                $result = mysqli_query($conn, $sql);
+                
+                $counter = 1;
+                while ($row = mysqli_fetch_assoc($result)) {
+                    echo "<tr>";
+                    echo "<td>" . $counter++ . "</td>";
+                    echo "<td>" . htmlspecialchars($row['memberName']) . "</td>";
+                    echo "<td>" . htmlspecialchars($row['ic']) . "</td>";
+                    echo "<td>" . htmlspecialchars($row['email']) . "</td>";
+                    echo "<td>" . htmlspecialchars($row['phoneNumber']) . "</td>";
+                    echo "<td>" . htmlspecialchars($row['phoneHome']) . "</td>";
+                    echo "<td>" . htmlspecialchars($row['sex']) . "</td>";
+                    echo "<td>" . htmlspecialchars($row['religion']) . "</td>";
+                    echo "<td>" . htmlspecialchars($row['birthdate']) . "</td>";
+                    echo "<td>" . htmlspecialchars($row['maritalStatus']) . "</td>";
+                    echo "<td>" . htmlspecialchars($row['nation']) . "</td>";
+                    echo "<td>" . htmlspecialchars($row['address']) . "</td>";
+                    echo "<td>" . htmlspecialchars($row['position']) . "</td>";
+                    echo "<td>RM " . number_format($row['monthlySalary'], 2) . "</td>";
+                    echo "<td>" . htmlspecialchars($row['no_pf']) . "</td>";
+                    echo "<td>" . htmlspecialchars($row['status']) . "</td>";
+                    echo "<td>" . htmlspecialchars($row['registration_date']) . "</td>";
+                    echo "</tr>";
+                }
+                mysqli_close($conn);
+                ?>
             </tbody>
         </table>
     </div>

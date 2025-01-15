@@ -277,7 +277,41 @@
                 </tr>
             </thead>
             <tbody>
-                <!-- Table content will go here -->
+                <?php
+                include 'dbconnect.php';
+
+                $sql = "SELECT * FROM tb_loan";
+                $result = $conn->query($sql);
+                
+                if ($result->num_rows > 0) {
+                    $count = 1;
+                    while($row = $result->fetch_assoc()) {
+                        echo "<tr>";
+                        echo "<td>" . $count . "</td>";
+                        echo "<td>" . $row['nama'] . "</td>";
+                        echo "<td>" . $row['ic'] . "</td>";
+                        echo "<td>" . $row['modah_syeh'] . "</td>";
+                        echo "<td>" . $row['modal_yuran'] . "</td>";
+                        echo "<td>" . $row['simpanan_tetap'] . "</td>";
+                        echo "<td>" . $row['tabung_anggota'] . "</td>";
+                        echo "<td>" . $row['simpanan_anggota'] . "</td>";
+                        echo "<td>" . $row['al_bai'] . "</td>";
+                        echo "<td>" . $row['al_innah'] . "</td>";
+                        echo "<td>" . $row['baik_pulih'] . "</td>";
+                        echo "<td>" . $row['roadtax_insurans'] . "</td>";
+                        echo "<td>" . $row['khas'] . "</td>";
+                        echo "<td>" . $row['al_qadrul_hassan'] . "</td>";
+                        echo "<td>" . $row['no_pf'] . "</td>";
+                        echo "<td>" . $row['status'] . "</td>";
+                        echo "<td>" . $row['tarikh_daftar'] . "</td>";
+                        echo "</tr>";
+                        $count++;
+                    }
+                } else {
+                    echo "<tr><td colspan='17'>Tiada rekod ditemui</td></tr>";
+                }
+                $conn->close();
+                ?>
             </tbody>
         </table>
     </div>

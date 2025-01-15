@@ -4,7 +4,13 @@ include "headeradmin.php";
 include "footer.php";
 include "dbconnect.php";
 
-// Establish database connection
+// Database configuration
+$servername = "localhost";
+$username = "root";  // Your database username
+$password = "";      // Your database password
+$dbname = "db_kada";    // Your database name
+
+// Now the connection will work properly
 $conn = mysqli_connect($servername, $username, $password, $dbname);
 
 $defaultloanStatus = 'Belum Selesai';
