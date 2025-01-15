@@ -57,7 +57,7 @@ $userData = mysqli_fetch_assoc($result);
                 <div class="profile-nav">
                     <ul class="nav flex-column gap-2">
                         <li class="nav-item w-100">
-                            <a class="btn btn-primary w-75" href="profil.php">Profil</a>
+                            <a class="btn btn-primary w-75" href="profil2.php">Profil</a>
                         </li>
                         <?php if ($isMember): ?>
                         <!-- 会员菜单选项 -->
@@ -185,24 +185,34 @@ $userData = mysqli_fetch_assoc($result);
 
                         <?php if (!$isMember): ?>
                         <!-- 非会员提示信息 -->
-                        <div class="alert alert-info mt-4">
+                        <!-- <div class="alert alert-info mt-4">
                             <i class="fas fa-info-circle"></i>
                             Untuk mengakses lebih banyak fungsi, sila mohon keahlian KADA.
                             <a href="daftar_ahli.php" class="alert-link" >Mohon Sekarang</a>
+                        </div> -->
+                        <div class="alert alert-info mt-4">
+                            <i class="fas fa-info-circle"></i>
+                            Untuk mengakses lebih banyak fungsi, sila mohon keahlian KADA.
+                            <a href="daftar_ahli.php" class="btn btn-danger ms-2" style="font-weight: bold;">
+                                Mohon Sekarang <i class="fas fa-arrow-right"></i>
+                            </a>
                         </div>
                         <?php endif; ?>
                     </div>
                     
+                    <!-- 修改 card-footer 部分 -->
                     <div class="card-footer text-end">
-                        <button type="button" class="btn btn-primary" id="editButton" onclick="editProfile()">
-                            <i class="fas fa-edit"></i> Kemaskini
-                        </button>
-                        <button type="submit" class="btn btn-success" id="updateButton" style="display: none;">
-                            <i class="fas fa-save"></i> Simpan
-                        </button>
-                        <button type="button" class="btn btn-secondary" id="cancelButton" onclick="cancelEdit()" style="display: none;">
-                            <i class="fas fa-times"></i> Batal
-                        </button>
+                        <?php if ($isMember): ?>
+                            <button type="button" class="btn btn-primary" id="editButton" onclick="editProfile()">
+                                <i class="fas fa-edit"></i> Kemaskini
+                            </button>
+                            <button type="submit" class="btn btn-success" id="updateButton" style="display: none;">
+                                <i class="fas fa-save"></i> Simpan
+                            </button>
+                            <button type="button" class="btn btn-secondary" id="cancelButton" onclick="cancelEdit()" style="display: none;">
+                                <i class="fas fa-times"></i> Batal
+                            </button>
+                        <?php endif; ?>
                     </div>
                 </form>
             </div>
@@ -211,9 +221,93 @@ $userData = mysqli_fetch_assoc($result);
 </div>
 
 <script>
-// JavaScript 代码保持不变
+function editProfile() {
+    // 移除所有输入框的 readonly 属性
+    const inputs = document.querySelectorAll('#profileForm input[type="text"]');
+    inputs.forEach(input => {
+        if (input.name !== 'employeeID' && 
+            input.name !== 'ic' && 
+            input.name !== 'memberName') {
+            input.removeAttribute('readonly');
+            input.style.backgroundColor = '#ffffff';
+        }
+    });
+
+    // 显示/隐藏按钮
+    document.getElementById('editButton').style.display = 'none';
+    document.getElementById('updateButton').style.display = 'inline-block';
+    document.getElementById('cancelButton').style.display = 'inline-block';
+}
+
+function cancelEdit() {
+    if(confirm('Adakah anda pasti untuk membatalkan?')) {
+        location.href = 'profil2.php';
+    }
+}
+
+// 添加表单提交处理
+document.getElementById('profileForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    if(confirm('Adakah anda pasti untuk menyimpan perubahan ini?')) {
+        this.submit();
+    }
+});
 </script>
 
 <style>
-// CSS 样式保持不变
+/* 添加按钮样式 */
+.card-footer {
+    background-color: transparent;
+    border-top: 1px solid #dee2e6;
+    padding: 1rem;
+}
+
+.btn {
+    padding: 0.5rem 1rem;
+    margin-left: 0.5rem;
+}
+
+.btn-primary {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+.btn-success {
+    background-color: #28a745;
+    border-color: #28a745;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    border-color: #6c757d;
+}
+
+/* 确保表单控件样式正确 */
+.form-control {
+    display: block;
+    width: 100%;
+    padding: 0.375rem 0.75rem;
+    font-size: 1rem;
+    line-height: 1.5;
+    color: #495057;
+    background-color: #fff;
+    border: 1px solid #ced4da;
+    border-radius: 0.25rem;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.alert-info .btn-danger {
+    background-color: #dc3545;
+    border-color: #dc3545;
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.alert-info .btn-danger:hover {
+    background-color: #c82333;
+    border-color: #bd2130;
+    transform: scale(1.05);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
 </style>

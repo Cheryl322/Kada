@@ -167,15 +167,17 @@ $memberData = mysqli_fetch_assoc($result);
         </div>
     </div>
 
-
-    <script>
-// 修改 JavaScript 代码
+<script>
 function editProfile() {
     // 移除所有输入框的 readonly 属性
     const inputs = document.querySelectorAll('#profileForm input[type="text"]');
     inputs.forEach(input => {
-        input.removeAttribute('readonly');
-        input.style.backgroundColor = '#ffffff';
+        if (input.name !== 'employeeID' && 
+            input.name !== 'ic' && 
+            input.name !== 'memberName') {
+            input.removeAttribute('readonly');
+            input.style.backgroundColor = '#ffffff';
+        }
     });
 
     // 显示/隐藏按钮
@@ -186,16 +188,16 @@ function editProfile() {
 
 function cancelEdit() {
     if(confirm('Adakah anda pasti untuk membatalkan?')) {
-        document.location = 'profil.php';
+        location.href = 'profil.php';
     }
 }
 
-// 移除 fetch，使用传统表单提交
+// 添加表单提交处理
 document.getElementById('profileForm').addEventListener('submit', function(e) {
     e.preventDefault();
     
     if(confirm('Adakah anda pasti untuk menyimpan perubahan ini?')) {
-        this.submit(); // 直接提交表单
+        this.submit();
     }
 });
 </script>
