@@ -7,9 +7,6 @@ include "dbconnect.php";
 // Get the loan application ID from URL
 $loanId = isset($_GET['id']) ? $_GET['id'] : null;
 
-// Debug: Print the loan ID
-echo "Loan ID being queried: " . $loanId . "<br>";
-
 if (!$loanId) {
     header("Location: senaraiPermohonanPinjaman.php");
     exit;
@@ -41,7 +38,9 @@ $sql = "SELECT
     moa.officePostcode,
     moa.officeState,
     b.bankName,
-    b.accountNo
+    b.accountNo,
+    l.basicSalaryFile,
+    l.netSalaryFile
     FROM tb_loanapplication la
     LEFT JOIN tb_loan l ON l.loanApplicationID = la.loanApplicationID
     LEFT JOIN tb_member m ON la.employeeID = m.employeeID
@@ -56,25 +55,8 @@ mysqli_stmt_execute($stmt);
 $result = mysqli_stmt_get_result($stmt);
 $memberData = mysqli_fetch_assoc($result);
 
-// Debug: Print the query result
-echo "<pre>";
-print_r($memberData);
-echo "</pre>";
-
 if (!$memberData) {
     die("No data found for loan ID: " . $loanId);
-}
-
-// Also verify the SQL query
-echo "SQL Query: " . $sql . "<br>";
-echo "Loan ID parameter: " . $loanId . "<br>";
-
-// Check for any MySQL errors
-if (!$stmt) {
-    echo "Prepare failed: (" . $conn->errno . ") " . $conn->error;
-}
-if (!$result) {
-    echo "Query failed: (" . $stmt->errno . ") " . $stmt->error;
 }
 
 // First get the loan data
@@ -340,14 +322,26 @@ $netSalary = number_format($salaryData['netSalary'], 2, '.', '');
 
                 <div class="row mb-3">
                     <div class="col-md-6">
-                        <label for="basicSalarySlip" class="form-label">Lampiran Slip Gaji Pokok Kakitangan</label>
-                        <input type="file" class="form-control" id="basicSalarySlip" name="basicSalarySlip" accept=".pdf" required>
-                        <small class="form-text text-muted">Sila lampirkan slip gaji pokok dalam format PDF</small>
+                        <label for="basicSalarySlip" class="form-label">Slip Gaji Pokok Kakitangan</label>
+                        <?php if (!empty($memberData['basicSalaryFile'])): ?>
+                            <div class="mb-2">
+                                <a href="<?php echo htmlspecialchars($memberData['basicSalaryFile']); ?>" 
+                                   class="btn btn-primary btn-sm" target="_blank">
+                                    <i class="fas fa-file-pdf"></i> Lihat Slip Gaji Pokok
+                                </a>
+                            </div>
+                        <?php endif; ?>
                     </div>
                     <div class="col-md-6">
-                        <label for="netSalarySlip" class="form-label">Lampiran Slip Gaji Bersih Kakitangan</label>
-                        <input type="file" class="form-control" id="netSalarySlip" name="netSalarySlip" accept=".pdf" required>
-                        <small class="form-text text-muted">Sila lampirkan slip gaji bersih dalam format PDF</small>
+                        <label for="netSalarySlip" class="form-label">Slip Gaji Bersih Kakitangan</label>
+                        <?php if (!empty($memberData['netSalaryFile'])): ?>
+                            <div class="mb-2">
+                                <a href="<?php echo htmlspecialchars($memberData['netSalaryFile']); ?>" 
+                                   class="btn btn-primary btn-sm" target="_blank">
+                                    <i class="fas fa-file-pdf"></i> Lihat Slip Gaji Bersih
+                                </a>
+                            </div>
+                        <?php endif; ?>
                     </div>
                 </div>
 
