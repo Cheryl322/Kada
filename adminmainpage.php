@@ -410,13 +410,13 @@ if (!isset($_SESSION['employeeID']) || $_SESSION['role'] !== 'admin') {
     ?>
 
     <div class="circle-container">
-      <a href="senaraiahli.php" class="circle">
+      <a href="senaraiPermohonanAhli.php" class="circle">
         <div class="circle-content">
-          <i class="fas fa-users mb-2"></i>
-          <span>Ahli Semasa</span>
+          <i class="fas fa-user-plus mb-2"></i>
+          <span>Pendaftaran Ahli</span>
         </div>
       </a>
-      <a href="senaraipembiayaan.php" class="circle">
+      <a href="senaraiPermohonanPinjaman.php" class="circle">
         <div class="circle-content">
           <i class="fas fa-hand-holding-usd mb-2"></i>
           <span>Permohonan Pinjaman</span>
