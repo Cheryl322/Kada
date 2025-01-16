@@ -19,9 +19,9 @@ $employeeID = $_SESSION['employeeID']; // Make sure this matches your session va
 $sql = "SELECT 
             COALESCE(mr.regisStatus, 'Belum Selesai') as regisStatus,
             CASE 
-                WHEN mr.regisDate IS NOT NULL THEN mr.regisDate
-                WHEN m.created_at IS NOT NULL THEN m.created_at
-                ELSE CURRENT_TIMESTAMP
+                WHEN mr.regisDate IS NOT NULL THEN DATE(mr.regisDate)
+                WHEN m.created_at IS NOT NULL THEN DATE(m.created_at)
+                ELSE CURRENT_DATE()
             END as regisDate
         FROM tb_member m 
         LEFT JOIN tb_memberregistration_memberapplicationdetails mr 
@@ -32,9 +32,29 @@ $stmt = mysqli_prepare($conn, $sql);
 mysqli_stmt_bind_param($stmt, "i", $employeeID);
 mysqli_stmt_execute($stmt);
 $result = mysqli_stmt_get_result($stmt);
-$row = mysqli_fetch_assoc($result);
-$status = $row['regisStatus'];
-$regisDate = !empty($row['regisDate']) ? date('d/m/Y', strtotime($row['regisDate'])) : date('d/m/Y'); // Format the date with fallback
+
+// Set default values
+$status = 'Belum Selesai';
+$regisDate = date('d/m/Y'); // Default to today's date
+
+// Only update values if we have results
+if ($result && $row = mysqli_fetch_assoc($result)) {
+    $status = $row['regisStatus'] ?? 'Belum Selesai';
+    // Format the date properly
+    $regisDate = !empty($row['regisDate']) 
+        ? date('d/m/Y', strtotime($row['regisDate'])) 
+        : date('d/m/Y');
+}
+
+// Make sure the date is available for JavaScript
+echo "<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const currentStatus = document.getElementById('currentStatus');
+        if (currentStatus) {
+            currentStatus.setAttribute('data-date', '" . $regisDate . "');
+        }
+    });
+</script>";
 ?>
 
 <div class="container mt-3">
