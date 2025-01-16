@@ -64,7 +64,7 @@ $result = mysqli_query($conn, $sql);
                                 echo "<td>" . htmlspecialchars($row['memberName']) . "</td>";
                                 echo "<td>" . htmlspecialchars($row['ic']) . "</td>";
                                 echo "<td>" . htmlspecialchars($row['applicationDate']) . "</td>";
-                                echo "<td><a href='penyatapermohonanloan.php?id=" . $row['loanApplicationID'] . "' class='btn btn-primary'>Tekan borang</a></td>";
+                                echo "<td><a href='penyatapermohonanpinjaman.php?id=" . $row['loanApplicationID'] . "' class='btn btn-primary'>Tekan borang</a></td>";
                                 echo "<td>";
                                 echo "<div class='d-flex align-items-center'>";
                                 echo "<select class='form-select status-select me-2' data-id='" . $row['loanApplicationID'] . "'>";
