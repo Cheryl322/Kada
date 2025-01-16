@@ -60,18 +60,23 @@ if (!$memberData) {
 }
 
 // First get the loan data
-$loanApplicationID = $_GET['loanApplicationID']; // or however you're getting the loanApplicationID
+$loanApplicationID = isset($_GET['id']) ? $_GET['id'] : null; // Use the same ID as before
 
-$query = "SELECT basicSalary, netSalary FROM tb_loan WHERE loanApplicationID = ?";
-$stmt = $conn->prepare($query);
-$stmt->bind_param("i", $loanApplicationID);
-$stmt->execute();
-$result = $stmt->get_result();
-$salaryData = $result->fetch_assoc();
+if ($loanApplicationID) {
+    $query = "SELECT basicSalary, netSalary FROM tb_loan WHERE loanApplicationID = ?";
+    $stmt = $conn->prepare($query);
+    $stmt->bind_param("i", $loanApplicationID);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $salaryData = $result->fetch_assoc();
 
-// Format the salary values with 2 decimal places
-$basicSalary = number_format($salaryData['basicSalary'], 2, '.', '');
-$netSalary = number_format($salaryData['netSalary'], 2, '.', '');
+    // Set default values if no data found
+    $basicSalary = $salaryData ? number_format($salaryData['basicSalary'], 2, '.', '') : '0.00';
+    $netSalary = $salaryData ? number_format($salaryData['netSalary'], 2, '.', '') : '0.00';
+} else {
+    $basicSalary = '0.00';
+    $netSalary = '0.00';
+}
 
 // Update the form values to use the correct array keys
 ?>
