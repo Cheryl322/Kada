@@ -1,10 +1,98 @@
 <?php
 
-include"headeradmin.php";
+include "headeradmin.php";
 include "footer.php";
+include "dbconnect.php";
 
+// Get the loan application ID from URL
+$loanId = isset($_GET['id']) ? $_GET['id'] : null;
+
+// Debug: Print the loan ID
+echo "Loan ID being queried: " . $loanId . "<br>";
+
+if (!$loanId) {
+    header("Location: senaraiPermohonanPinjaman.php");
+    exit;
+}
+
+// First, get the loan application and related member data
+$sql = "SELECT 
+    la.loanApplicationID,
+    la.amountRequested,
+    la.financingPeriod,
+    la.monthlyInstallments,
+    l.loanType,
+    l.employerName,
+    l.employerIC,
+    l.basicSalary,
+    l.netSalary,
+    m.memberName,
+    m.ic,
+    m.maritalStatus,
+    m.sex,
+    m.religion,
+    m.nation,
+    m.no_pf,
+    m.phoneNumber,
+    mha.homeAddress,
+    mha.homePostcode,
+    mha.homeState,
+    moa.officeAddress,
+    moa.officePostcode,
+    moa.officeState,
+    b.bankName,
+    b.accountNo
+    FROM tb_loanapplication la
+    LEFT JOIN tb_loan l ON l.loanApplicationID = la.loanApplicationID
+    LEFT JOIN tb_member m ON la.employeeID = m.employeeID
+    LEFT JOIN tb_member_homeaddress mha ON m.employeeID = mha.employeeID
+    LEFT JOIN tb_member_officeaddress moa ON m.employeeID = moa.employeeID
+    LEFT JOIN tb_bank b ON b.loanApplicationID = la.loanApplicationID
+    WHERE la.loanApplicationID = ?";
+
+$stmt = mysqli_prepare($conn, $sql);
+mysqli_stmt_bind_param($stmt, "i", $loanId);
+mysqli_stmt_execute($stmt);
+$result = mysqli_stmt_get_result($stmt);
+$memberData = mysqli_fetch_assoc($result);
+
+// Debug: Print the query result
+echo "<pre>";
+print_r($memberData);
+echo "</pre>";
+
+if (!$memberData) {
+    die("No data found for loan ID: " . $loanId);
+}
+
+// Also verify the SQL query
+echo "SQL Query: " . $sql . "<br>";
+echo "Loan ID parameter: " . $loanId . "<br>";
+
+// Check for any MySQL errors
+if (!$stmt) {
+    echo "Prepare failed: (" . $conn->errno . ") " . $conn->error;
+}
+if (!$result) {
+    echo "Query failed: (" . $stmt->errno . ") " . $stmt->error;
+}
+
+// First get the loan data
+$loanApplicationID = $_GET['loanApplicationID']; // or however you're getting the loanApplicationID
+
+$query = "SELECT basicSalary, netSalary FROM tb_loan WHERE loanApplicationID = ?";
+$stmt = $conn->prepare($query);
+$stmt->bind_param("i", $loanApplicationID);
+$stmt->execute();
+$result = $stmt->get_result();
+$salaryData = $result->fetch_assoc();
+
+// Format the salary values with 2 decimal places
+$basicSalary = number_format($salaryData['basicSalary'], 2, '.', '');
+$netSalary = number_format($salaryData['netSalary'], 2, '.', '');
+
+// Update the form values to use the correct array keys
 ?>
-
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <br><br><br>
@@ -37,22 +125,21 @@ include "footer.php";
                 <div class="row mb-3">
                     <div class="col-md-6">
                         <label for="officeTel" class="form-label">Tempoh Pembiayaan</label>
-                            <div class="input-group">
-                                <input type="text" class="form-control" id="financingPeriod" name="financingPeriod" 
-                                    value="<?php echo isset($memberData['financingPeriod']) ? htmlspecialchars($memberData['financingPeriod']) : ''; ?>" readonly>
-                                <span class="input-group-text">bulan</span>
-                            </div>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="financingPeriod" name="financingPeriod" 
+                                value="<?php echo isset($memberData['financingPeriod']) ? htmlspecialchars($memberData['financingPeriod']) : ''; ?>" readonly>
+                            <span class="input-group-text">bulan</span>
+                        </div>
                     </div>
                     <div class="col-md-6">
                         <label for="officeTel" class="form-label">Ansuran Bulan</label>
-                            <div class="input-group">
-                                <span class="input-group-text">RM</span>
-                                <input type="text" class="form-control" id="monthlyInstalment" name="monthlyInstalment" 
-                                    value="<?php echo isset($memberData['monthlyInstalment']) ? htmlspecialchars($memberData['monthlyInstalment']) : ''; ?>" readonly>
-                            </div>
+                        <div class="input-group">
+                            <span class="input-group-text">RM</span>
+                            <input type="text" class="form-control" id="monthlyInstalment" name="monthlyInstalment" 
+                                value="<?php echo isset($memberData['monthlyInstallments']) ? htmlspecialchars($memberData['monthlyInstallments']) : ''; ?>" readonly>
+                        </div>
                     </div>
                 </div>
-
 
                 <h5>BUTIR-BUTIR PERIBADI PEMOHON</h5>
                 <!-- Personal Info -->
@@ -187,21 +274,33 @@ include "footer.php";
                     <table class="table">
                         <thead class="table-dark">
                             <tr>
-                            <th style="width: 5%">Bil</th>
-                            <th style="width: 50%">Nama</th>
-                            <th style="width: 20%">No. Kad Pengenalan</th>
-                            <th style="width: 15%">No. PF</th>
-                            <th style="width: 15%">No. Anggota</th>
-
-                            <!-- tandatangan? -->
-                            
+                                <th style="width: 5%">Bil</th>
+                                <th style="width: 50%">Nama</th>
+                                <th style="width: 20%">No. Kad Pengenalan</th>
+                                <th style="width: 15%">No. PF</th>
+                                <th style="width: 15%">No. Anggota</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr> </tr>
-                            <tr> </tr>
-                            <tr> </tr>
-                            <tr> </tr>
+                            <?php
+                            // Query to get guarantor information
+                            $guarantorSql = "SELECT * FROM tb_guarantor WHERE loanApplicationID = ?";
+                            $guarantorStmt = mysqli_prepare($conn, $guarantorSql);
+                            mysqli_stmt_bind_param($guarantorStmt, "i", $loanId);
+                            mysqli_stmt_execute($guarantorStmt);
+                            $guarantorResult = mysqli_stmt_get_result($guarantorStmt);
+                            
+                            $counter = 1;
+                            while ($guarantor = mysqli_fetch_assoc($guarantorResult)) {
+                                echo "<tr>";
+                                echo "<td>" . $counter++ . "</td>";
+                                echo "<td>" . htmlspecialchars($guarantor['guarantorName']) . "</td>";
+                                echo "<td>" . htmlspecialchars($guarantor['guarantorIC']) . "</td>";
+                                echo "<td>" . htmlspecialchars($guarantor['guarantorPFNo']) . "</td>";
+                                echo "<td>" . htmlspecialchars($guarantor['guarantorMemberNo']) . "</td>";
+                                echo "</tr>";
+                            }
+                            ?>
                         </tbody>
                     </table>
                 </div>
@@ -225,14 +324,16 @@ include "footer.php";
                         <label for="basicSalary" class="form-label">Gaji Pokok Sebulan Kakitangan</label>
                         <div class="input-group">
                             <span class="input-group-text">RM</span>
-                            <input type="number" step="0.01" class="form-control" id="basicSalary" name="basicSalary" required>
+                            <input type="number" step="0.01" class="form-control" id="basicSalary" name="basicSalary" 
+                                   value="<?php echo htmlspecialchars($basicSalary); ?>" readonly>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <label for="netSalary" class="form-label">Gaji Bersih Sebulan Kakitangan</label>
                         <div class="input-group">
                             <span class="input-group-text">RM</span>
-                            <input type="number" step="0.01" class="form-control" id="netSalary" name="netSalary" required>
+                            <input type="number" step="0.01" class="form-control" id="netSalary" name="netSalary" 
+                                   value="<?php echo htmlspecialchars($netSalary); ?>" readonly>
                         </div>
                     </div>
                 </div>
