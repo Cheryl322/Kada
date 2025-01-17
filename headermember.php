@@ -1,3 +1,35 @@
+<?php
+// 确保session已经启动
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// 检查用户是否登录
+if (isset($_SESSION['employeeID'])) {
+    include "dbconnect.php";
+    
+    // 检查用户是否有已批准的贷款
+    $employeeID = $_SESSION['employeeID'];
+    $sqlCheckLoan = "SELECT loanStatus 
+                     FROM tb_loanapplication 
+                     WHERE employeeID = ? 
+                     AND loanStatus = 'Diluluskan'
+                     LIMIT 1";
+                     
+    $stmt = mysqli_prepare($conn, $sqlCheckLoan);
+    mysqli_stmt_bind_param($stmt, "s", $employeeID);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+    
+    // 根据查询结果设置个人资料页面的链接
+    $profileLink = (mysqli_num_rows($result) > 0) ? "profil.php" : "profil2.php";
+    
+    mysqli_close($conn);
+} else {
+    $profileLink = "login.php"; // 如果未登录，导向登录页面
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -64,7 +96,7 @@ body::before {
     <div class="collapse navbar-collapse" id="navbarColor03">
       <ul class="navbar-nav me-auto">
         <li class="nav-item">
-          <a class="nav-link active" href="index.php">Laman Utama
+          <a class="nav-link active" href="mainpage.php">Laman Utama
             <span class="visually-hidden">(current)</span>
           </a>
         </li>
@@ -107,7 +139,7 @@ body::before {
             </svg>
           </li>
           <li class="nav-item">
-          <a class="nav-link" href="profil2.php">Profil</a>
+            <a class="nav-link" href="<?php echo $profileLink; ?>">Profil</a>
           </li>
     
         </ul>

@@ -29,7 +29,7 @@ $financialData = mysqli_fetch_assoc($result);
 $sqlSavings = "SELECT 
     m.employeeID,
     m.memberName,
-    b.no_akaun,    // 从 tb_bank 表获取 no_akaun
+    b.accountNo,
     COALESCE(SUM(CASE 
         WHEN t.transType = 'deposit' THEN t.transAmt 
         WHEN t.transType = 'withdrawal' THEN -t.transAmt 
@@ -37,10 +37,10 @@ $sqlSavings = "SELECT
     END), 0) as total_savings,
     MAX(t.transDate) as last_update
 FROM tb_member m
-LEFT JOIN tb_bank b ON m.employeeID = b.employeeID    // 添加与 tb_bank 的关联
+LEFT JOIN tb_bank b ON m.employeeID = b.employeeID
 LEFT JOIN tb_transaction t ON m.employeeID = t.employeeID
 WHERE m.employeeID = ?
-GROUP BY m.employeeID, m.memberName, b.no_akaun";
+GROUP BY m.employeeID, m.memberName, b.accountNo";
 
 $stmt = mysqli_prepare($conn, $sqlSavings);
 mysqli_stmt_bind_param($stmt, "s", $employeeID);
@@ -49,7 +49,7 @@ $result = mysqli_stmt_get_result($stmt);
 
 if ($row = mysqli_fetch_assoc($result)) {
     $totalSavings = $row['total_savings'];
-    $accountNo = $row['no_akaun'];
+    $accountNo = $row['accountNo'];
     $memberName = $row['memberName'];
     $lastUpdate = $row['last_update'] ? date('d M Y, h:i A', strtotime($row['last_update'])) : date('d M Y, h:i A');
 } else {
@@ -59,6 +59,28 @@ if ($row = mysqli_fetch_assoc($result)) {
     $lastUpdate = date('d M Y, h:i A');
 }
 ?>
+
+<div class="mt-4 mb-4 ms-3">
+        <a href="javascript:history.back()" class="btn btn-kembali">
+            <i class="fas fa-arrow-left me-2"></i>Kembali
+        </a>
+</div>
+
+<div class="container mt-4">
+    <div class="card savings-card mb-4" style="max-width: 1500px;">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <h5 class="card-subtitle mb-2 text-white">
+                        <i class="fas fa-piggy-bank me-2"></i>Jumlah Simpanan
+                    </h5>
+                    <h2 class="card-title text-white mb-3">RM <?php echo number_format($totalSavings, 2); ?></h2>
+                    <p class="card-text text-white mb-1">No. Akaun: <?php echo $accountNo; ?></p>
+                    <small class="text-white">Kemas kini terakhir: <?php echo $lastUpdate; ?></small>
+                </div>
+            </div>
+        </div>
+    </div>
 
 <div class="container mt-4">
     <!-- Navigation Cards -->
@@ -198,7 +220,7 @@ h6 {
 }
 
 .savings-card {
-    background: linear-gradient(135deg, #ff9a9e 0%, #ff6a88 100%);
+    background: linear-gradient(135deg,rgb(105, 212, 164) 0%,rgb(129, 195, 180) 100%);
     border: none;
     border-radius: 15px;
     box-shadow: 0 4px 15px rgba(0,0,0,0.1);
@@ -227,9 +249,24 @@ h6 {
 .savings-card small {
     opacity: 0.8;
 }
+
+.btn-kembali {
+    background-color: #FF9999;
+    color: white;
+    padding: 8px 20px;
+    /* border-radius: 20px; */
+    border: none;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.btn-kembali:hover {
+    background-color: #FF8080;
+    color: white;
+}
 </style>
 
-<div class="card savings-card mb-4">
+<!-- <div class="card savings-card mb-4">
     <div class="card-body">
         <div class="d-flex justify-content-between align-items-start">
             <div>
@@ -250,7 +287,7 @@ h6 {
             </div>
         </div>
     </div>
-</div>
+</div> -->
 
 
 
