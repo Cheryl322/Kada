@@ -1,13 +1,13 @@
 <?php
 session_start();
-include "dbconnect.php";
-include "headermember.php";
 
 if (!isset($_SESSION['employeeID'])) {
     header("Location: login.php");
     exit();
 }
 
+include "dbconnect.php";
+include "headermember.php";
 $employeeID = $_SESSION['employeeID'];
 
 // Fetch financial data
@@ -24,6 +24,40 @@ mysqli_stmt_bind_param($stmt, 's', $employeeID);
 mysqli_stmt_execute($stmt);
 $result = mysqli_stmt_get_result($stmt);
 $financialData = mysqli_fetch_assoc($result);
+
+// 获取会员的存款总额
+$sqlSavings = "SELECT 
+    m.employeeID,
+    m.memberName,
+    b.no_akaun,    // 从 tb_bank 表获取 no_akaun
+    COALESCE(SUM(CASE 
+        WHEN t.transType = 'deposit' THEN t.transAmt 
+        WHEN t.transType = 'withdrawal' THEN -t.transAmt 
+        ELSE 0 
+    END), 0) as total_savings,
+    MAX(t.transDate) as last_update
+FROM tb_member m
+LEFT JOIN tb_bank b ON m.employeeID = b.employeeID    // 添加与 tb_bank 的关联
+LEFT JOIN tb_transaction t ON m.employeeID = t.employeeID
+WHERE m.employeeID = ?
+GROUP BY m.employeeID, m.memberName, b.no_akaun";
+
+$stmt = mysqli_prepare($conn, $sqlSavings);
+mysqli_stmt_bind_param($stmt, "s", $employeeID);
+mysqli_stmt_execute($stmt);
+$result = mysqli_stmt_get_result($stmt);
+
+if ($row = mysqli_fetch_assoc($result)) {
+    $totalSavings = $row['total_savings'];
+    $accountNo = $row['no_akaun'];
+    $memberName = $row['memberName'];
+    $lastUpdate = $row['last_update'] ? date('d M Y, h:i A', strtotime($row['last_update'])) : date('d M Y, h:i A');
+} else {
+    $totalSavings = 0;
+    $accountNo = '-';
+    $memberName = '-';
+    $lastUpdate = date('d M Y, h:i A');
+}
 ?>
 
 <div class="container mt-4">
@@ -162,7 +196,61 @@ h6 {
     color: #6c757d;
     margin-bottom: 0.5rem;
 }
+
+.savings-card {
+    background: linear-gradient(135deg, #ff9a9e 0%, #ff6a88 100%);
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.savings-card .btn-light {
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    border-radius: 8px;
+    font-weight: 500;
+    padding: 8px 16px;
+    transition: all 0.3s ease;
+}
+
+.savings-card .btn-light:hover {
+    background: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.savings-card .card-title {
+    font-size: 2.5rem;
+    font-weight: 600;
+}
+
+.savings-card small {
+    opacity: 0.8;
+}
 </style>
+
+<div class="card savings-card mb-4">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <h5 class="card-subtitle mb-2 text-white">
+                    <i class="fas fa-piggy-bank me-2"></i>Jumlah Simpanan
+                </h5>
+                <h2 class="card-title text-white mb-3">RM <?php echo number_format($totalSavings, 2); ?></h2>
+                <p class="card-text text-white mb-1">No. Akaun: <?php echo $accountNo; ?></p>
+                <small class="text-white">Kemas kini terakhir: <?php echo $lastUpdate; ?></small>
+            </div>
+            <div class="d-flex flex-column gap-2">
+                <a href="buat_deposit.php" class="btn btn-light">
+                    <i class="fas fa-plus me-1"></i> Buat Deposit
+                </a>
+                <a href="mohon_pengeluaran.php" class="btn btn-light">
+                    <i class="fas fa-money-bill-wave me-1"></i> Mohon Pengeluaran
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
 
 
 
