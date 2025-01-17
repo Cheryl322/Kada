@@ -1,13 +1,13 @@
 <?php
 session_start();
-include "dbconnect.php";
-include "headermember.php";
 
 if (!isset($_SESSION['employeeID'])) {
     header("Location: login.php");
     exit();
 }
 
+include "dbconnect.php";
+include "headermember.php";
 $employeeID = $_SESSION['employeeID'];
 
 // Fetch financial data
@@ -24,7 +24,63 @@ mysqli_stmt_bind_param($stmt, 's', $employeeID);
 mysqli_stmt_execute($stmt);
 $result = mysqli_stmt_get_result($stmt);
 $financialData = mysqli_fetch_assoc($result);
+
+// 获取会员的存款总额
+$sqlSavings = "SELECT 
+    m.employeeID,
+    m.memberName,
+    b.accountNo,
+    COALESCE(SUM(CASE 
+        WHEN t.transType = 'deposit' THEN t.transAmt 
+        WHEN t.transType = 'withdrawal' THEN -t.transAmt 
+        ELSE 0 
+    END), 0) as total_savings,
+    MAX(t.transDate) as last_update
+FROM tb_member m
+LEFT JOIN tb_bank b ON m.employeeID = b.employeeID
+LEFT JOIN tb_transaction t ON m.employeeID = t.employeeID
+WHERE m.employeeID = ?
+GROUP BY m.employeeID, m.memberName, b.accountNo";
+
+$stmt = mysqli_prepare($conn, $sqlSavings);
+mysqli_stmt_bind_param($stmt, "s", $employeeID);
+mysqli_stmt_execute($stmt);
+$result = mysqli_stmt_get_result($stmt);
+
+if ($row = mysqli_fetch_assoc($result)) {
+    $totalSavings = $row['total_savings'];
+    $accountNo = $row['accountNo'];
+    $memberName = $row['memberName'];
+    $lastUpdate = $row['last_update'] ? date('d M Y, h:i A', strtotime($row['last_update'])) : date('d M Y, h:i A');
+} else {
+    $totalSavings = 0;
+    $accountNo = '-';
+    $memberName = '-';
+    $lastUpdate = date('d M Y, h:i A');
+}
 ?>
+
+<div class="mt-4 mb-4 ms-3">
+        <a href="javascript:history.back()" class="btn btn-kembali">
+            <i class="fas fa-arrow-left me-2"></i>Kembali
+        </a>
+</div>
+
+<div class="container mt-4">
+    <div class="card savings-card mb-4" style="max-width: 1500px;">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <h5 class="card-subtitle mb-2 text-white">
+                        <i class="fas fa-piggy-bank me-2"></i>Jumlah Simpanan
+                    </h5>
+                    <h2 class="card-title text-white mb-3">RM <?php echo number_format($totalSavings, 2); ?></h2>
+                    <p class="card-text text-white mb-1">No. Akaun: <?php echo $accountNo; ?></p>
+                    <small class="text-white">Kemas kini terakhir: <?php echo $lastUpdate; ?></small>
+                </div>
+            </div>
+        </div>
+    </div>
 
 <div class="container mt-4">
     <!-- Navigation Cards -->
@@ -162,7 +218,76 @@ h6 {
     color: #6c757d;
     margin-bottom: 0.5rem;
 }
+
+.savings-card {
+    background: linear-gradient(135deg,rgb(105, 212, 164) 0%,rgb(129, 195, 180) 100%);
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.savings-card .btn-light {
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    border-radius: 8px;
+    font-weight: 500;
+    padding: 8px 16px;
+    transition: all 0.3s ease;
+}
+
+.savings-card .btn-light:hover {
+    background: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.savings-card .card-title {
+    font-size: 2.5rem;
+    font-weight: 600;
+}
+
+.savings-card small {
+    opacity: 0.8;
+}
+
+.btn-kembali {
+    background-color: #FF9999;
+    color: white;
+    padding: 8px 20px;
+    /* border-radius: 20px; */
+    border: none;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.btn-kembali:hover {
+    background-color: #FF8080;
+    color: white;
+}
 </style>
+
+<!-- <div class="card savings-card mb-4">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <h5 class="card-subtitle mb-2 text-white">
+                    <i class="fas fa-piggy-bank me-2"></i>Jumlah Simpanan
+                </h5>
+                <h2 class="card-title text-white mb-3">RM <?php echo number_format($totalSavings, 2); ?></h2>
+                <p class="card-text text-white mb-1">No. Akaun: <?php echo $accountNo; ?></p>
+                <small class="text-white">Kemas kini terakhir: <?php echo $lastUpdate; ?></small>
+            </div>
+            <div class="d-flex flex-column gap-2">
+                <a href="buat_deposit.php" class="btn btn-light">
+                    <i class="fas fa-plus me-1"></i> Buat Deposit
+                </a>
+                <a href="mohon_pengeluaran.php" class="btn btn-light">
+                    <i class="fas fa-money-bill-wave me-1"></i> Mohon Pengeluaran
+                </a>
+            </div>
+        </div>
+    </div>
+</div> -->
 
 
 

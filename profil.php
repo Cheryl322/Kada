@@ -46,9 +46,9 @@ $memberData = mysqli_fetch_assoc($result);
                             <li class="nav-item w-100">
                                 <a class="btn btn-primary w-75" href="profil.php">Profil</a>
                             </li>
-                            <li class="nav-item w-100">
+                            <!-- <li class="nav-item w-100">
                                 <a class="btn btn-info w-75" href="statuskewangan.php">Pinjaman</a>
-                            </li>
+                            </li> -->
                             <li class="nav-item w-100">
                                 <a class="btn btn-info w-75" href="statuspermohonanloan.php">Permohonan</a>
                             </li>

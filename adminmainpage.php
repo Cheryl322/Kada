@@ -1,8 +1,6 @@
 <?php
 session_start();
 
-include "headeradmin.php";
-
 // Debug lines
 error_log("Admin page access - Session data: " . print_r($_SESSION, true));
 
@@ -447,7 +445,7 @@ if (!isset($_SESSION['employeeID']) || $_SESSION['role'] !== 'admin') {
 
 <body>
     <?php
-    // Include header and footer
+    // Include only once
     include "headeradmin.php";
     ?>
 
