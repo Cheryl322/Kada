@@ -37,81 +37,108 @@ if (!isset($_SESSION['employeeID']) || $_SESSION['role'] !== 'admin') {
 }
 
 .circle-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 20vh;
-  width: 100%;
-  margin: 80px auto 40px;
-  padding: 0 40px;
-  flex-wrap: wrap;
-  gap: 40px;
-  position: relative;
-  transition: all 0.3s ease-in-out;
-  transition: padding-left 0.3s ease-in-out;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 30px;
+    padding: 100px 40px 40px 40px;
+    flex-wrap: nowrap;
+    width: 100%;
+    max-width: 1600px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
 }
 
 .circle {
-  flex: 0 0 180px;
-  margin: 10px;
-  width: 180px;
-  height: 180px;
-  border-radius: 50%;
-  background-color: MediumAquamarine;
-  cursor: pointer;
-  transition: transform 0.3s ease, background-color 0.3s ease;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  text-decoration: none;
-  color: white;
-  font-size: 1.2rem;
-  font-weight: bold;
-  text-align: center;
-  padding: 15px;
-  line-height: 1.2;
-  border: 4px solid white;
-  box-shadow: 0 0 15px rgba(0,0,0,0.1);
-  overflow: hidden;
+    flex: 0 0 200px;
+    width: 200px;
+    height: 200px;
+    min-width: 200px;
+    position: relative;
+    z-index: 2;
+    background: MediumAquamarine;
+    border-radius: 50%;
+    overflow: visible;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-decoration: none;
+    color: white;
+    font-size: 1.2rem;
+    font-weight: bold;
+    text-align: center;
+    padding: 15px;
+    line-height: 1.2;
+    border: 4px solid white;
+    box-shadow: 0 0 15px rgba(0,0,0,0.1);
 }
 
 .circle:hover {
-  transform: scale(1.05);
-  background-color: rgb(34, 119, 210);
-  border-color: rgba(255, 255, 255, 0.9);
+    transform: scale(1.05);
+    background: #5dbea3;
 }
 
 /* Make circles responsive */
-@media screen and (max-width: 1200px) {
-  .circle {
-    flex: 0 0 150px;
-    width: 150px;
-    height: 150px;
-  }
-
-  .circle i {
-    font-size: 1.5rem;
-  }
-
-  .circle span {
-    font-size: 0.85em;
-  }
+@media screen and (max-width: 1400px) {
+    .circle-container {
+        gap: 20px;
+        padding-top: 80px;
+    }
+    
+    .circle {
+        flex: 0 0 180px;
+        width: 180px;
+        height: 180px;
+        min-width: 180px;
+    }
 }
 
-@media screen and (max-width: 800px) {
-  .circle {
-    flex: 0 0 130px;
-    width: 130px;
-    height: 130px;
-  }
+@media screen and (max-width: 1200px) {
+    .circle {
+        flex: 0 0 160px;
+        width: 160px;
+        height: 160px;
+        min-width: 160px;
+    }
+    
+    .circle i {
+        font-size: 2rem;
+    }
+    
+    .circle span {
+        font-size: 1rem;
+    }
+}
 
-  .circle i {
-    font-size: 1.3rem;
-  }
+@media screen and (max-width: 992px) {
+    .circle-container {
+        padding-top: 60px;
+    }
+    
+    .circle {
+        flex: 0 0 140px;
+        width: 140px;
+        height: 140px;
+        min-width: 140px;
+    }
+    
+    .circle i {
+        font-size: 1.8rem;
+    }
+    
+    .circle span {
+        font-size: 0.9rem;
+    }
+}
 
-  .circle span {
-    font-size: 0.8em;
-  }
+@media screen and (max-width: 768px) {
+    .circle-container {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
 }
 
 /* Add these table styles */
@@ -251,19 +278,21 @@ if (!isset($_SESSION['employeeID']) || $_SESSION['role'] !== 'admin') {
     align-items: center;
     justify-content: center;
     text-align: center;
-    gap: 8px;
+    gap: 10px;
     max-width: 100%;
+    position: relative;
+    z-index: 3;
 }
 
 .circle i {
-    font-size: 1.8rem;
-    margin-bottom: 3px;
+    font-size: 2.2rem;
+    margin-bottom: 5px;
 }
 
 .circle span {
     display: block;
-    line-height: 1.1;
-    font-size: 0.9em;
+    line-height: 1.3;
+    font-size: 1.1rem;
     word-wrap: break-word;
     max-width: 100%;
 }
@@ -400,6 +429,12 @@ if (!isset($_SESSION['employeeID']) || $_SESSION['role'] !== 'admin') {
     max-width: calc(100vw - 200px);
   }
   }
+
+/* 调整导航栏样式 */
+.navbar {
+    position: relative;
+    z-index: 0;
+}
 </style>
 </head>
 
@@ -410,30 +445,36 @@ if (!isset($_SESSION['employeeID']) || $_SESSION['role'] !== 'admin') {
     ?>
 
     <div class="circle-container">
-      <a href="senaraiPermohonanAhli.php" class="circle">
-        <div class="circle-content">
-          <i class="fas fa-user-plus mb-2"></i>
-          <span>Pendaftaran Ahli</span>
-        </div>
-      </a>
-      <a href="senaraiPermohonanPinjaman.php" class="circle">
-        <div class="circle-content">
-          <i class="fas fa-hand-holding-usd mb-2"></i>
-          <span>Permohonan Pinjaman</span>
-        </div>
-      </a>
-      <a href="hasilreport.php" class="circle">
-        <div class="circle-content">
-          <i class="fas fa-file-alt mb-2"></i>
-          <span>Hasil Laporan</span>
-        </div>
-      </a>
-      <a href="adminviewreport.php" class="circle">
-        <div class="circle-content">
-          <i class="fas fa-clipboard-check mb-2"></i>
-          <span>Cek Laporan</span>
-        </div>
-      </a>
+        <a href="senaraiPermohonanAhli.php" class="circle">
+            <div class="circle-content">
+                <i class="fas fa-user-plus mb-2"></i>
+                <span>Pendaftaran Ahli</span>
+            </div>
+        </a>
+        <a href="senaraiPermohonanPinjaman.php" class="circle">
+            <div class="circle-content">
+                <i class="fas fa-hand-holding-usd mb-2"></i>
+                <span>Permohonan Pinjaman</span>
+            </div>
+        </a>
+        <a href="hasilreport.php" class="circle">
+            <div class="circle-content">
+                <i class="fas fa-file-alt mb-2"></i>
+                <span>Hasil Laporan</span>
+            </div>
+        </a>
+        <a href="adminviewreport.php" class="circle">
+            <div class="circle-content">
+                <i class="fas fa-clipboard-check mb-2"></i>
+                <span>Cek Laporan</span>
+            </div>
+        </a>
+        <a href="admin_upload_payment.php" class="circle">
+            <div class="circle-content">
+                <i class="fas fa-money-bill-wave mb-2"></i>
+                <span>Rekod Pembayaran</span>
+            </div>
+        </a>
     </div>
 
     <div class="tables-container">

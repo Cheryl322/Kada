@@ -57,20 +57,85 @@ if ($row = mysqli_fetch_assoc($result)) {
     $lastUpdate = date('d M Y, h:i A');
 }
 
-$sql_loan = "SELECT * FROM tb_loan 
-             WHERE employeeID = ? 
-             ORDER BY loanID DESC LIMIT 1";
+// 获取贷款信息
+$sql_loan = "SELECT la.*, l.balance, l.loanID, l.loanType 
+             FROM tb_loanapplication la
+             LEFT JOIN tb_loan l ON l.loanApplicationID = la.loanApplicationID
+             WHERE la.employeeID = ? AND la.loanStatus = 'Diluluskan'
+             ORDER BY la.loanApplicationID DESC LIMIT 1";
 
 $stmt_loan = mysqli_prepare($conn, $sql_loan);
 if ($stmt_loan) {
     mysqli_stmt_bind_param($stmt_loan, 'i', $employeeID);
     mysqli_stmt_execute($stmt_loan);
     $result_loan = mysqli_stmt_get_result($stmt_loan);
-    if ($result_loan) {
-        $loanData = mysqli_fetch_assoc($result_loan);
+    
+    // 添加SQL调试信息
+    echo "<!-- Debug Info Start -->";
+    echo "<!-- SQL Query: " . $sql_loan . " -->";
+    echo "<!-- EmployeeID: " . $employeeID . " -->";
+    
+    if ($result_loan && ($loanData = mysqli_fetch_assoc($result_loan))) {
+        echo "<!-- Found loan application:
+        LoanApplicationID: " . ($loanData['loanApplicationID'] ?? 'Not set') . "
+        Amount Requested: " . ($loanData['amountRequested'] ?? 'Not set') . "
+        Loan Status: [" . ($loanData['loanStatus'] ?? 'Not set') . "]
+        Loan Type: [" . ($loanData['loanType'] ?? 'Not set') . "]
+        Balance: " . ($loanData['balance'] ?? 'Not set') . "
+        -->";
+        
+        // 如果没有 balance 记录，创建一个
+        if (!isset($loanData['balance']) || $loanData['balance'] == 0) {
+            // 检查是否已经有 loan 记录
+            $check_sql = "SELECT * FROM tb_loan WHERE loanApplicationID = ?";
+            $check_stmt = mysqli_prepare($conn, $check_sql);
+            mysqli_stmt_bind_param($check_stmt, 'i', $loanData['loanApplicationID']);
+            mysqli_stmt_execute($check_stmt);
+            $check_result = mysqli_stmt_get_result($check_stmt);
+            
+            if (mysqli_num_rows($check_result) == 0) {
+                // 创建新的 loan 记录，包括贷款类型
+                $insert_sql = "INSERT INTO tb_loan (employeeID, loanApplicationID, balance, loanType) 
+                              VALUES (?, ?, ?, ?)";
+                $insert_stmt = mysqli_prepare($conn, $insert_sql);
+                mysqli_stmt_bind_param($insert_stmt, 'iids', 
+                    $employeeID,
+                    $loanData['loanApplicationID'],
+                    $loanData['amountRequested'],
+                    $loanData['loanType']  // 使用申请时的贷款类型
+                );
+                $insert_result = mysqli_stmt_execute($insert_stmt);
+                echo "<!-- Insert new loan record: " . ($insert_result ? 'Success' : 'Failed') . " -->";
+                
+                if ($insert_result) {
+                    $loanData['balance'] = $loanData['amountRequested'];
+                }
+            } else {
+                // 更新现有记录
+                $update_sql = "UPDATE tb_loan 
+                              SET balance = ? 
+                              WHERE loanApplicationID = ?";
+                $update_stmt = mysqli_prepare($conn, $update_sql);
+                mysqli_stmt_bind_param($update_stmt, 'di', 
+                    $loanData['amountRequested'],
+                    $loanData['loanApplicationID']
+                );
+                $update_result = mysqli_stmt_execute($update_stmt);
+                echo "<!-- Update existing loan record: " . ($update_result ? 'Success' : 'Failed') . " -->";
+                
+                if ($update_result) {
+                    $loanData['balance'] = $loanData['amountRequested'];
+                }
+            }
+        }
+    } else {
+        echo "<!-- No loan application found -->";
+        echo "<!-- MySQL Error: " . mysqli_error($conn) . " -->";
     }
+    echo "<!-- Debug Info End -->";
     mysqli_stmt_close($stmt_loan);
 }
+
 
 $sql_loan_details = "SELECT * FROM tb_loan 
                     WHERE employeeID = ? 
@@ -136,7 +201,7 @@ mysqli_close($conn);
                         <h5 class="card-title mb-0">Jumlah Pinjaman</h5>
                     </div>
                     <h2 class="card-text mb-2">RM <?php 
-                        echo number_format($loanData['amountRequested'] ?? 0, 2); 
+                        echo number_format($loanData['balance'] ?? 0, 2); 
                     ?></h2>
                     <div class="small mt-auto">
                         <?php if ($loanData): ?>
@@ -232,9 +297,9 @@ mysqli_close($conn);
                                 <h6>Al-Bai</h6>
                                 <h4 class="text-success">RM <?php 
                                     echo number_format(
-                                        ($loanData && strtoupper($loanData['loanType']) == 'AL-BAI') 
-                                            ? $loanData['amountRequested'] 
-                                            : 0, 
+                                        (isset($loanData['loanType']) && 
+                                         strtoupper($loanData['loanType']) == 'AL-BAI' && 
+                                         isset($loanData['balance'])) ? $loanData['balance'] : 0, 
                                         2
                                     ); 
                                 ?></h4>
@@ -245,9 +310,9 @@ mysqli_close($conn);
                                 <h6>Al-Innah</h6>
                                 <h4 class="text-success">RM <?php 
                                     echo number_format(
-                                        ($loanData && strtoupper($loanData['loanType']) == 'AL-INNAH') 
-                                            ? $loanData['amountRequested'] 
-                                            : 0, 
+                                        (isset($loanData['loanType']) && 
+                                         strtoupper($loanData['loanType']) == 'AL-INNAH' && 
+                                         isset($loanData['balance'])) ? $loanData['balance'] : 0, 
                                         2
                                     ); 
                                 ?></h4>
@@ -258,9 +323,9 @@ mysqli_close($conn);
                                 <h6>B/Pulih Kenderaan</h6>
                                 <h4 class="text-success">RM <?php 
                                     echo number_format(
-                                        ($loanData && strtoupper($loanData['loanType']) == 'B/PULIH KENDERAAN') 
-                                            ? $loanData['amountRequested'] 
-                                            : 0, 
+                                        (isset($loanData['loanType']) && 
+                                         strtoupper($loanData['loanType']) == 'B/PULIH KENDERAAN' && 
+                                         isset($loanData['balance'])) ? $loanData['balance'] : 0, 
                                         2
                                     ); 
                                 ?></h4>
@@ -271,9 +336,9 @@ mysqli_close($conn);
                                 <h6>Road Tax & Insuran</h6>
                                 <h4 class="text-success">RM <?php 
                                     echo number_format(
-                                        ($loanData && strtoupper($loanData['loanType']) == 'ROAD TAX & INSURAN') 
-                                            ? $loanData['amountRequested'] 
-                                            : 0, 
+                                        (isset($loanData['loanType']) && 
+                                         strtoupper($loanData['loanType']) == 'ROAD TAX & INSURAN' && 
+                                         isset($loanData['balance'])) ? $loanData['balance'] : 0, 
                                         2
                                     ); 
                                 ?></h4>
