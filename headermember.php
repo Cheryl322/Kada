@@ -24,7 +24,7 @@ if (isset($_SESSION['employeeID'])) {
     // 根据查询结果设置个人资料页面的链接
     $profileLink = (mysqli_num_rows($result) > 0) ? "profil.php" : "profil2.php";
     
-    mysqli_close($conn);
+    // mysqli_close($conn);
 } else {
     $profileLink = "login.php"; // 如果未登录，导向登录页面
 }
