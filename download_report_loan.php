@@ -12,7 +12,16 @@ $employeeID = $_GET['employeeID'];
 
 try {
     require_once('tcpdf/tcpdf.php');
+    
+    // Add error reporting at the start
+    error_reporting(E_ALL);
+    ini_set('display_errors', 1);
 
+    // Verify database connection
+    if (!$conn) {
+        throw new Exception("Database connection failed: " . mysqli_connect_error());
+    }
+    
     // Initialize PDF with proper settings
     $pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
     
@@ -29,15 +38,25 @@ try {
     $pdf->AddPage();
     
     // Query loan data and employee data
-    $query = "SELECT l.*, e.name, e.staffNo, e.icNo, e.pfNo 
+    $query = "SELECT l.*, m.memberName, m.employeeID, m.ic, m.no_pf 
               FROM tb_loan l 
-              JOIN tb_employee e ON l.employeeID = e.employeeID 
+              JOIN tb_member m ON l.employeeID = m.employeeID 
               WHERE l.employeeID = ?";
     $stmt = mysqli_prepare($conn, $query);
     mysqli_stmt_bind_param($stmt, 's', $employeeID);
+
+    // Add debugging before query execution
+    if (!$stmt) {
+        throw new Exception("Query preparation failed: " . mysqli_error($conn));
+    }
+    
     mysqli_stmt_execute($stmt);
     $result = mysqli_stmt_get_result($stmt);
-    $data = mysqli_fetch_assoc($result);
+    
+    // Verify data was retrieved
+    if (!$data = mysqli_fetch_assoc($result)) {
+        throw new Exception("No data found for employee ID: " . $employeeID);
+    }
 
     // Add content to PDF
     $pdf->SetFont('helvetica', 'B', 14);
@@ -51,16 +70,16 @@ try {
     $pdf->SetFont('helvetica', '', 11);
     
     $pdf->Cell(40, 8, 'Nama', 1, 0);
-    $pdf->Cell(150, 8, $data['name'], 1, 1);
+    $pdf->Cell(150, 8, htmlspecialchars($data['memberName']), 1, 1);
     
     $pdf->Cell(40, 8, 'No. Pekerja', 1, 0);
-    $pdf->Cell(150, 8, $data['staffNo'], 1, 1);
+    $pdf->Cell(150, 8, htmlspecialchars($data['employeeID']), 1, 1);
     
     $pdf->Cell(40, 8, 'No. Kad Pengenalan', 1, 0);
-    $pdf->Cell(150, 8, $data['ic'], 1, 1);
+    $pdf->Cell(150, 8, htmlspecialchars($data['ic']), 1, 1);
     
     $pdf->Cell(40, 8, 'No. PF', 1, 0);
-    $pdf->Cell(150, 8, $data['no_pf'], 1, 1);
+    $pdf->Cell(150, 8, htmlspecialchars($data['no_pf']), 1, 1);
     
     $pdf->Ln(10);
 
@@ -73,7 +92,7 @@ try {
     $pdf->Cell(150, 8, $data['loanType'], 1, 1);
     
     $pdf->Cell(40, 8, 'Amaun Dipohon', 1, 0);
-    $pdf->Cell(150, 8, 'RM ' . number_format($data['amountRequestd'], 2), 1, 1);
+    $pdf->Cell(150, 8, 'RM ' . number_format($data['amountRequested'], 2), 1, 1);
     
     $pdf->Cell(40, 8, 'Tempoh Pembiayaan', 1, 0);
     $pdf->Cell(150, 8, $data['financingPeriod'] . ' bulan', 1, 1);
@@ -101,7 +120,23 @@ try {
     exit();
 
 } catch (Exception $e) {
+    // Enhanced error handling
     header('HTTP/1.1 500 Internal Server Error');
     error_log('PDF Generation Error: ' . $e->getMessage());
-    exit('Error generating PDF. Please try again later.');
+    error_log('Stack trace: ' . $e->getTraceAsString());
+    
+    // In development environment, you might want to show detailed error
+    if (defined('ENVIRONMENT') && ENVIRONMENT === 'development') {
+        exit('Error generating PDF: ' . $e->getMessage());
+    } else {
+        exit('Error generating PDF. Please try again later.');
+    }
+} finally {
+    // Clean up resources
+    if (isset($stmt)) {
+        mysqli_stmt_close($stmt);
+    }
+    if (isset($conn)) {
+        mysqli_close($conn);
+    }
 } 
