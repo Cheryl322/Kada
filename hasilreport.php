@@ -528,16 +528,17 @@ function fetchMembers(page = 1, search = '') {
                         row.innerHTML = `
                             <td class="text-center">
                                 <input type="checkbox" class="form-check-input member-checkbox" 
-                                       name="selected_loans[]" value="${member.employeeID}">
+                                       name="selected_loans[]" value="${member.loanApplicationID}">
                             </td>
                             <td>${rowNum}</td>
                             <td>${member.employeeID}</td>
                             <td>${member.memberName}</td>
                             <td>${new Date(member.created_at).toLocaleDateString('en-GB')}</td>
                             <td>
-                                <button type="button" class="btn btn-primary btn-sm" onclick="viewMember('${member.employeeID}')">
-                                    View
-                                </button>
+                                <a href="penyatapermohonanpinjaman.php?id=${member.loanApplicationID}" 
+                                   class="btn btn-primary btn-sm">
+                                    Lihat
+                                </a>
                             </td>
                         `;
                     } else {
@@ -551,9 +552,10 @@ function fetchMembers(page = 1, search = '') {
                             <td>${member.memberName}</td>
                             <td>${new Date(member.created_at).toLocaleDateString('en-GB')}</td>
                             <td>
-                                <button type="button" class="btn btn-primary btn-sm" onclick="viewMember('${member.employeeID}')">
+                                <a href="penyatapermohonananggota.php?id=${member.employeeID}" 
+                                   class="btn btn-primary btn-sm">
                                     Lihat
-                                </button>
+                                </a>
                             </td>
                         `;
                     }
@@ -934,11 +936,17 @@ document.querySelectorAll('input[name="reportType"]').forEach(radio => {
 
 // Add this new function for handling the view action
 function viewMember(employeeID) {
-    // Prevent default navigation
-    event.preventDefault();
-    // You can add any specific view functionality here
-    // For example, show a modal or fetch member details via AJAX
-    console.log('Viewing member:', employeeID);
+    // Get the selected report type
+    const reportType = document.querySelector('input[name="reportType"]:checked').value;
+    
+    // Determine which page to redirect to based on report type
+    if (reportType === 'pembiayaan') {
+        // For loan applications, redirect to loan application form
+        window.location.href = `senaraiPermohonanPinjaman.php?id=${employeeID}`;
+    } else {
+        // For members, redirect to member details form
+        window.location.href = `senaraiahli.php?id=${employeeID}`;
+    }
 }
 
 // Update the modal button to use validateAndSubmit instead
