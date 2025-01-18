@@ -23,16 +23,129 @@ if ($stmt) {
     mysqli_stmt_close($stmt);
 }
 
+// 获取交易数据
+$sql_trans = "SELECT 
+    COUNT(DISTINCT transDate) as payment_count,
+    SUM(CASE WHEN transType = 'Simpanan-M' THEN transAmt ELSE 0 END) as modal_saham,
+    SUM(CASE WHEN transType = 'Simpanan-S' THEN transAmt ELSE 0 END) as simpanan_tetap,
+    SUM(CASE WHEN transType = 'Simpanan-T' THEN transAmt ELSE 0 END) as tabung_anggota,
+    SUM(CASE WHEN transType = 'Simpanan-Y' THEN transAmt ELSE 0 END) as model_yuran
+FROM tb_transaction 
+WHERE employeeID = ?";
+
+$stmt_trans = mysqli_prepare($conn, $sql_trans);
+mysqli_stmt_bind_param($stmt_trans, 'i', $employeeID);
+mysqli_stmt_execute($stmt_trans);
+$trans_data = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_trans));
+
+// 获取费用分配信息
+$sql_fees = "SELECT 
+    entryFee,
+    deposit,
+    modalShare,
+    feeCapital,
+    contribution,
+    fixedDeposit
+FROM tb_memberregistration_feesandcontribution
+WHERE employeeID = ?";
+
+$stmt_fees = mysqli_prepare($conn, $sql_fees);
+mysqli_stmt_bind_param($stmt_fees, 'i', $employeeID);
+mysqli_stmt_execute($stmt_fees);
+$fees_data = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_fees));
+
+// 获取所有交易
+$sql_trans = "SELECT transAmt, transDate 
+              FROM tb_transaction 
+              WHERE employeeID = ?
+              ORDER BY transDate ASC";
+
+$stmt_trans = mysqli_prepare($conn, $sql_trans);
+mysqli_stmt_bind_param($stmt_trans, 'i', $employeeID);
+mysqli_stmt_execute($stmt_trans);
+$result = mysqli_stmt_get_result($stmt_trans);
+
+// 初始化累计金额
+$modalSaham = 0;
+$modalYuran = 0;
+$simpananTetap = 0;
+$tabungAnggota = 0;
+
+// 处理每笔交易
+while ($trans = mysqli_fetch_assoc($result)) {
+    $amount = $trans['transAmt'];
+    
+    // 先扣除 entry fee 和 deposit（如果还未扣除）
+    if ($fees_data['entryFee'] > 0) {
+        $deduction = min($amount, $fees_data['entryFee']);
+        $amount -= $deduction;
+        $fees_data['entryFee'] -= $deduction;
+    }
+    
+    if ($amount > 0 && $fees_data['deposit'] > 0) {
+        $deduction = min($amount, $fees_data['deposit']);
+        $amount -= $deduction;
+        $fees_data['deposit'] -= $deduction;
+    }
+    
+    // 如果还有剩余金额，按比例分配
+    if ($amount > 0) {
+        // Modal Saham
+        if ($modalSaham < $fees_data['modalShare']) {
+            $allocation = min($amount, $fees_data['modalShare'] - $modalSaham);
+            $modalSaham += $allocation;
+            $amount -= $allocation;
+        }
+        
+        // 如果还有剩余金额，平均分配给其他三项
+        if ($amount > 0) {
+            $remaining = $amount / 3;
+            
+            // Modal Yuran
+            if ($modalYuran < $fees_data['feeCapital']) {
+                $allocation = min($remaining, $fees_data['feeCapital'] - $modalYuran);
+                $modalYuran += $allocation;
+            }
+            
+            // Simpanan Tetap
+            if ($simpananTetap < $fees_data['fixedDeposit']) {
+                $allocation = min($remaining, $fees_data['fixedDeposit'] - $simpananTetap);
+                $simpananTetap += $allocation;
+            }
+            
+            // Tabung Anggota
+            if ($tabungAnggota < $fees_data['contribution']) {
+                $allocation = min($remaining, $fees_data['contribution'] - $tabungAnggota);
+                $tabungAnggota += $allocation;
+            }
+        }
+    }
+}
+
+// 添加调试信息
+echo "<!-- ALLOCATION DEBUG
+Original Targets:
+Modal Share: {$fees_data['modalShare']}
+Fee Capital: {$fees_data['feeCapital']}
+Fixed Deposit: {$fees_data['fixedDeposit']}
+Contribution: {$fees_data['contribution']}
+
+Actual Allocations:
+Modal Saham: $modalSaham
+Modal Yuran: $modalYuran
+Simpanan Tetap: $simpananTetap
+Tabung Anggota: $tabungAnggota
+-->";
+
+// 计算总存款
+$totalSavings = $trans_data['total_all'] ?? 0;
+
 // 获取会员的存款总额
 $sqlSavings = "SELECT 
     m.employeeID,
     m.memberName,
     b.accountNo,
-    COALESCE(SUM(CASE 
-        WHEN t.transType = 'deposit' THEN t.transAmt 
-        WHEN t.transType = 'withdrawal' THEN -t.transAmt 
-        ELSE 0 
-    END), 0) as total_savings,
+    COALESCE(SUM(t.transAmt), 0) as total_savings,
     MAX(t.transDate) as last_update
 FROM tb_member m
 LEFT JOIN tb_bank b ON m.employeeID = b.employeeID
@@ -57,96 +170,72 @@ if ($row = mysqli_fetch_assoc($result)) {
     $lastUpdate = date('d M Y, h:i A');
 }
 
-// 获取贷款信息并添加调试
-$sql_loan = "SELECT la.*, l.balance, l.loanID, l.loanType 
-             FROM tb_loanapplication la
-             LEFT JOIN tb_loan l ON l.loanApplicationID = la.loanApplicationID
-             WHERE la.employeeID = ? AND la.loanStatus = 'Diluluskan'
-             ORDER BY la.loanApplicationID DESC LIMIT 1";
+// 获取贷款信息
+$sql_loan = "SELECT 
+    la.*,
+    l.loanID,
+    COALESCE(l.balance, la.amountRequested) as balance,  
+    COALESCE(l.loanType, 'Unknown') as loanType,
+    la.amountRequested,
+    la.monthlyInstallments
+FROM tb_loanapplication la
+LEFT JOIN tb_loan l ON l.loanApplicationID = la.loanApplicationID
+WHERE la.employeeID = ? 
+    AND la.loanStatus = 'Diluluskan'
+ORDER BY la.loanApplicationID DESC 
+LIMIT 1";
 
 $stmt_loan = mysqli_prepare($conn, $sql_loan);
-mysqli_stmt_bind_param($stmt_loan, 'i', $employeeID);
+mysqli_stmt_bind_param($stmt_loan, 's', $employeeID);
 mysqli_stmt_execute($stmt_loan);
-$loanData = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_loan));
+$result_loan = mysqli_stmt_get_result($stmt_loan);
+$loan_data = mysqli_fetch_assoc($result_loan);
+
+// 设置贷款变量
+$loanAmount = $loan_data['amountRequested'] ?? 0;
+$balance = $loan_data['balance'] ?? $loanAmount;  // 如果 balance 为空，使用 amountRequested
+$monthlyPayment = $loan_data['monthlyInstallments'] ?? 0;
+$loanType = $loan_data['loanType'] ?? '';
 
 // 添加调试信息
-error_log("Loan Data for employee " . $employeeID . ": " . print_r($loanData, true));
+echo "<!-- LOAN DEBUG
+SQL: $sql_loan
+EmployeeID: $employeeID
+Loan Data: " . print_r($loan_data, true) . "
+Balance: $balance
+LoanAmount: $loanAmount
+-->";
 
-// 获取贷款信息
-$sql_loan_details = "SELECT * FROM tb_loan 
-                    WHERE employeeID = ? 
-                    ORDER BY loanID DESC LIMIT 1";
+// 初始化贷款类型金额
+$albai_amount = 0;
+$alinnah_amount = 0;
+$bpulih_amount = 0;
+$roadtax_amount = 0;
 
-$stmt_loan_details = mysqli_prepare($conn, $sql_loan_details);
-$loan_details = null;
-if ($stmt_loan_details) {
-    mysqli_stmt_bind_param($stmt_loan_details, 'i', $employeeID);
-    mysqli_stmt_execute($stmt_loan_details);
-    $result_loan_details = mysqli_stmt_get_result($stmt_loan_details);
-    if ($result_loan_details) {
-        $loan_details = mysqli_fetch_assoc($result_loan_details);
+// 根据当前贷款类型设置对应金额
+if ($loan_data) {
+    switch (strtoupper($loanType)) {
+        case 'AL-BAI':
+            $albai_amount = $balance;
+            break;
+        case 'AL-INAH':
+            $alinnah_amount = $balance;
+            break;
+        case 'B/PULIH KENDERAAN':
+            $bpulih_amount = $balance;
+            break;
+        case 'ROAD TAX & INSURAN':
+            $roadtax_amount = $balance;
+            break;
     }
-    mysqli_stmt_close($stmt_loan_details);
 }
 
-// 获取当前的 financialstatus
-$sql = "SELECT f.* 
-        FROM tb_financialstatus f
-        WHERE f.employeeID = ?";
-
-$stmt = mysqli_prepare($conn, $sql);
-mysqli_stmt_bind_param($stmt, 'i', $employeeID);
-mysqli_stmt_execute($stmt);
-$financialStatus = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
-
-// 如果没有记录，创建一个新记录，所有金额初始化为0
-if (!$financialStatus) {
-    $sql_insert = "INSERT INTO tb_financialstatus 
-                   (employeeID, modalShare, feeCapital, contribution, fixedDeposit, dateUpdated)
-                   VALUES (?, 0, 0, 0, 0, CURRENT_TIMESTAMP)";
-    $stmt_insert = mysqli_prepare($conn, $sql_insert);
-    mysqli_stmt_bind_param($stmt_insert, 'i', $employeeID);
-    mysqli_stmt_execute($stmt_insert);
-    
-    // 重新获取刚创建的记录
-    mysqli_stmt_execute($stmt);
-    $financialStatus = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
-}
-
-// 当管理员确认更新时（假设通过POST请求）
-if (isset($_POST['confirm_update']) && $_POST['confirm_update'] == 1) {
-    // 使用初始注册金额更新 financialstatus
-    $sql_update = "UPDATE tb_financialstatus 
-                   SET modalShare = ?,
-                       feeCapital = ?,
-                       contribution = ?,
-                       fixedDeposit = ?,
-                       dateUpdated = CURRENT_TIMESTAMP
-                   WHERE employeeID = ?";
-    
-    $stmt_update = mysqli_prepare($conn, $sql_update);
-    mysqli_stmt_bind_param($stmt_update, 'ddddi', 
-        $initialAmount['modalShare'],
-        $initialAmount['feeCapital'],
-        $initialAmount['contribution'],
-        $initialAmount['fixedDeposit'],
-        $employeeID
-    );
-    mysqli_stmt_execute($stmt_update);
-}
-
-// 在文件最后关闭数据库连接
-mysqli_close($conn);
-
-function formatNumber($number) {
-    return str_pad($number, 4, '0', STR_PAD_LEFT);
-}
+// 在页面中只显示一次贷款信息卡片
 ?>
-
 <div class="mt-4 mb-4 ms-3">
-        <a href="javascript:history.back()" class="btn btn-kembali">
-            <i class="fas fa-arrow-left me-2"></i>Kembali
-        </a>
+    <a href="javascript:history.back()" class="btn btn-kembali">
+        <i class="fas fa-arrow-left me-2"></i>Kembali
+    </a>
 </div>
 
 <div class="container mt-4">
@@ -157,46 +246,38 @@ function formatNumber($number) {
         <!-- Total Savings Card -->
         <div class="col-md-6 mb-3">
             <div class="card bg-success text-white h-100">
-                <div class="card-body d-flex flex-column">
+                <div class="card-body">
                     <div class="d-flex align-items-center mb-2">
                         <i class="fas fa-piggy-bank me-2"></i>
                         <h5 class="card-title mb-0">Jumlah Simpanan</h5>
                     </div>
-                    <h2 class="card-text mb-2">RM <?php echo number_format(
-                        ($financialStatus['modalShare'] ?? 0) + 
-                        ($financialStatus['feeCapital'] ?? 0) + 
-                        ($financialStatus['fixedDeposit'] ?? 0) + 
-                        ($financialStatus['contribution'] ?? 0), 
-                        2); 
-                    ?></h2>
-                    <div class="small mt-auto">
+                    <h2 class="card-text mb-2">RM <?php echo number_format($totalSavings, 2); ?></h2>
+                    <div class="small">
                         No. Akaun: <?php echo $accountNo; ?><br>
-                        Kemas kini terakhir: <?php echo date('d M Y, h:i A', strtotime($financialData['dateUpdated'] ?? 'now')); ?>
+                        Kemas kini terakhir: <?php echo $lastUpdate; ?>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Total Loan Card -->
+        <!-- Loan Card -->
         <div class="col-md-6 mb-3">
             <div class="card bg-info text-white h-100">
-                <div class="card-body d-flex flex-column">
+                <div class="card-body">
                     <div class="d-flex align-items-center mb-2">
-                        <i class="fas fa-hand-holding-dollar me-2"></i>
+                        <i class="fas fa-money-bill-wave me-2"></i>
                         <h5 class="card-title mb-0">Jumlah Pinjaman</h5>
                     </div>
-                    <h2 class="card-text mb-2">RM <?php 
-                        echo number_format($loanData['balance'] ?? 0, 2); 
-                    ?></h2>
-                    <div class="small mt-auto">
-                        <?php if ($loanData): ?>
-                            Jenis: <?php echo $loanData['loanType']; ?><br>
-                            Tempoh: <?php echo $loanData['financingPeriod']; ?> bulan<br>
-                            Bayaran Bulanan: RM <?php echo number_format($loanData['monthlyInstallments'], 2); ?>
-                        <?php else: ?>
-                            Tiada pinjaman aktif
-                        <?php endif; ?>
-                    </div>
+                    <?php if ($loan_data): ?>
+                        <h2 class="card-text mb-2">RM <?php echo number_format($balance, 2); ?> / <?php echo number_format($loanAmount, 2); ?></h2>
+                        <div class="small">
+                            Jenis Pinjaman: <?php echo $loanType; ?><br>
+                            Bayaran Bulanan: RM <?php echo number_format($monthlyPayment, 2); ?>
+                        </div>
+                    <?php else: ?>
+                        <h2 class="card-text mb-2">RM 0.00 / 0.00</h2>
+                        <div class="small">Tiada pinjaman aktif</div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
@@ -243,25 +324,25 @@ function formatNumber($number) {
                         <div class="col-6">
                             <div class="border rounded p-3">
                                 <h6>Modal Saham</h6>
-                                <h4>RM <?php echo number_format($financialStatus['modalShare'] ?? 0, 2); ?></h4>
+                                <h4 class="text-primary">RM <?php echo number_format($modalSaham, 2); ?></h4>
                             </div>
                         </div>
                         <div class="col-6">
                             <div class="border rounded p-3">
                                 <h6>Modal Yuran</h6>
-                                <h4>RM <?php echo number_format($financialStatus['feeCapital'] ?? 0, 2); ?></h4>
+                                <h4 class="text-primary">RM <?php echo number_format($modalYuran, 2); ?></h4>
                             </div>
                         </div>
                         <div class="col-6">
                             <div class="border rounded p-3">
                                 <h6>Simpanan Tetap</h6>
-                                <h4>RM <?php echo number_format($financialStatus['fixedDeposit'] ?? 0, 2); ?></h4>
+                                <h4 class="text-primary">RM <?php echo number_format($simpananTetap, 2); ?></h4>
                             </div>
                         </div>
                         <div class="col-6">
                             <div class="border rounded p-3">
                                 <h6>Tabung Anggota</h6>
-                                <h4>RM <?php echo number_format($financialStatus['contribution'] ?? 0, 2); ?></h4>
+                                <h4 class="text-primary">RM <?php echo number_format($tabungAnggota, 2); ?></h4>
                             </div>
                         </div>
                     </div>
@@ -280,52 +361,25 @@ function formatNumber($number) {
                         <div class="col-6">
                             <div class="border rounded p-3">
                                 <h6>Al-Bai</h6>
-                                <h4 class="text-success">RM <?php 
-                                    echo number_format(
-                                        (isset($loanData['loanType']) && 
-                                         strtoupper($loanData['loanType']) == 'AL-BAI' && 
-                                         isset($loanData['balance'])) ? $loanData['balance'] : 0, 
-                                        2
-                                    ); 
-                                ?></h4>
+                                <h4 class="text-success">RM <?php echo number_format($albai_amount, 2); ?></h4>
                             </div>
                         </div>
                         <div class="col-6">
                             <div class="border rounded p-3">
                                 <h6>Al-Innah</h6>
-                                <?php 
-                                $alInnahAmount = (isset($loanData['loanType']) && 
-                                                strtoupper($loanData['loanType']) == 'AL-INNAH' && 
-                                                isset($loanData['balance'])) ? $loanData['balance'] : 0;
-                                error_log("Al-Innah amount: " . $alInnahAmount);
-                                ?>
-                                <h4 class="text-success">RM <?php echo number_format($alInnahAmount, 2); ?></h4>
+                                <h4 class="text-success">RM <?php echo number_format($alinnah_amount, 2); ?></h4>
                             </div>
                         </div>
                         <div class="col-6">
                             <div class="border rounded p-3">
                                 <h6>B/Pulih Kenderaan</h6>
-                                <h4 class="text-success">RM <?php 
-                                    echo number_format(
-                                        (isset($loanData['loanType']) && 
-                                         strtoupper($loanData['loanType']) == 'B/PULIH KENDERAAN' && 
-                                         isset($loanData['balance'])) ? $loanData['balance'] : 0, 
-                                        2
-                                    ); 
-                                ?></h4>
+                                <h4 class="text-success">RM <?php echo number_format($bpulih_amount, 2); ?></h4>
                             </div>
                         </div>
                         <div class="col-6">
                             <div class="border rounded p-3">
                                 <h6>Road Tax & Insuran</h6>
-                                <h4 class="text-success">RM <?php 
-                                    echo number_format(
-                                        (isset($loanData['loanType']) && 
-                                         strtoupper($loanData['loanType']) == 'ROAD TAX & INSURAN' && 
-                                         isset($loanData['balance'])) ? $loanData['balance'] : 0, 
-                                        2
-                                    ); 
-                                ?></h4>
+                                <h4 class="text-success">RM <?php echo number_format($roadtax_amount, 2); ?></h4>
                             </div>
                         </div>
                     </div>
@@ -434,16 +488,3 @@ h6 {
         </div>
     </div>
 </div> -->
-
-<!-- 显示当前余额
-$sql_display = "SELECT f.* 
-                FROM tb_financialstatus f
-                WHERE f.employeeID = ?";
-$stmt_display = mysqli_prepare($conn, $sql_display);
-mysqli_stmt_bind_param($stmt_display, 'i', $employeeID);
-mysqli_stmt_execute($stmt_display);
-$financialStatus = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_display)); -->
-
-
-
-

@@ -43,6 +43,26 @@ foreach($transactions as $trans) {
 function formatNumber($number) {
     return str_pad($number, 4, '0', STR_PAD_LEFT);
 }
+
+// 获取贷款信息
+$sql_loan = "SELECT 
+    la.*,
+    l.loanID,
+    COALESCE(l.balance, la.amountRequested) as balance,
+    COALESCE(l.loanType, 'Unknown') as loanType,
+    la.amountRequested,
+    la.monthlyInstallments
+FROM tb_loanapplication la
+LEFT JOIN tb_loan l ON l.loanApplicationID = la.loanApplicationID
+WHERE la.employeeID = ? 
+    AND la.loanStatus = 'Diluluskan'
+ORDER BY la.loanApplicationID DESC 
+LIMIT 1";
+
+$stmt_loan = mysqli_prepare($conn, $sql_loan);
+mysqli_stmt_bind_param($stmt_loan, 's', $employeeID);
+mysqli_stmt_execute($stmt_loan);
+$loan_data = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_loan));
 ?>
 
 <div class="container mt-5">
@@ -119,6 +139,39 @@ function formatNumber($number) {
                                     ($member['fixedDeposit'] ?? 0), 
                                     2); ?></strong></td>
                             </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 贷款信息 -->
+            <div class="mb-4">
+                <h5 class="border-bottom pb-2">MAKLUMAT PINJAMAN</h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <?php if ($loan_data): ?>
+                                <tr>
+                                    <td width="150">Jenis Pinjaman</td>
+                                    <td>: <?php echo $loan_data['loanType']; ?></td>
+                                </tr>
+                                <tr>
+                                    <td>Jumlah Pinjaman</td>
+                                    <td>: RM <?php echo number_format($loan_data['amountRequested'], 2); ?></td>
+                                </tr>
+                                <tr>
+                                    <td>Baki Pinjaman</td>
+                                    <td>: RM <?php echo number_format($loan_data['balance'], 2); ?></td>
+                                </tr>
+                                <tr>
+                                    <td>Bayaran Bulanan</td>
+                                    <td>: RM <?php echo number_format($loan_data['monthlyInstallments'], 2); ?></td>
+                                </tr>
+                            <?php else: ?>
+                                <tr>
+                                    <td colspan="2">Tiada pinjaman aktif</td>
+                                </tr>
+                            <?php endif; ?>
                         </table>
                     </div>
                 </div>
