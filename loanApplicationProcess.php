@@ -1,10 +1,15 @@
 <?php
+ini_set('upload_max_filesize', '10M');
+ini_set('post_max_size', '10M');
+ini_set('memory_limit', '256M');
+
 session_start();
 include "dbconnect.php";
 
 // Debug: Print all received data
-error_log("POST Data: " . print_r($_POST, true));
-error_log("FILES Data: " . print_r($_FILES, true));
+error_log("Loan application process started");
+error_log("POST data received: " . print_r($_POST, true));
+error_log("FILES data received: " . print_r($_FILES, true));
 
 // Check if guarantor data exists
 if (empty($_POST['guarantorName1']) || empty($_POST['guarantorName2'])) {
