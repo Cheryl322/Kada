@@ -1,8 +1,6 @@
 <?php
 session_start();
 
-include "headeradmin.php";
-
 // Debug lines
 error_log("Admin page access - Session data: " . print_r($_SESSION, true));
 
@@ -37,81 +35,108 @@ if (!isset($_SESSION['employeeID']) || $_SESSION['role'] !== 'admin') {
 }
 
 .circle-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 20vh;
-  width: 100%;
-  margin: 80px auto 40px;
-  padding: 0 40px;
-  flex-wrap: wrap;
-  gap: 40px;
-  position: relative;
-  transition: all 0.3s ease-in-out;
-  transition: padding-left 0.3s ease-in-out;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 30px;
+    padding: 100px 40px 40px 40px;
+    flex-wrap: nowrap;
+    width: 100%;
+    max-width: 1600px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
 }
 
 .circle {
-  flex: 0 0 180px;
-  margin: 10px;
-  width: 180px;
-  height: 180px;
-  border-radius: 50%;
-  background-color: MediumAquamarine;
-  cursor: pointer;
-  transition: transform 0.3s ease, background-color 0.3s ease;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  text-decoration: none;
-  color: white;
-  font-size: 1.2rem;
-  font-weight: bold;
-  text-align: center;
-  padding: 15px;
-  line-height: 1.2;
-  border: 4px solid white;
-  box-shadow: 0 0 15px rgba(0,0,0,0.1);
-  overflow: hidden;
+    flex: 0 0 200px;
+    width: 200px;
+    height: 200px;
+    min-width: 200px;
+    position: relative;
+    z-index: 2;
+    background: MediumAquamarine;
+    border-radius: 50%;
+    overflow: visible;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-decoration: none;
+    color: white;
+    font-size: 1.2rem;
+    font-weight: bold;
+    text-align: center;
+    padding: 15px;
+    line-height: 1.2;
+    border: 4px solid white;
+    box-shadow: 0 0 15px rgba(0,0,0,0.1);
 }
 
 .circle:hover {
-  transform: scale(1.05);
-  background-color: rgb(34, 119, 210);
-  border-color: rgba(255, 255, 255, 0.9);
+    transform: scale(1.05);
+    background: #5dbea3;
 }
 
 /* Make circles responsive */
-@media screen and (max-width: 1200px) {
-  .circle {
-    flex: 0 0 150px;
-    width: 150px;
-    height: 150px;
-  }
-
-  .circle i {
-    font-size: 1.5rem;
-  }
-
-  .circle span {
-    font-size: 0.85em;
-  }
+@media screen and (max-width: 1400px) {
+    .circle-container {
+        gap: 20px;
+        padding-top: 80px;
+    }
+    
+    .circle {
+        flex: 0 0 180px;
+        width: 180px;
+        height: 180px;
+        min-width: 180px;
+    }
 }
 
-@media screen and (max-width: 800px) {
-  .circle {
-    flex: 0 0 130px;
-    width: 130px;
-    height: 130px;
-  }
+@media screen and (max-width: 1200px) {
+    .circle {
+        flex: 0 0 160px;
+        width: 160px;
+        height: 160px;
+        min-width: 160px;
+    }
+    
+    .circle i {
+        font-size: 2rem;
+    }
+    
+    .circle span {
+        font-size: 1rem;
+    }
+}
 
-  .circle i {
-    font-size: 1.3rem;
-  }
+@media screen and (max-width: 992px) {
+    .circle-container {
+        padding-top: 60px;
+    }
+    
+    .circle {
+        flex: 0 0 140px;
+        width: 140px;
+        height: 140px;
+        min-width: 140px;
+    }
+    
+    .circle i {
+        font-size: 1.8rem;
+    }
+    
+    .circle span {
+        font-size: 0.9rem;
+    }
+}
 
-  .circle span {
-    font-size: 0.8em;
-  }
+@media screen and (max-width: 768px) {
+    .circle-container {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
 }
 
 /* Add these table styles */
@@ -177,17 +202,17 @@ if (!isset($_SESSION['employeeID']) || $_SESSION['role'] !== 'admin') {
 /* Ensure consistent column widths across both tables */
 .custom-table th:nth-child(1),
 .custom-table td:nth-child(1) {
-    width: 20%;
+    width: 10%;
 }
 
 .custom-table th:nth-child(2),
 .custom-table td:nth-child(2) {
-    width: 35%;
+    width: 20%;
 }
 
 .custom-table th:nth-child(3),
 .custom-table td:nth-child(3) {
-    width: 20%;
+    width: 45%;
 }
 
 .custom-table th:nth-child(4),
@@ -251,19 +276,21 @@ if (!isset($_SESSION['employeeID']) || $_SESSION['role'] !== 'admin') {
     align-items: center;
     justify-content: center;
     text-align: center;
-    gap: 8px;
+    gap: 10px;
     max-width: 100%;
+    position: relative;
+    z-index: 3;
 }
 
 .circle i {
-    font-size: 1.8rem;
-    margin-bottom: 3px;
+    font-size: 2.2rem;
+    margin-bottom: 5px;
 }
 
 .circle span {
     display: block;
-    line-height: 1.1;
-    font-size: 0.9em;
+    line-height: 1.3;
+    font-size: 1.1rem;
     word-wrap: break-word;
     max-width: 100%;
 }
@@ -400,40 +427,88 @@ if (!isset($_SESSION['employeeID']) || $_SESSION['role'] !== 'admin') {
     max-width: calc(100vw - 200px);
   }
   }
+
+/* First table (Senarai Ahli) column widths */
+.table-wrapper:first-child .custom-table th:nth-child(1),
+.table-wrapper:first-child .custom-table td:nth-child(1) {
+    width: 10%;
+}
+
+.table-wrapper:first-child .custom-table th:nth-child(2),
+.table-wrapper:first-child .custom-table td:nth-child(2) {
+    width: 15%;
+}
+
+.table-wrapper:first-child .custom-table th:nth-child(3),
+.table-wrapper:first-child .custom-table td:nth-child(3) {
+    width: 50%;
+}
+
+.table-wrapper:first-child .custom-table th:nth-child(4),
+.table-wrapper:first-child .custom-table td:nth-child(4) {
+    width: 25%;
+}
+
+/* Second table (Senarai Pinjaman) column widths */
+.table-wrapper:last-child .custom-table th:nth-child(1),
+.table-wrapper:last-child .custom-table td:nth-child(1) {
+    width: 10%;
+}
+
+.table-wrapper:last-child .custom-table th:nth-child(2),
+.table-wrapper:last-child .custom-table td:nth-child(2) {
+    width: 15%;
+}
+
+.table-wrapper:last-child .custom-table th:nth-child(3),
+.table-wrapper:last-child .custom-table td:nth-child(3) {
+    width: 50%;
+}
+
+.table-wrapper:last-child .custom-table th:nth-child(4),
+.table-wrapper:last-child .custom-table td:nth-child(4) {
+    width: 25%;
+}
 </style>
 </head>
 
 <body>
     <?php
-    // Include header and footer
+    // Include only once
     include "headeradmin.php";
     ?>
 
     <div class="circle-container">
-      <a href="senaraiPermohonanAhli.php" class="circle">
-        <div class="circle-content">
-          <i class="fas fa-user-plus mb-2"></i>
-          <span>Pendaftaran Ahli</span>
-        </div>
-      </a>
-      <a href="senaraiPermohonanPinjaman.php" class="circle">
-        <div class="circle-content">
-          <i class="fas fa-hand-holding-usd mb-2"></i>
-          <span>Permohonan Pinjaman</span>
-        </div>
-      </a>
-      <a href="hasilreport.php" class="circle">
-        <div class="circle-content">
-          <i class="fas fa-file-alt mb-2"></i>
-          <span>Hasil Laporan</span>
-        </div>
-      </a>
-      <a href="adminviewreport.php" class="circle">
-        <div class="circle-content">
-          <i class="fas fa-clipboard-check mb-2"></i>
-          <span>Cek Laporan</span>
-        </div>
-      </a>
+        <a href="senaraiPermohonanAhli.php" class="circle">
+            <div class="circle-content">
+                <i class="fas fa-user-plus mb-2"></i>
+                <span>Pendaftaran Ahli</span>
+            </div>
+        </a>
+        <a href="senaraiPermohonanPinjaman.php" class="circle">
+            <div class="circle-content">
+                <i class="fas fa-hand-holding-usd mb-2"></i>
+                <span>Permohonan Pinjaman</span>
+            </div>
+        </a>
+        <a href="hasilreport.php" class="circle">
+            <div class="circle-content">
+                <i class="fas fa-file-alt mb-2"></i>
+                <span>Hasil Laporan</span>
+            </div>
+        </a>
+        <a href="adminviewreport.php" class="circle">
+            <div class="circle-content">
+                <i class="fas fa-clipboard-check mb-2"></i>
+                <span>Cek Laporan</span>
+            </div>
+        </a>
+        <a href="admin_upload_payment.php" class="circle">
+            <div class="circle-content">
+                <i class="fas fa-money-bill-wave mb-2"></i>
+                <span>Rekod Pembayaran</span>
+            </div>
+        </a>
     </div>
 
     <div class="tables-container">
@@ -448,30 +523,34 @@ if (!isset($_SESSION['employeeID']) || $_SESSION['role'] !== 'admin') {
                 <thead>
                     <tr>
                         <th>No.</th>
+                        <th>ID</th>
                         <th>Nama</th>
-                        <th>Status</th>
                         <th>Tarikh Daftar</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td>A001</td>
-                        <td>Ahmad bin Abdullah</td>
-                        <td>Lulus</td>
-                        <td>01/03/2024</td>
-                    </tr>
-                    <tr>
-                        <td>A002</td>
-                        <td>Siti Aminah</td>
-                        <td>Lulus</td>
-                        <td>02/03/2024</td>
-                    </tr>
-                    <tr>
-                        <td>A003</td>
-                        <td>Raj Kumar</td>
-                        <td>Lulus</td>
-                        <td>03/03/2024</td>
-                    </tr>
+                    <?php
+                    include 'dbconnect.php';
+                    
+                    $sql = "SELECT employeeID,memberName, created_at FROM tb_member ORDER BY created_at DESC LIMIT 3";
+                    $result = $conn->query($sql);
+                    
+                    if ($result->num_rows > 0) {
+                        $count = 1;
+                        while($row = $result->fetch_assoc()) {
+                            echo "<tr>";
+                            echo "<td>" . $count . "</td>";
+                            echo "<td>" . $row['employeeID'] . "</td>";
+                            echo "<td>" . $row['memberName'] . "</td>";
+                            echo "<td>" . date('d/m/Y', strtotime($row['created_at'])) . "</td>";
+                            echo "</tr>";
+                            $count++;
+                        }
+                    } else {
+                        echo "<tr><td colspan='3'>Tiada rekod ditemui</td></tr>";
+                    }
+                    $conn->close();
+                    ?>
                 </tbody>
             </table>
         </div>
@@ -487,30 +566,36 @@ if (!isset($_SESSION['employeeID']) || $_SESSION['role'] !== 'admin') {
                 <thead>
                     <tr>
                         <th>No.</th>
+                        <th>ID</th>
                         <th>Nama</th>
-                        <th>Status</th>
-                        <th>Tarikh Pinjaman</th>
+                        <th>Tarikh Daftar</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td>P001</td>
-                        <td>Muhammad Ali</td>
-                        <td>Dalam Proses</td>
-                        <td>01/03/2024</td>
-                    </tr>
-                    <tr>
-                        <td>P002</td>
-                        <td>Lee Wei Ming</td>
-                        <td>Lulus</td>
-                        <td>02/03/2024</td>
-                    </tr>
-                    <tr>
-                        <td>P003</td>
-                        <td>Sarah Abdullah</td>
-                        <td>Dalam Proses</td>
-                        <td>03/03/2024</td>
-                    </tr>
+                    <?php
+                    include 'dbconnect.php';
+                    
+                    $sql = "SELECT l.loanApplicationID, m.memberName, l.created_at 
+                           FROM tb_loan l
+                           JOIN tb_member m ON l.employeeID = m.employeeID
+                           ORDER BY l.loanApplicationID DESC LIMIT 3";
+                    $result = $conn->query($sql);
+                    
+                    if ($result->num_rows > 0) {
+                        $count = 1;
+                        while($row = $result->fetch_assoc()) {
+                            echo "<tr>";
+                            echo "<td>" . $count . "</td>";
+                            echo "<td>" . $row['loanApplicationID'] . "</td>";
+                            echo "<td>" . $row['memberName'] . "</td>";
+                            echo "<td>" . date('d/m/Y', strtotime($row['created_at'])) . "</td>";
+                            echo "</tr>";
+                            $count++;
+                        }
+                    } else {
+                        echo "<tr><td colspan='4'>Tiada rekod ditemui</td></tr>";
+                    }
+                    ?>
                 </tbody>
             </table>
         </div>

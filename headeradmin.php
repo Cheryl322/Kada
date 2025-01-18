@@ -386,40 +386,6 @@
 body {
     transition: all 0.3s ease-in-out;
 }
-
-/* Add these new styles for the profile dropdown */
-.profile-dropdown {
-    position: absolute;
-    top: 100%;
-    right: 0;
-    background-color: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    padding: 5px;
-    display: none;
-    z-index: 1000;
-    min-width: 120px;
-}
-
-.profile-dropdown.show {
-    display: block;
-}
-
-.profile-dropdown a {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 12px;
-    color: #333;
-    text-decoration: none;
-    transition: background-color 0.3s ease;
-    font-size: 0.9rem;
-}
-
-.profile-dropdown a:hover {
-    background-color: #f5f5f5;
-    border-radius: 4px;
-}
 </style>
 </head>
 
@@ -442,11 +408,8 @@ body {
             <i class="fas fa-bell"></i>
             <span class="notification-badge">3</span>
         </div>
-        <div class="icon-button" style="position: relative;">
-            <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Profile" class="profile-pic" id="profileButton">
-            <div class="profile-dropdown" id="profileDropdown">
-                <a href="logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a>
-            </div>
+        <div class="icon-button">
+            <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Profile" class="profile-pic">
         </div>
     </div>
 </div>
@@ -478,16 +441,7 @@ body {
         <a class="nav-link" href="adminviewreport.php">Cek Laporan</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" href="#">Info KADA</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="#">Media</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="#">Hubungi Kami</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="logout.php">Log Out</a>
+        <a class="nav-link" href="logout.php">Log Keluar</a>
       </li>
     </ul>
   </div>
@@ -499,8 +453,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const menuButton = document.getElementById('menuButton');
     const closeSidebar = document.getElementById('closeSidebar');
     const mainContent = document.body;
-    const profileButton = document.getElementById('profileButton');
-    const profileDropdown = document.getElementById('profileDropdown');
 
     // Remove initial-state class after a brief delay
     setTimeout(() => {
@@ -511,19 +463,6 @@ document.addEventListener('DOMContentLoaded', function() {
         sidebar.classList.toggle('closed');
         mainContent.classList.toggle('sidebar-open');
     }
-
-    // Toggle profile dropdown
-    profileButton.addEventListener('click', function(e) {
-        e.stopPropagation();
-        profileDropdown.classList.toggle('show');
-    });
-
-    // Close dropdown when clicking outside
-    document.addEventListener('click', function(e) {
-        if (!profileButton.contains(e.target) && !profileDropdown.contains(e.target)) {
-            profileDropdown.classList.remove('show');
-        }
-    });
 
     menuButton.addEventListener('click', toggleSidebar);
     closeSidebar.addEventListener('click', toggleSidebar);

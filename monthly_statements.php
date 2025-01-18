@@ -15,10 +15,11 @@ if (!isset($conn)) {
     die("Database connection not established");
 }
 
-// Fetch all monthly statements
-$sql = "SELECT * FROM tb_transaction 
+// 获取所有可用的月份
+$sql = "SELECT DISTINCT YEAR(transDate) as year, MONTH(transDate) as month 
+        FROM tb_transaction 
         WHERE employeeID = ? 
-        -- ORDER BY reportMonth DESC";
+        ORDER BY year DESC, month DESC";
 
 try {
     $stmt = mysqli_prepare($conn, $sql);
@@ -33,7 +34,7 @@ try {
     }
 
     $result = mysqli_stmt_get_result($stmt);
-    $statements = mysqli_fetch_all($result, MYSQLI_ASSOC);
+    $available_months = mysqli_fetch_all($result, MYSQLI_ASSOC);
     
 } catch (Exception $e) {
     die("Error: " . $e->getMessage());
@@ -64,17 +65,19 @@ try {
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach($statements as $statement): ?>
+                    <?php foreach($available_months as $month): 
+                        $monthName = date('F', mktime(0, 0, 0, $month['month'], 1));
+                        $year = $month['year'];
+                    ?>
                     <tr>
-                        <td><?php echo date('F', strtotime($statement['reportMonth'])); ?></td>
-                        <td><?php echo date('Y', strtotime($statement['reportMonth'])); ?></td>
+                        <td><?php echo $monthName; ?></td>
+                        <td><?php echo $year; ?></td>
                         <td>
-                            <span class="badge badge-success">Tersedia</span>
+                            <span class="badge bg-success">Tersedia</span>
                         </td>
                         <td>
-                            <a href="<?php echo $statement['filePath']; ?>" 
-                               class="btn btn-sm btn-primary" 
-                               target="_blank">
+                            <a href="view_statement.php?month=<?php echo $month['month']; ?>&year=<?php echo $year; ?>" 
+                               class="btn btn-sm btn-primary">
                                 Lihat Penyata
                             </a>
                         </td>

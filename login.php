@@ -1,3 +1,14 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Login - Sistem Koperasi KADA</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+</head>
+
 <?php
 session_start();
 include "headermain.php";
@@ -114,6 +125,17 @@ body::before {
     float: right;
     margin-top: 10px;
 }
+
+.input-group .btn-outline-secondary {
+    border-color: #ced4da;
+    z-index: 10;
+    padding: 0.375rem 0.75rem;  /* 添加内边距 */
+}
+
+.input-group .btn-outline-secondary i {
+    font-size: 16px;  /* 设置图标大小 */
+    line-height: 1;   /* 确保图标垂直居中 */
+}
 </style>
 
 <div class="container">
@@ -159,10 +181,10 @@ body::before {
                             <input type="password" class="form-control" id="password" name="password" 
                                    placeholder="Masukkan kata laluan" required>
                             <button class="btn btn-outline-secondary" type="button" id="togglePassword">
-                                <i class="fas fa-eye"></i>
+                                <i class="fas fa-eye-slash"></i>
                             </button>
                         </div>
-                        <a href="forgot-password.php" class="forgot-password">Lupa kata laluan?</a>
+                        <a href="forgot_password.php" class="forgot-password">Lupa kata laluan?</a>
                     </div>
 
                     <button type="submit" class="btn btn-login">Log Masuk</button>
@@ -179,5 +201,25 @@ body::before {
         </div>
     </div>
 </div>
+
+
+<script>
+document.getElementById('togglePassword').addEventListener('click', function(e) {
+    e.preventDefault();
+    const passwordInput = document.getElementById('password');
+    const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+    passwordInput.setAttribute('type', type);
+    
+    // 切换图标
+    const icon = this.querySelector('i');
+    if (type === 'text') {
+        icon.classList.remove('fa-eye-slash');  // 移除闭眼
+        icon.classList.add('fa-eye');          // 添加睁眼
+    } else {
+        icon.classList.remove('fa-eye');       // 移除睁眼
+        icon.classList.add('fa-eye-slash');    // 添加闭眼
+    }
+});
+</script>
 
 <?php include 'footer.php'; ?>
