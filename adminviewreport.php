@@ -25,7 +25,7 @@ if (isset($_POST['selected_members']) && is_array($_POST['selected_members'])) {
                 // Query for loan report - get all loan applications
                 $query = "SELECT 
                             m.memberName,
-                            '' as status,
+                            m.employeeID,
                             DATE_FORMAT(m.created_at, '%d/%m/%Y') as tarikh_daftar,
                             DATE_FORMAT(l.created_at, '%d/%m/%Y') as tarikh_pembiayaan,
                             m.employeeID,
@@ -54,10 +54,10 @@ if (isset($_POST['selected_members']) && is_array($_POST['selected_members'])) {
                     }
                 }
             } else {
-                // Query for member report (unchanged)
+                // Query for member report
                 $query = "SELECT 
                             m.memberName,
-                            '' as status,
+                            m.employeeID,
                             DATE_FORMAT(m.created_at, '%d/%m/%Y') as tarikh_daftar,
                             '' as tarikh_pembiayaan,
                             m.employeeID,
@@ -145,7 +145,7 @@ $reportData = $_SESSION['reportData'];
             <tr>
                 <th>No.</th>
                 <th>Nama</th>
-                <th>Status</th>
+                <th>ID</th>
                 <th>Tarikh Daftar</th>
                 <th>Penyata Ahli</th>
                 <th>Tarikh Pembiayaan</th>
@@ -159,7 +159,7 @@ $reportData = $_SESSION['reportData'];
                     <tr>
                         <td><?php echo $index + 1; ?></td>
                         <td><?php echo htmlspecialchars($data['memberName']); ?></td>
-                        <td><?php echo htmlspecialchars($data['status']); ?></td>
+                        <td><?php echo htmlspecialchars($data['employeeID']); ?></td>
                         <td><?php echo htmlspecialchars($data['tarikh_daftar']); ?></td>
                         <td class="text-center">
                             <div class="btn-group" role="group">
@@ -200,15 +200,14 @@ $reportData = $_SESSION['reportData'];
 
 <!-- Modal for viewing statements -->
 <div class="modal fade" id="statementModal" tabindex="-1" aria-labelledby="statementModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="statementModalLabel">Penyata</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                <!-- Statement content will be loaded here -->
-                <div id="statementContent"></div>
+            <div class="modal-body" style="height: 80vh; padding: 0;">
+                <iframe id="statementFrame" style="width: 100%; height: 100%; border: none;"></iframe>
             </div>
         </div>
     </div>
@@ -216,35 +215,39 @@ $reportData = $_SESSION['reportData'];
 
 <script>
 function viewMemberStatement(employeeID) {
-    // Set modal title
+    const modal = new bootstrap.Modal(document.getElementById('statementModal'));
+    const frame = document.getElementById('statementFrame');
+    
+    // Set the source first
+    frame.src = `view_report_member.php?id=${employeeID}`;
     document.getElementById('statementModalLabel').textContent = 'Penyata Ahli';
     
-    // Here you would typically load the member statement content
-    document.getElementById('statementContent').innerHTML = 
-        `<div class="text-center">
-            <h4>Penyata Ahli</h4>
-            <p>ID Ahli: ${employeeID}</p>
-            <!-- Add your actual statement content here -->
-        </div>`;
+    // Show modal after setting source
+    modal.show();
     
-    // Show the modal
-    new bootstrap.Modal(document.getElementById('statementModal')).show();
+    // Add error handling for iframe
+    frame.onerror = function() {
+        console.error('Failed to load member statement');
+        alert('Gagal memuat penyata. Sila cuba lagi.');
+    };
 }
 
 function viewFinancialStatement(employeeID) {
-    // Set modal title
+    const modal = new bootstrap.Modal(document.getElementById('statementModal'));
+    const frame = document.getElementById('statementFrame');
+    
+    // Set the source first
+    frame.src = `view_report_loan.php?id=${employeeID}`;
     document.getElementById('statementModalLabel').textContent = 'Penyata Kewangan';
     
-    // Here you would typically load the financial statement content
-    document.getElementById('statementContent').innerHTML = 
-        `<div class="text-center">
-            <h4>Penyata Kewangan</h4>
-            <p>ID Ahli: ${employeeID}</p>
-            <!-- Add your actual statement content here -->
-        </div>`;
+    // Show modal after setting source
+    modal.show();
     
-    // Show the modal
-    new bootstrap.Modal(document.getElementById('statementModal')).show();
+    // Add error handling for iframe
+    frame.onerror = function() {
+        console.error('Failed to load financial statement');
+        alert('Gagal memuat penyata. Sila cuba lagi.');
+    };
 }
 
 function deleteEntry(index) {
@@ -264,33 +267,11 @@ function deleteEntry(index) {
 }
 
 function downloadMemberStatement(employeeID) {
-    // Create the URL for downloading member statement
-    const url = `download_member_statement.php?employeeID=${employeeID}`;
-    
-    // Create a temporary link element
-    const link = document.createElement('a');
-    link.href = url;
-    link.target = '_blank';
-    
-    // Trigger the download
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    window.location.href = `download_report_ahli.php?employeeID=${employeeID}`;
 }
 
 function downloadFinancialStatement(employeeID) {
-    // Create the URL for downloading financial statement
-    const url = `download_financial_statement.php?employeeID=${employeeID}`;
-    
-    // Create a temporary link element
-    const link = document.createElement('a');
-    link.href = url;
-    link.target = '_blank';
-    
-    // Trigger the download
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    window.location.href = `download_report_loan.php?employeeID=${employeeID}`;
 }
 
 // Add search functionality
@@ -324,6 +305,14 @@ document.getElementById('searchInput').addEventListener('keyup', function() {
         }
     }
 });
+
+function viewLoanReport(employeeID) {
+    var iframe = document.getElementById('loanReportFrame');
+    // Add a console log to check the URL being generated
+    console.log('view_report_loan.php?id=' + employeeID);
+    iframe.src = 'view_report_loan.php?id=' + employeeID;
+    $('#loanReportModal').modal('show');
+}
 </script>
 
 <?php include 'footer.php'; ?>
