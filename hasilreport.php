@@ -311,11 +311,10 @@
 </div>
 
 <div class="content-container">
-    <!-- Add form wrapper -->
+    <!-- Update form to submit to adminviewreport.php -->
     <form id="reportForm" method="POST" action="adminviewreport.php">
-        <!-- Change to multiple select input -->
-        <select name="selected_members[]" id="selectedMembersInput" multiple style="display: none;">
-        </select>
+        <!-- Add hidden input for selected members -->
+        <input type="hidden" name="selected_members" id="selectedMembersInput">
         
         <h2>Hasil Laporan</h2>
         <hr style="margin-top: 10px; margin-bottom: 20px;">
@@ -401,7 +400,7 @@
                                 <th scope="col">ID </th>
                                 <th scope="col">Nama</th>
                                 <th scope="col">Tarikh Daftar</th>
-                                <th scope="col">Action</th>
+                                <th scope="col">Tindakan</th>
                             </tr>
                         </thead>
                         <tbody id="memberTableBody">
@@ -465,13 +464,7 @@
         <a class="nav-link" href="adminviewreport.php">Cek Laporan</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" href="#">Info KADA</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="#">Media</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="#">Hubungi Kami</a>
+        <a class="nav-link" href="login.php">Log Keluar</a>
       </li>
     </ul>
   </div>
@@ -490,11 +483,10 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tidak</button>
-                <button type="button" class="btn btn-primary" onclick="downloadReport()">Ya</button>
+                <button type="button" class="btn btn-primary">Ya</button>
             </div>
         </div>
     </div>
-
 </div>
 
 <script>
@@ -543,7 +535,7 @@ function fetchMembers(page = 1, search = '') {
                             <td>${member.memberName}</td>
                             <td>${new Date(member.created_at).toLocaleDateString('en-GB')}</td>
                             <td>
-                                <button class="btn btn-primary btn-sm" onclick="viewMember('${member.employeeID}')">
+                                <button type="button" class="btn btn-primary btn-sm" onclick="viewMember('${member.employeeID}')">
                                     View
                                 </button>
                             </td>
@@ -559,8 +551,8 @@ function fetchMembers(page = 1, search = '') {
                             <td>${member.memberName}</td>
                             <td>${new Date(member.created_at).toLocaleDateString('en-GB')}</td>
                             <td>
-                                <button class="btn btn-primary btn-sm" onclick="viewMember('${member.employeeID}')">
-                                    View
+                                <button type="button" class="btn btn-primary btn-sm" onclick="viewMember('${member.employeeID}')">
+                                    Lihat
                                 </button>
                             </td>
                         `;
@@ -824,33 +816,34 @@ function showLoadingScreen() {
     }, 2000);
 }
 
-function downloadReport() {
-    // Redirect to adminviewreport.php
-    window.location.href = 'adminviewreport.php';
-
-}
-
-// Add these new functions
 function validateAndSubmit() {
     // Get all checked checkboxes
     const selectedCheckboxes = document.querySelectorAll('.member-checkbox:checked');
+    const reportFormat = document.querySelector('input[name="reportFormat"]:checked');
     
+    // Validate selections
     if (selectedCheckboxes.length === 0) {
         alert('Sila pilih sekurang-kurangnya seorang ahli');
         return;
     }
     
-    // Clear existing options
-    const select = document.getElementById('selectedMembersInput');
-    select.innerHTML = '';
+    if (!reportFormat) {
+        alert('Sila pilih format laporan');
+        return;
+    }
     
-    // Add new options for each selected checkbox
-    selectedCheckboxes.forEach(checkbox => {
-        const option = document.createElement('option');
-        option.value = checkbox.value;
-        option.selected = true;
-        select.appendChild(option);
+    // Create a hidden input for each selected member
+    const selectedMembers = Array.from(selectedCheckboxes).map(checkbox => checkbox.value);
+    selectedMembers.forEach((memberId, index) => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'selected_members[]';
+        input.value = memberId;
+        document.getElementById('reportForm').appendChild(input);
     });
+    
+    // Show loading screen
+    document.getElementById('loadingScreen').style.display = 'flex';
     
     // Submit the form
     document.getElementById('reportForm').submit();
@@ -941,9 +934,15 @@ document.querySelectorAll('input[name="reportType"]').forEach(radio => {
 
 // Add this new function for handling the view action
 function viewMember(employeeID) {
-    // Redirect to member details page
-    window.location.href = `view_member.php?id=${employeeID}`;
+    // Prevent default navigation
+    event.preventDefault();
+    // You can add any specific view functionality here
+    // For example, show a modal or fetch member details via AJAX
+    console.log('Viewing member:', employeeID);
 }
+
+// Update the modal button to use validateAndSubmit instead
+document.querySelector('#confirmationModal .btn-primary').onclick = validateAndSubmit;
 </script>
 
 <?php include 'footer.php';?>
