@@ -185,17 +185,17 @@
 .custom-table {
     width: 100%;
     border-collapse: collapse;
-    table-layout: fixed;
+    white-space: normal;
 }
 
 .custom-table th, 
 .custom-table td {
     padding: 12px;
     text-align: left;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
     border: 1px solid #ddd;
+    min-width: 150px;
+    word-wrap: break-word;
+    white-space: normal;
 }
 
 .custom-table th {
@@ -246,71 +246,76 @@
 /* Column widths for loan table */
 .custom-table th:nth-child(1),
 .custom-table td:nth-child(1) {
-    width: 5%;  /* No. */
+    min-width: 70px;
 }
 
 .custom-table th:nth-child(2),
 .custom-table td:nth-child(2) {
-    width: 10%; /* Jenis Pinjaman */
+    min-width: 200px;
 }
 
 .custom-table th:nth-child(3),
 .custom-table td:nth-child(3) {
-    width: 8%;  /* ID Pinjaman */
+    width: 10%; /* Jenis Pinjaman */
 }
 
 .custom-table th:nth-child(4),
 .custom-table td:nth-child(4) {
-    width: 8%;  /* ID Permohonan */
+    width: 8%;  /* ID Pinjaman */
 }
 
 .custom-table th:nth-child(5),
 .custom-table td:nth-child(5) {
-    width: 8%;  /* ID Pekerja */
+    width: 8%;  /* ID Permohonan */
 }
 
 .custom-table th:nth-child(6),
 .custom-table td:nth-child(6) {
-    width: 10%; /* Jumlah Dipohon */
+    width: 8%;  /* ID Pekerja */
 }
 
 .custom-table th:nth-child(7),
 .custom-table td:nth-child(7) {
-    width: 8%;  /* Tempoh Pembiayaan */
+    width: 10%; /* Jumlah Dipohon */
 }
 
 .custom-table th:nth-child(8),
 .custom-table td:nth-child(8) {
-    width: 8%;  /* Ansuran Bulanan */
+    width: 8%;  /* Tempoh Pembiayaan */
 }
 
 .custom-table th:nth-child(9),
 .custom-table td:nth-child(9) {
-    width: 12%; /* Nama Majikan */
+    width: 8%;  /* Ansuran Bulanan */
 }
 
 .custom-table th:nth-child(10),
 .custom-table td:nth-child(10) {
-    width: 8%;  /* IC Majikan */
+    width: 12%; /* Nama Majikan */
 }
 
 .custom-table th:nth-child(11),
 .custom-table td:nth-child(11) {
-    width: 8%;  /* Gaji Pokok */
+    width: 8%;  /* IC Majikan */
 }
 
 .custom-table th:nth-child(12),
 .custom-table td:nth-child(12) {
-    width: 8%;  /* Gaji Bersih */
+    width: 8%;  /* Gaji Pokok */
 }
 
 .custom-table th:nth-child(13),
 .custom-table td:nth-child(13) {
-    width: 8%;  /* Fail Gaji Pokok */
+    width: 8%;  /* Gaji Bersih */
 }
 
 .custom-table th:nth-child(14),
 .custom-table td:nth-child(14) {
+    width: 8%;  /* Fail Gaji Pokok */
+}
+
+.custom-table th:nth-child(15),
+.custom-table td:nth-child(15) {
     width: 8%;  /* Fail Gaji Bersih */
 }
 
@@ -318,10 +323,11 @@
 @media screen and (max-width: 1200px) {
     .table-responsive {
         overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
     }
     
     .custom-table {
-        min-width: 1200px;
+        margin-bottom: 0;
     }
 }
 </style>
@@ -398,6 +404,7 @@
                 <thead>
                     <tr>
                         <th>No.</th>
+                        <th>Nama</th>
                         <th>Jenis Pinjaman</th>
                         <th>ID Pinjaman</th>
                         <th>ID Permohonan</th>
@@ -417,7 +424,9 @@
                     <?php
                     include 'dbconnect.php';
 
-                    $sql = "SELECT * FROM tb_loan";
+                    $sql = "SELECT l.*, m.memberName 
+                           FROM tb_loan l 
+                           LEFT JOIN tb_member m ON l.employeeID = m.employeeID";
                     $result = $conn->query($sql);
                     
                     if ($result->num_rows > 0) {
@@ -425,6 +434,7 @@
                         while($row = $result->fetch_assoc()) {
                             echo "<tr>";
                             echo "<td>" . $count . "</td>";
+                            echo "<td>" . (empty($row['memberName']) ? '-' : $row['memberName']) . "</td>";
                             echo "<td>" . (empty($row['loanType']) ? '-' : $row['loanType']) . "</td>";
                             echo "<td>" . $row['loanID'] . "</td>";
                             echo "<td>" . $row['loanApplicationID'] . "</td>";
@@ -442,7 +452,7 @@
                             $count++;
                         }
                     } else {
-                        echo "<tr><td colspan='14'>Tiada rekod ditemui</td></tr>";
+                        echo "<tr><td colspan='15'>Tiada rekod ditemui</td></tr>";
                     }
                     $conn->close();
                     ?>
