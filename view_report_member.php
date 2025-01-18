@@ -19,9 +19,10 @@ if (!isset($_GET['download'])) {
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     </head>
     <body class="p-4">
-        <h3 class="text-center mb-4">Pengesahan Penyata Ahli Koperasi Kakitangan KADA Kelantan Berhad</h3>
+        <h3 class="text-center mb-5">Pengesahan Penyata Ahli Koperasi Kakitangan KADA Kelantan Berhad</h3>
         
         <div class="container">
+            <h5 class="mb-3">Maklumat Peribadi</h5>
             <table class="table table-bordered">
                 <tr>
                     <th style="width: 30%">Nama</th>
