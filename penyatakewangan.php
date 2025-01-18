@@ -11,19 +11,17 @@ include "headermember.php";
 $employeeID = $_SESSION['employeeID'];
 
 // Fetch financial data
-$sql = "SELECT f.* FROM tb_financialstatus f
-        WHERE f.accountID IN (
-            SELECT accountID 
-            FROM tb_member_financialstatus 
-            WHERE employeeID = ?
-        )
-        ORDER BY f.dateUpdated DESC LIMIT 1";
+$sql = "SELECT * FROM tb_memberregistration_feesandcontribution 
+        WHERE employeeID = ?";
 
 $stmt = mysqli_prepare($conn, $sql);
-mysqli_stmt_bind_param($stmt, 's', $employeeID);
-mysqli_stmt_execute($stmt);
-$result = mysqli_stmt_get_result($stmt);
-$financialData = mysqli_fetch_assoc($result);
+if ($stmt) {
+    mysqli_stmt_bind_param($stmt, 'i', $employeeID);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+    $financialData = mysqli_fetch_assoc($result);
+    mysqli_stmt_close($stmt);
+}
 
 // 获取会员的存款总额
 $sqlSavings = "SELECT 
@@ -58,6 +56,40 @@ if ($row = mysqli_fetch_assoc($result)) {
     $memberName = '-';
     $lastUpdate = date('d M Y, h:i A');
 }
+
+$sql_loan = "SELECT * FROM tb_loan 
+             WHERE employeeID = ? 
+             ORDER BY loanID DESC LIMIT 1";
+
+$stmt_loan = mysqli_prepare($conn, $sql_loan);
+if ($stmt_loan) {
+    mysqli_stmt_bind_param($stmt_loan, 'i', $employeeID);
+    mysqli_stmt_execute($stmt_loan);
+    $result_loan = mysqli_stmt_get_result($stmt_loan);
+    if ($result_loan) {
+        $loanData = mysqli_fetch_assoc($result_loan);
+    }
+    mysqli_stmt_close($stmt_loan);
+}
+
+$sql_loan_details = "SELECT * FROM tb_loan 
+                    WHERE employeeID = ? 
+                    ORDER BY loanID DESC LIMIT 1";
+
+$stmt_loan_details = mysqli_prepare($conn, $sql_loan_details);
+$loan_details = null;
+if ($stmt_loan_details) {
+    mysqli_stmt_bind_param($stmt_loan_details, 'i', $employeeID);
+    mysqli_stmt_execute($stmt_loan_details);
+    $result_loan_details = mysqli_stmt_get_result($stmt_loan_details);
+    if ($result_loan_details) {
+        $loan_details = mysqli_fetch_assoc($result_loan_details);
+    }
+    mysqli_stmt_close($stmt_loan_details);
+}
+
+// 在文件最后关闭数据库连接
+mysqli_close($conn);
 ?>
 
 <div class="mt-4 mb-4 ms-3">
@@ -67,22 +99,59 @@ if ($row = mysqli_fetch_assoc($result)) {
 </div>
 
 <div class="container mt-4">
-    <div class="card savings-card mb-4" style="max-width: 1500px;">
-        <div class="card-body">
-            <div class="d-flex justify-content-between align-items-start">
-                <div>
-                    <h5 class="card-subtitle mb-2 text-white">
-                        <i class="fas fa-piggy-bank me-2"></i>Jumlah Simpanan
-                    </h5>
-                    <h2 class="card-title text-white mb-3">RM <?php echo number_format($totalSavings, 2); ?></h2>
-                    <p class="card-text text-white mb-1">No. Akaun: <?php echo $accountNo; ?></p>
-                    <small class="text-white">Kemas kini terakhir: <?php echo $lastUpdate; ?></small>
+    <h2 class="mb-4">Penyata Kewangan</h2>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <!-- Total Savings Card -->
+        <div class="col-md-6 mb-3">
+            <div class="card bg-success text-white h-100">
+                <div class="card-body d-flex flex-column">
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="fas fa-piggy-bank me-2"></i>
+                        <h5 class="card-title mb-0">Jumlah Simpanan</h5>
+                    </div>
+                    <h2 class="card-text mb-2">RM <?php 
+                        $totalSavings = ($financialData['modalShare'] ?? 0) + 
+                                        ($financialData['feeCapital'] ?? 0) + 
+                                        ($financialData['fixedDeposit'] ?? 0) + 
+                                        ($financialData['contribution'] ?? 0) +
+                                        ($financialData['deposit'] ?? 0);
+                        echo number_format($totalSavings, 2); 
+                    ?></h2>
+                    <div class="small mt-auto">
+                        No. Akaun: <?php echo $accountNo; ?><br>
+                        Kemas kini terakhir: <?php echo date('d M Y, h:i A', strtotime($financialData['dateUpdated'] ?? 'now')); ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Loan Card -->
+        <div class="col-md-6 mb-3">
+            <div class="card bg-info text-white h-100">
+                <div class="card-body d-flex flex-column">
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="fas fa-hand-holding-dollar me-2"></i>
+                        <h5 class="card-title mb-0">Jumlah Pinjaman</h5>
+                    </div>
+                    <h2 class="card-text mb-2">RM <?php 
+                        echo number_format($loanData['amountRequested'] ?? 0, 2); 
+                    ?></h2>
+                    <div class="small mt-auto">
+                        <?php if ($loanData): ?>
+                            Jenis: <?php echo $loanData['loanType']; ?><br>
+                            Tempoh: <?php echo $loanData['financingPeriod']; ?> bulan<br>
+                            Bayaran Bulanan: RM <?php echo number_format($loanData['monthlyInstallments'], 2); ?>
+                        <?php else: ?>
+                            Tiada pinjaman aktif
+                        <?php endif; ?>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-<div class="container mt-4">
     <!-- Navigation Cards -->
     <div class="row mb-4">
         <div class="col-md-4">
@@ -124,7 +193,7 @@ if ($row = mysqli_fetch_assoc($result)) {
                         <div class="col-6">
                             <div class="border rounded p-3">
                                 <h6>Modal Saham</h6>
-                                <h4 class="text-primary">RM <?php echo number_format($financialData['memberSaving'] ?? 0, 2); ?></h4>
+                                <h4 class="text-primary">RM <?php echo number_format($financialData['modalShare'] ?? 0, 2); ?></h4>
                             </div>
                         </div>
                         <div class="col-6">
@@ -161,25 +230,53 @@ if ($row = mysqli_fetch_assoc($result)) {
                         <div class="col-6">
                             <div class="border rounded p-3">
                                 <h6>Al-Bai</h6>
-                                <h4 class="text-success">RM <?php echo number_format($financialData['alBai'] ?? 0, 2); ?></h4>
+                                <h4 class="text-success">RM <?php 
+                                    echo number_format(
+                                        ($loanData && strtoupper($loanData['loanType']) == 'AL-BAI') 
+                                            ? $loanData['amountRequested'] 
+                                            : 0, 
+                                        2
+                                    ); 
+                                ?></h4>
                             </div>
                         </div>
                         <div class="col-6">
                             <div class="border rounded p-3">
                                 <h6>Al-Innah</h6>
-                                <h4 class="text-success">RM <?php echo number_format($financialData['alnnah'] ?? 0, 2); ?></h4>
+                                <h4 class="text-success">RM <?php 
+                                    echo number_format(
+                                        ($loanData && strtoupper($loanData['loanType']) == 'AL-INNAH') 
+                                            ? $loanData['amountRequested'] 
+                                            : 0, 
+                                        2
+                                    ); 
+                                ?></h4>
                             </div>
                         </div>
                         <div class="col-6">
                             <div class="border rounded p-3">
                                 <h6>B/Pulih Kenderaan</h6>
-                                <h4 class="text-success">RM <?php echo number_format($financialData['bPulihKenderaan'] ?? 0, 2); ?></h4>
+                                <h4 class="text-success">RM <?php 
+                                    echo number_format(
+                                        ($loanData && strtoupper($loanData['loanType']) == 'B/PULIH KENDERAAN') 
+                                            ? $loanData['amountRequested'] 
+                                            : 0, 
+                                        2
+                                    ); 
+                                ?></h4>
                             </div>
                         </div>
                         <div class="col-6">
                             <div class="border rounded p-3">
                                 <h6>Road Tax & Insuran</h6>
-                                <h4 class="text-success">RM <?php echo number_format($financialData['roadTaxInsurance'] ?? 0, 2); ?></h4>
+                                <h4 class="text-success">RM <?php 
+                                    echo number_format(
+                                        ($loanData && strtoupper($loanData['loanType']) == 'ROAD TAX & INSURAN') 
+                                            ? $loanData['amountRequested'] 
+                                            : 0, 
+                                        2
+                                    ); 
+                                ?></h4>
                             </div>
                         </div>
                     </div>
