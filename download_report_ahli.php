@@ -46,6 +46,10 @@ try {
     $pdf->Cell(0, 10, 'Kakitangan KADA Kelantan Berhad', 0, 1, 'C');
     $pdf->Ln(10);
 
+    // Add "Maklumat Peribadi" heading
+    $pdf->SetFont('helvetica', 'B', 12);
+    $pdf->Cell(0, 10, 'Maklumat Peribadi', 0, 1, 'L');
+    
     // Create table for member details
     $pdf->SetFont('helvetica', '', 12);
     
