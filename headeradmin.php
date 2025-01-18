@@ -441,6 +441,9 @@ body {
         <a class="nav-link" href="adminviewreport.php">Cek Laporan</a>
       </li>
       <li class="nav-item">
+        <a class="nav-link" href="admin_update_payment.php">Record Bayaran</a>
+      </li>
+      <li class="nav-item">
         <a class="nav-link" href="logout.php">Log Keluar</a>
       </li>
     </ul>

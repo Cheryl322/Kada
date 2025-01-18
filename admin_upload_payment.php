@@ -2,6 +2,7 @@
 session_start();
 include "dbconnect.php";
 require_once "functions.php";
+include "headeradmin.php";
 
 // 检查admin权限
 checkAdminAccess();
