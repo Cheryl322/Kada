@@ -48,7 +48,7 @@ try {
 
     // Get records for current page (limited to 5 rows)
     if ($type === 'pembiayaan') {
-        $query = "SELECT l.loanID, m.employeeID, m.memberName, l.amountRequested, l.created_at 
+        $query = "SELECT l.loanApplicationID, m.employeeID, m.memberName, l.amountRequested, l.created_at 
                   FROM tb_loan l 
                   JOIN tb_member m ON l.employeeID = m.employeeID 
                   WHERE 1=1 $dateCondition $searchCondition
@@ -67,6 +67,7 @@ try {
     while ($row = $result->fetch_assoc()) {
         if ($type === 'pembiayaan') {
             $members[] = [
+                'loanApplicationID' => $row['loanApplicationID'],
                 'employeeID' => $row['employeeID'],
                 'memberName' => $row['memberName'],
                 'amountRequested' => $row['amountRequested'],
