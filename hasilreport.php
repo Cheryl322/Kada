@@ -244,26 +244,6 @@
     margin-bottom: 20px;
 }
 
-#loadingScreen {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(255, 255, 255, 0.8);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 9999;
-}
-
-#loadingScreen .spinner-border {
-    width: 4rem;
-    height: 4rem;
-
-
-}
-
 /* Add these new styles */
 .invalid-feedback {
     display: none;
@@ -278,14 +258,6 @@
 </head>
 
 <body>
-
-<div id="loadingScreen" style="display: none;">
-    <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">Loading...</span>
-    </div>
-</div>
-
-
 
 <div class="main-header">
     <div class="header-left">
@@ -496,11 +468,8 @@ function fetchMembers(page = 1, search = '') {
     const toDate = document.getElementById('toDate').value;
 
     if (!type) {
-        document.getElementById('loadingScreen').style.display = 'none';
         return;
     }
-
-    document.getElementById('loadingScreen').style.display = 'flex';
 
     fetch(`get_report_data.php?page=${page}&search=${search}&type=${type}&fromDate=${fromDate}&toDate=${toDate}&limit=5`)
         .then(response => {
@@ -579,9 +548,6 @@ function fetchMembers(page = 1, search = '') {
                     <td colspan="6" class="text-center">Error loading data: ${error.message}</td>
                 </tr>
             `;
-        })
-        .finally(() => {
-            document.getElementById('loadingScreen').style.display = 'none';
         });
 }
 
@@ -807,15 +773,9 @@ document.addEventListener('change', function(e) {
 });
 
 function showLoadingScreen() {
-    document.getElementById('loadingScreen').style.display = 'flex';
-    
-    // Simulate processing time
-    setTimeout(() => {
-        document.getElementById('loadingScreen').style.display = 'none';
-        // Show confirmation modal
-        const confirmationModal = new bootstrap.Modal(document.getElementById('confirmationModal'));
-        confirmationModal.show();
-    }, 2000);
+    // Show confirmation modal immediately instead of after delay
+    const confirmationModal = new bootstrap.Modal(document.getElementById('confirmationModal'));
+    confirmationModal.show();
 }
 
 function validateAndSubmit() {
@@ -843,9 +803,6 @@ function validateAndSubmit() {
         input.value = memberId;
         document.getElementById('reportForm').appendChild(input);
     });
-    
-    // Show loading screen
-    document.getElementById('loadingScreen').style.display = 'flex';
     
     // Submit the form
     document.getElementById('reportForm').submit();
