@@ -177,7 +177,7 @@ $loan_data = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_loan));
                 </div>
             </div>
 
-            <!-- 交易记录 -->
+            
             <div class="mb-4">
                 <h5 class="border-bottom pb-2">BUTIRAN TRANSAKSI BULANAN</h5>
                 <div class="table-responsive">

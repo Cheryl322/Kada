@@ -466,25 +466,4 @@ h6 {
 }
 </style>
 
-<!-- <div class="card savings-card mb-4">
-    <div class="card-body">
-        <div class="d-flex justify-content-between align-items-start">
-            <div>
-                <h5 class="card-subtitle mb-2 text-white">
-                    <i class="fas fa-piggy-bank me-2"></i>Jumlah Simpanan
-                </h5>
-                <h2 class="card-title text-white mb-3">RM <?php echo number_format($totalSavings, 2); ?></h2>
-                <p class="card-text text-white mb-1">No. Akaun: <?php echo $accountNo; ?></p>
-                <small class="text-white">Kemas kini terakhir: <?php echo $lastUpdate; ?></small>
-            </div>
-            <div class="d-flex flex-column gap-2">
-                <a href="buat_deposit.php" class="btn btn-light">
-                    <i class="fas fa-plus me-1"></i> Buat Deposit
-                </a>
-                <a href="mohon_pengeluaran.php" class="btn btn-light">
-                    <i class="fas fa-money-bill-wave me-1"></i> Mohon Pengeluaran
-                </a>
-            </div>
-        </div>
-    </div>
-</div> -->
+

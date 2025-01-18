@@ -3,7 +3,7 @@ session_start();
 include "dbconnect.php";
 require_once "functions.php";
 
-// 检查管理员权限
+// 检查admin权限
 checkAdminAccess();
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
