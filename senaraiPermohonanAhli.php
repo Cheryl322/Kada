@@ -38,6 +38,8 @@ $sql = "SELECT
             ) as regisStatus
         FROM 
             tb_member m
+        LEFT JOIN tb_memberregistration_memberapplicationdetails md 
+            ON m.employeeID = md.memberRegistrationID
         GROUP BY 
             m.employeeID, m.memberName, m.ic, m.created_at";
 

@@ -4,7 +4,7 @@ include "dbconnect.php";
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $memberId = $_POST['memberId'];
     $status = $_POST['status'];
-    $currentDate = date('Y-m-d H:i:s'); // Current timestamp
+    $currentDate = date('Y-m-d H:i:s');
     
     // First, check if there's an existing record
     $checkSql = "SELECT memberRegistrationID FROM tb_memberregistration_memberapplicationdetails 
@@ -34,10 +34,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     
     if (mysqli_stmt_execute($stmt)) {
-        echo "Success";
+        // Return the updated status and date
+        echo json_encode([
+            'success' => true,
+            'status' => $status,
+            'date' => date('d/m/Y', strtotime($currentDate))
+        ]);
     } else {
         http_response_code(500);
-        echo "Error: " . mysqli_error($conn);
+        echo json_encode([
+            'success' => false,
+            'error' => mysqli_error($conn)
+        ]);
     }
     
     mysqli_stmt_close($stmt);
