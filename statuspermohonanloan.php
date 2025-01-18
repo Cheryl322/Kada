@@ -18,7 +18,12 @@ $stmtMember = mysqli_prepare($conn, $sqlMember);
 mysqli_stmt_bind_param($stmtMember, "i", $employeeID);
 mysqli_stmt_execute($stmtMember);
 $resultMember = mysqli_stmt_get_result($stmtMember);
-$memberData = mysqli_fetch_assoc($resultMember);
+$memberData = null; // Initialize the variable
+
+// Add error checking for the query result
+if ($resultMember && mysqli_num_rows($resultMember) > 0) {
+    $memberData = mysqli_fetch_assoc($resultMember);
+}
 
 // Get all loan applications for the user
 $sql = "SELECT 
@@ -45,11 +50,11 @@ $result = mysqli_stmt_get_result($stmt);
             <div class="profile-sidebar text-center">
                 <div class="profile-image mb-4">
                     <img src="img/profile.jpeg" class="rounded-circle img-fluid" alt="Profile Picture" style="width: 200px; height: 200px; object-fit: cover;">
-                    <h3 class="mt-3"><?php echo htmlspecialchars($memberData['memberName']); ?></h3>
+                    <h3 class="mt-3"><?php echo isset($memberData['memberName']) ? htmlspecialchars($memberData['memberName']) : 'Member not found'; ?></h3>
                 </div>
 
                 <div class="profile-nav d-flex flex-column gap-3">
-                    <a href="profil2.php" class="btn w-75 mx-auto" style="background-color: #75B798; color: white;">
+                    <a href="profil.php" class="btn w-75 mx-auto" style="background-color: #75B798; color: white;">
                         Profil
                     </a>
                     <a href="statuspermohonanloan.php" class="btn w-75 mx-auto" style="background-color: #8CD9B5; color: white;">

@@ -30,35 +30,30 @@ $memberData = mysqli_fetch_assoc($result);
 ?>
 
 
-    <div class="container">
+    <div class="container mt-5">
         <div class="row">
             <!-- Left Sidebar -->
             <div class="col-md-3">
-                <div class="profile-sidebar">
-                    <div class="profile-image">
-                        <img src="img/profile.jpeg" class="rounded-circle" alt="Profile Picture">
-                        <h3 class="text-left mt-3"><?php echo isset($memberData['memberName']) ? $memberData['memberName'] : 'User'; ?></h3>
+                <div class="profile-sidebar text-center">
+                    <div class="profile-image mb-4">
+                        <img src="img/profile.jpeg" class="rounded-circle img-fluid" alt="Profile Picture" style="width: 200px; height: 200px; object-fit: cover;">
+                        <h3 class=" mt-3"><?php echo isset($memberData['memberName']) ? $memberData['memberName'] : 'User'; ?></h3>
                     </div>
 
                     <!-- Navigation Menu -->
-                    <div class="profile-nav">
-                        <ul class="nav flex-column gap-2">
-                            <li class="nav-item w-100">
-                                <a class="btn btn-primary w-75" href="profil.php">Profil</a>
-                            </li>
-                            <!-- <li class="nav-item w-100">
-                                <a class="btn btn-info w-75" href="statuskewangan.php">Pinjaman</a>
-                            </li> -->
-                            <li class="nav-item w-100">
-                                <a class="btn btn-info w-75" href="statuspermohonanloan.php">Permohonan</a>
-                            </li>
-                            <li class="nav-item w-100">
-                                <a class="btn btn-info w-75" href="penyatakewangan.php">Penyata Kewangan</a>
-                            </li>
-                            <li class="nav-item w-100">
-                                <a class="btn btn-info w-75" href="logout.php">Daftar Keluar</a>
-                            </li>
-                        </ul>
+                    <div class="profile-nav d-flex flex-column gap-3">
+                        <a href="profil.php" class="btn w-75 mx-auto" style="background-color: #8CD9B5; color: white;">
+                            Profil
+                        </a>
+                        <a href="statuspermohonanloan.php" class="btn w-75 mx-auto" style="background-color: #75B798; color: white;">
+                            Permohonan
+                        </a>
+                        <a href="penyatakewangan.php" class="btn w-75 mx-auto" style="background-color: #75B798; color: white;">
+                        Penyata Kewangan
+                        </a>
+                        <a href="logout.php" class="btn w-75 mx-auto" style="background-color: #75B798; color: white;">
+                            Daftar Keluar
+                        </a>
                     </div>
                 </div>
             </div>

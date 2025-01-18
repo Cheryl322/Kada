@@ -68,8 +68,8 @@ $userData = mysqli_fetch_assoc($result);
                             Mohon Keahlian
                         </a>
                         <?php endif; ?>
-                        <a href="logout.php" class="btn w-75 mx-auto" style="background-color: #75B798; color: white;">
-                            Daftar Keluar
+                        <a href="login.php" class="btn w-75 mx-auto" style="background-color: #75B798; color: white;">
+                            Login
                         </a>
                     </div>
                 </div>
