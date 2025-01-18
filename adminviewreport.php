@@ -5,7 +5,7 @@ include 'headeradmin.php';
 // Add title tag right after header inclusion
 echo '<title>Cek Laporan</title>';
 
-// Initialize reportData array if not exists
+// Initialize reportData array and reportType if not exists
 if (!isset($_SESSION['reportData'])) {
     $_SESSION['reportData'] = [];
 }
@@ -16,25 +16,28 @@ if (isset($_POST['selected_members']) && is_array($_POST['selected_members'])) {
     
     try {
         $selectedMembers = $_POST['selected_members'];
-        $isLoanReport = isset($_POST['reportType']) && $_POST['reportType'] === 'pembiayaan';
+        // Store report type in session
+        $_SESSION['reportType'] = isset($_POST['reportType']) ? $_POST['reportType'] : 'member';
+        $isLoanReport = $_SESSION['reportType'] === 'pembiayaan';
         
         if (!empty($selectedMembers)) {
             $placeholders = implode(',', array_fill(0, count($selectedMembers), '?'));
             
             if ($isLoanReport) {
-                // Query for loan report - get all loan applications
+                // Modified query for loan report - get all loan applications
                 $query = "SELECT 
                             m.memberName,
                             m.employeeID,
                             DATE_FORMAT(m.created_at, '%d/%m/%Y') as tarikh_daftar,
                             DATE_FORMAT(l.created_at, '%d/%m/%Y') as tarikh_pembiayaan,
-                            m.employeeID,
-                            l.loanID
+                            l.loanID,
+                            l.loanAmount,
+                            l.loanApplicationID,
+                            CONCAT(m.employeeID, '_', l.loanApplicationID) as unique_id
                          FROM tb_member m
                          INNER JOIN tb_loan l ON m.employeeID = l.employeeID
-                         WHERE m.employeeID IN ($placeholders)
-                         ORDER BY l.created_at DESC
-                         LIMIT " . count($_POST['selected_loans']);
+                         WHERE l.loanApplicationID IN ($placeholders)
+                         ORDER BY m.memberName, l.created_at DESC";
                          
                 $stmt = mysqli_prepare($conn, $query);
                 if ($stmt) {
@@ -43,12 +46,10 @@ if (isset($_POST['selected_members']) && is_array($_POST['selected_members'])) {
                     mysqli_stmt_execute($stmt);
                     $result = mysqli_stmt_get_result($stmt);
                     
-                    // Remove existing entries for the selected members
-                    $_SESSION['reportData'] = array_filter($_SESSION['reportData'], function($entry) use ($selectedMembers) {
-                        return !in_array($entry['employeeID'], $selectedMembers);
-                    });
+                    // Clear existing report data
+                    $_SESSION['reportData'] = [];
                     
-                    // Add only the newly selected entries
+                    // Add each loan entry separately
                     while ($row = mysqli_fetch_assoc($result)) {
                         $_SESSION['reportData'][] = $row;
                     }
@@ -97,19 +98,21 @@ if (isset($_POST['selected_members']) && is_array($_POST['selected_members'])) {
     }
 }
 
-// Sort the report data by tarikh_daftar and then by tarikh_pembiayaan
+// Modified sorting to handle multiple loan entries
 if (!empty($_SESSION['reportData'])) {
     usort($_SESSION['reportData'], function($a, $b) {
-        // First sort by tarikh_daftar
-        $dateCompare = strtotime($b['tarikh_daftar']) - strtotime($a['tarikh_daftar']);
-        if ($dateCompare !== 0) {
-            return $dateCompare;
+        // First sort by member name
+        $nameCompare = strcmp($a['memberName'], $b['memberName']);
+        if ($nameCompare !== 0) {
+            return $nameCompare;
         }
-        // If same registration date, sort by loan date (if exists)
+        
+        // If same member, sort by loan date (if exists) in descending order
         if (!empty($a['tarikh_pembiayaan']) && !empty($b['tarikh_pembiayaan'])) {
             return strtotime($b['tarikh_pembiayaan']) - strtotime($a['tarikh_pembiayaan']);
         }
-        return 0;
+        
+        return 0; // Keep original order if no loan dates
     });
 }
 
@@ -159,14 +162,14 @@ $reportData = $_SESSION['reportData'];
                     <tr>
                         <td><?php echo $index + 1; ?></td>
                         <td><?php echo htmlspecialchars($data['memberName']); ?></td>
-                        <td><?php echo htmlspecialchars($data['employeeID']); ?></td>
+                        <td><?php echo htmlspecialchars($isLoanReport ? $data['loanApplicationID'] : $data['employeeID']); ?></td>
                         <td><?php echo htmlspecialchars($data['tarikh_daftar']); ?></td>
                         <td class="text-center">
                             <div class="btn-group" role="group">
-                                <button class="btn btn-primary" onclick="viewMemberStatement(<?php echo $data['employeeID']; ?>)">
+                                <button class="btn btn-primary" onclick="viewMemberStatement('<?php echo $data['employeeID']; ?>')">
                                     Lihat Penyata
                                 </button>
-                                <button class="btn btn-success" onclick="downloadMemberStatement(<?php echo $data['employeeID']; ?>)">
+                                <button class="btn btn-success" onclick="downloadMemberStatement('<?php echo $data['employeeID']; ?>')">
                                     <i class="fas fa-download"></i>
                                 </button>
                             </div>
@@ -174,10 +177,10 @@ $reportData = $_SESSION['reportData'];
                         <td><?php echo empty($data['tarikh_pembiayaan']) ? '-' : htmlspecialchars($data['tarikh_pembiayaan']); ?></td>
                         <td class="text-center">
                             <div class="btn-group" role="group">
-                                <button class="btn btn-primary" onclick="viewFinancialStatement(<?php echo $data['employeeID']; ?>)">
+                                <button class="btn btn-primary" onclick="viewFinancialStatement('<?php echo $isLoanReport ? $data['loanApplicationID'] : $data['employeeID']; ?>')">
                                     Lihat Penyata
                                 </button>
-                                <button class="btn btn-success" onclick="downloadFinancialStatement(<?php echo $data['employeeID']; ?>)">
+                                <button class="btn btn-success" onclick="downloadFinancialStatement('<?php echo $isLoanReport ? $data['loanApplicationID'] : $data['employeeID']; ?>')">
                                     <i class="fas fa-download"></i>
                                 </button>
                             </div>

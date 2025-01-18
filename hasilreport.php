@@ -285,6 +285,7 @@
 <div class="content-container">
     <!-- Update form to submit to adminviewreport.php -->
     <form id="reportForm" method="POST" action="adminviewreport.php">
+        <input type="hidden" name="reportType" id="reportTypeInput">
         <!-- Add hidden input for selected members -->
         <input type="hidden" name="selected_members" id="selectedMembersInput">
         
@@ -462,6 +463,8 @@
 </div>
 
 <script>
+let selectedItems = new Set();
+
 function fetchMembers(page = 1, search = '') {
     const type = document.querySelector('input[name="reportType"]:checked')?.value;
     const fromDate = document.getElementById('fromDate').value;
@@ -492,15 +495,17 @@ function fetchMembers(page = 1, search = '') {
                 data.members.forEach((member, index) => {
                     const row = document.createElement('tr');
                     const rowNum = ((page - 1) * 5) + index + 1;
+                    const memberId = type === 'pembiayaan' ? member.loanApplicationID : member.employeeID;
                     
                     if (type === 'pembiayaan') {
                         row.innerHTML = `
                             <td class="text-center">
                                 <input type="checkbox" class="form-check-input member-checkbox" 
-                                       name="selected_loans[]" value="${member.loanApplicationID}">
+                                       name="selected_loans[]" value="${memberId}"
+                                       ${selectedItems.has(memberId.toString()) ? 'checked' : ''}>
                             </td>
                             <td>${rowNum}</td>
-                            <td>${member.employeeID}</td>
+                            <td>${member.loanApplicationID}</td>
                             <td>${member.memberName}</td>
                             <td>${new Date(member.created_at).toLocaleDateString('en-GB')}</td>
                             <td>
@@ -514,7 +519,8 @@ function fetchMembers(page = 1, search = '') {
                         row.innerHTML = `
                             <td class="text-center">
                                 <input type="checkbox" class="form-check-input member-checkbox" 
-                                       name="selected_members[]" value="${member.employeeID}">
+                                       name="selected_members[]" value="${memberId}"
+                                       ${selectedItems.has(memberId.toString()) ? 'checked' : ''}>
                             </td>
                             <td>${rowNum}</td>
                             <td>${member.employeeID}</td>
@@ -533,11 +539,8 @@ function fetchMembers(page = 1, search = '') {
             }
 
             updatePagination(Math.ceil(data.totalRecords / 5), page);
-            
-            const selectAll = document.getElementById('selectAll');
-            if (selectAll) {
-                selectAll.checked = false;
-            }
+            attachCheckboxListeners();
+            updateSelectAllCheckbox();
             updateSelectedCount();
         })
         .catch(error => {
@@ -689,26 +692,46 @@ function updateTableWithDateRange() {
 }
 
 function attachCheckboxListeners() {
-    // Select all checkbox
     const selectAll = document.getElementById('selectAll');
     const memberCheckboxes = document.getElementsByClassName('member-checkbox');
     
     selectAll.addEventListener('change', function() {
         Array.from(memberCheckboxes).forEach(checkbox => {
             checkbox.checked = this.checked;
+            if (this.checked) {
+                selectedItems.add(checkbox.value);
+            } else {
+                selectedItems.delete(checkbox.value);
+            }
         });
         updateSelectedCount();
     });
 
-    // Individual checkboxes
     Array.from(memberCheckboxes).forEach(checkbox => {
-        checkbox.addEventListener('change', updateSelectedCount);
+        checkbox.addEventListener('change', function() {
+            if (this.checked) {
+                selectedItems.add(this.value);
+            } else {
+                selectedItems.delete(this.value);
+            }
+            updateSelectAllCheckbox();
+            updateSelectedCount();
+        });
     });
 }
 
+function updateSelectAllCheckbox() {
+    const selectAll = document.getElementById('selectAll');
+    const memberCheckboxes = document.getElementsByClassName('member-checkbox');
+    const allChecked = Array.from(memberCheckboxes).every(checkbox => checkbox.checked);
+    const someChecked = Array.from(memberCheckboxes).some(checkbox => checkbox.checked);
+    
+    selectAll.checked = allChecked;
+    selectAll.indeterminate = someChecked && !allChecked;
+}
+
 function updateSelectedCount() {
-    const checkedCount = document.querySelectorAll('.member-checkbox:checked').length;
-    document.querySelector('#selectedCount span').textContent = checkedCount;
+    document.querySelector('#selectedCount span').textContent = selectedItems.size;
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -779,32 +802,38 @@ function showLoadingScreen() {
 }
 
 function validateAndSubmit() {
-    // Get all checked checkboxes
-    const selectedCheckboxes = document.querySelectorAll('.member-checkbox:checked');
-    const reportFormat = document.querySelector('input[name="reportFormat"]:checked');
-    
-    // Validate selections
-    if (selectedCheckboxes.length === 0) {
+    if (selectedItems.size === 0) {
         alert('Sila pilih sekurang-kurangnya seorang ahli');
         return;
     }
     
+    const reportType = document.querySelector('input[name="reportType"]:checked').value;
+    document.getElementById('reportTypeInput').value = reportType;
+    
+    const reportFormat = document.querySelector('input[name="reportFormat"]:checked');
     if (!reportFormat) {
         alert('Sila pilih format laporan');
         return;
     }
     
-    // Create a hidden input for each selected member
-    const selectedMembers = Array.from(selectedCheckboxes).map(checkbox => checkbox.value);
-    selectedMembers.forEach((memberId, index) => {
+    // Debug output
+    console.log("Selected items:", Array.from(selectedItems));
+    console.log("Report type:", document.querySelector('input[name="reportType"]:checked').value);
+    
+    // Clear any existing hidden inputs
+    const existingInputs = document.querySelectorAll('input[name="selected_members[]"]');
+    existingInputs.forEach(input => input.remove());
+    
+    // Add hidden inputs for selected items
+    selectedItems.forEach(id => {
         const input = document.createElement('input');
         input.type = 'hidden';
         input.name = 'selected_members[]';
-        input.value = memberId;
+        input.value = id;
+        console.log("Adding input with value:", id);
         document.getElementById('reportForm').appendChild(input);
     });
     
-    // Submit the form
     document.getElementById('reportForm').submit();
 }
 
@@ -908,6 +937,15 @@ function viewMember(employeeID) {
 
 // Update the modal button to use validateAndSubmit instead
 document.querySelector('#confirmationModal .btn-primary').onclick = validateAndSubmit;
+
+// Add this to clear selections when changing report type
+document.querySelectorAll('input[name="reportType"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+        selectedItems.clear();
+        updateSelectedCount();
+        fetchMembers(1, document.getElementById('searchInput').value);
+    });
+});
 </script>
 
 <?php include 'footer.php';?>
