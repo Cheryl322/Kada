@@ -16,7 +16,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     
     try {
         if ($transType == 'Simpanan') {
-            // 获取会员的缴费设置
+            // 获取会员的缴费设置（这些是初始设置，不应该被修改）
             $sql_fees = "SELECT modalShare, feeCapital, fixedDeposit, contribution 
                         FROM tb_memberregistration_feesandcontribution 
                         WHERE employeeID = ?";
@@ -28,7 +28,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             
             // 计算总预设金额
             $total_preset = $fees['modalShare'] + $fees['feeCapital'] + 
-                          $fees['fixedDeposit'] + $fees['contribution'];
+                           $fees['fixedDeposit'] + $fees['contribution'];
             
             if ($total_preset > 0) {
                 // 计算每个类型应得的比例
@@ -42,17 +42,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $feeCapital_amount = round($transAmt * $feeCapital_ratio, 2);
                 $fixedDeposit_amount = round($transAmt * $fixedDeposit_ratio, 2);
                 $contribution_amount = $transAmt - $modalShare_amount - 
-                                    $feeCapital_amount - $fixedDeposit_amount; // 确保总和等于输入金额
+                                    $feeCapital_amount - $fixedDeposit_amount;
                 
-                // 更新各个字段
-                $update_sql = "UPDATE tb_memberregistration_feesandcontribution 
-                             SET modalShare = modalShare + ?,
-                                 feeCapital = feeCapital + ?,
-                                 fixedDeposit = fixedDeposit + ?,
-                                 contribution = contribution + ?
-                             WHERE employeeID = ?";
-                $stmt = mysqli_prepare($conn, $update_sql);
-                mysqli_stmt_bind_param($stmt, 'dddds', 
+                // 只更新 tb_financialstatus
+                $update_financial = "UPDATE tb_financialstatus 
+                                   SET modalShare = modalShare + ?,
+                                       feeCapital = feeCapital + ?,
+                                       fixedDeposit = fixedDeposit + ?,
+                                       contribution = contribution + ?,
+                                       dateUpdated = CURRENT_TIMESTAMP
+                                   WHERE employeeID = ?";
+                $stmt = mysqli_prepare($conn, $update_financial);
+                mysqli_stmt_bind_param($stmt, 'ddddi', 
                     $modalShare_amount,
                     $feeCapital_amount,
                     $fixedDeposit_amount,
@@ -61,7 +62,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 );
                 mysqli_stmt_execute($stmt);
                 
-                // 记录各个类型的交易
+                // 记录交易
                 $transaction_types = [
                     ['Simpanan-Modal Saham', $modalShare_amount],
                     ['Simpanan-Modal Yuran', $feeCapital_amount],
@@ -148,6 +149,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 $sql_members = "SELECT employeeID, memberName FROM tb_member 
                 ORDER BY employeeID ASC";
 $result_members = mysqli_query($conn, $sql_members);
+
+function formatNumber($number) {
+    return str_pad($number, 4, '0', STR_PAD_LEFT);
+}
 ?>
 
 <!DOCTYPE html>

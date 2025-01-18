@@ -19,7 +19,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $employeeID = $_POST['employeeID'];
     $password = $_POST['password'];
 
-    // Query to check credentials and get role
+    // 首先检查 employee 表
     $sql = "SELECT * FROM tb_employee WHERE employeeID = ?";
     $stmt = mysqli_prepare($conn, $sql);
     mysqli_stmt_bind_param($stmt, "s", $employeeID);
@@ -28,12 +28,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     if (mysqli_num_rows($result) == 1) {
         $user = mysqli_fetch_assoc($result);
-        // Verify password using password_verify
-        if (password_verify($password, $user['password'])) {
+        
+        // 添加调试信息
+        error_log("Attempting login for employeeID: " . $employeeID);
+        error_log("Stored hash: " . $user['password']);
+        error_log("Input password: " . $password);
+        
+        // 检查密码是否为明文存储（临时调试）
+        if ($password === $user['password'] || password_verify($password, $user['password'])) {
             $_SESSION['employeeID'] = $employeeID;
             $_SESSION['role'] = $user['role'];
 
-            // Redirect based on role
+            // 重定向基于角色
             if ($user['role'] === 'admin') {
                 header("Location: adminmainpage.php");
             } else {
@@ -41,15 +47,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             }
             exit();
         } else {
+            error_log("Password verification failed for employeeID: " . $employeeID);
             $_SESSION['error_message'] = "ID Pekerja atau kata laluan tidak sah!";
         }
     } else {
+        error_log("No user found with employeeID: " . $employeeID);
         $_SESSION['error_message'] = "ID Pekerja atau kata laluan tidak sah!";
     }
     
     header("Location: login.php");
     exit();
 }
+
 ?>
 
 <style>

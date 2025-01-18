@@ -57,7 +57,7 @@ if ($row = mysqli_fetch_assoc($result)) {
     $lastUpdate = date('d M Y, h:i A');
 }
 
-// 获取贷款信息
+// 获取贷款信息并添加调试
 $sql_loan = "SELECT la.*, l.balance, l.loanID, l.loanType 
              FROM tb_loanapplication la
              LEFT JOIN tb_loan l ON l.loanApplicationID = la.loanApplicationID
@@ -65,78 +65,14 @@ $sql_loan = "SELECT la.*, l.balance, l.loanID, l.loanType
              ORDER BY la.loanApplicationID DESC LIMIT 1";
 
 $stmt_loan = mysqli_prepare($conn, $sql_loan);
-if ($stmt_loan) {
-    mysqli_stmt_bind_param($stmt_loan, 'i', $employeeID);
-    mysqli_stmt_execute($stmt_loan);
-    $result_loan = mysqli_stmt_get_result($stmt_loan);
-    
-    // 添加SQL调试信息
-    echo "<!-- Debug Info Start -->";
-    echo "<!-- SQL Query: " . $sql_loan . " -->";
-    echo "<!-- EmployeeID: " . $employeeID . " -->";
-    
-    if ($result_loan && ($loanData = mysqli_fetch_assoc($result_loan))) {
-        echo "<!-- Found loan application:
-        LoanApplicationID: " . ($loanData['loanApplicationID'] ?? 'Not set') . "
-        Amount Requested: " . ($loanData['amountRequested'] ?? 'Not set') . "
-        Loan Status: [" . ($loanData['loanStatus'] ?? 'Not set') . "]
-        Loan Type: [" . ($loanData['loanType'] ?? 'Not set') . "]
-        Balance: " . ($loanData['balance'] ?? 'Not set') . "
-        -->";
-        
-        // 如果没有 balance 记录，创建一个
-        if (!isset($loanData['balance']) || $loanData['balance'] == 0) {
-            // 检查是否已经有 loan 记录
-            $check_sql = "SELECT * FROM tb_loan WHERE loanApplicationID = ?";
-            $check_stmt = mysqli_prepare($conn, $check_sql);
-            mysqli_stmt_bind_param($check_stmt, 'i', $loanData['loanApplicationID']);
-            mysqli_stmt_execute($check_stmt);
-            $check_result = mysqli_stmt_get_result($check_stmt);
-            
-            if (mysqli_num_rows($check_result) == 0) {
-                // 创建新的 loan 记录，包括贷款类型
-                $insert_sql = "INSERT INTO tb_loan (employeeID, loanApplicationID, balance, loanType) 
-                              VALUES (?, ?, ?, ?)";
-                $insert_stmt = mysqli_prepare($conn, $insert_sql);
-                mysqli_stmt_bind_param($insert_stmt, 'iids', 
-                    $employeeID,
-                    $loanData['loanApplicationID'],
-                    $loanData['amountRequested'],
-                    $loanData['loanType']  // 使用申请时的贷款类型
-                );
-                $insert_result = mysqli_stmt_execute($insert_stmt);
-                echo "<!-- Insert new loan record: " . ($insert_result ? 'Success' : 'Failed') . " -->";
-                
-                if ($insert_result) {
-                    $loanData['balance'] = $loanData['amountRequested'];
-                }
-            } else {
-                // 更新现有记录
-                $update_sql = "UPDATE tb_loan 
-                              SET balance = ? 
-                              WHERE loanApplicationID = ?";
-                $update_stmt = mysqli_prepare($conn, $update_sql);
-                mysqli_stmt_bind_param($update_stmt, 'di', 
-                    $loanData['amountRequested'],
-                    $loanData['loanApplicationID']
-                );
-                $update_result = mysqli_stmt_execute($update_stmt);
-                echo "<!-- Update existing loan record: " . ($update_result ? 'Success' : 'Failed') . " -->";
-                
-                if ($update_result) {
-                    $loanData['balance'] = $loanData['amountRequested'];
-                }
-            }
-        }
-    } else {
-        echo "<!-- No loan application found -->";
-        echo "<!-- MySQL Error: " . mysqli_error($conn) . " -->";
-    }
-    echo "<!-- Debug Info End -->";
-    mysqli_stmt_close($stmt_loan);
-}
+mysqli_stmt_bind_param($stmt_loan, 'i', $employeeID);
+mysqli_stmt_execute($stmt_loan);
+$loanData = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_loan));
 
+// 添加调试信息
+error_log("Loan Data for employee " . $employeeID . ": " . print_r($loanData, true));
 
+// 获取贷款信息
 $sql_loan_details = "SELECT * FROM tb_loan 
                     WHERE employeeID = ? 
                     ORDER BY loanID DESC LIMIT 1";
@@ -153,8 +89,58 @@ if ($stmt_loan_details) {
     mysqli_stmt_close($stmt_loan_details);
 }
 
+// 获取当前的 financialstatus
+$sql = "SELECT f.* 
+        FROM tb_financialstatus f
+        WHERE f.employeeID = ?";
+
+$stmt = mysqli_prepare($conn, $sql);
+mysqli_stmt_bind_param($stmt, 'i', $employeeID);
+mysqli_stmt_execute($stmt);
+$financialStatus = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
+
+// 如果没有记录，创建一个新记录，所有金额初始化为0
+if (!$financialStatus) {
+    $sql_insert = "INSERT INTO tb_financialstatus 
+                   (employeeID, modalShare, feeCapital, contribution, fixedDeposit, dateUpdated)
+                   VALUES (?, 0, 0, 0, 0, CURRENT_TIMESTAMP)";
+    $stmt_insert = mysqli_prepare($conn, $sql_insert);
+    mysqli_stmt_bind_param($stmt_insert, 'i', $employeeID);
+    mysqli_stmt_execute($stmt_insert);
+    
+    // 重新获取刚创建的记录
+    mysqli_stmt_execute($stmt);
+    $financialStatus = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
+}
+
+// 当管理员确认更新时（假设通过POST请求）
+if (isset($_POST['confirm_update']) && $_POST['confirm_update'] == 1) {
+    // 使用初始注册金额更新 financialstatus
+    $sql_update = "UPDATE tb_financialstatus 
+                   SET modalShare = ?,
+                       feeCapital = ?,
+                       contribution = ?,
+                       fixedDeposit = ?,
+                       dateUpdated = CURRENT_TIMESTAMP
+                   WHERE employeeID = ?";
+    
+    $stmt_update = mysqli_prepare($conn, $sql_update);
+    mysqli_stmt_bind_param($stmt_update, 'ddddi', 
+        $initialAmount['modalShare'],
+        $initialAmount['feeCapital'],
+        $initialAmount['contribution'],
+        $initialAmount['fixedDeposit'],
+        $employeeID
+    );
+    mysqli_stmt_execute($stmt_update);
+}
+
 // 在文件最后关闭数据库连接
 mysqli_close($conn);
+
+function formatNumber($number) {
+    return str_pad($number, 4, '0', STR_PAD_LEFT);
+}
 ?>
 
 <div class="mt-4 mb-4 ms-3">
@@ -176,13 +162,12 @@ mysqli_close($conn);
                         <i class="fas fa-piggy-bank me-2"></i>
                         <h5 class="card-title mb-0">Jumlah Simpanan</h5>
                     </div>
-                    <h2 class="card-text mb-2">RM <?php 
-                        $totalSavings = ($financialData['modalShare'] ?? 0) + 
-                                        ($financialData['feeCapital'] ?? 0) + 
-                                        ($financialData['fixedDeposit'] ?? 0) + 
-                                        ($financialData['contribution'] ?? 0) +
-                                        ($financialData['deposit'] ?? 0);
-                        echo number_format($totalSavings, 2); 
+                    <h2 class="card-text mb-2">RM <?php echo number_format(
+                        ($financialStatus['modalShare'] ?? 0) + 
+                        ($financialStatus['feeCapital'] ?? 0) + 
+                        ($financialStatus['fixedDeposit'] ?? 0) + 
+                        ($financialStatus['contribution'] ?? 0), 
+                        2); 
                     ?></h2>
                     <div class="small mt-auto">
                         No. Akaun: <?php echo $accountNo; ?><br>
@@ -258,25 +243,25 @@ mysqli_close($conn);
                         <div class="col-6">
                             <div class="border rounded p-3">
                                 <h6>Modal Saham</h6>
-                                <h4 class="text-primary">RM <?php echo number_format($financialData['modalShare'] ?? 0, 2); ?></h4>
+                                <h4>RM <?php echo number_format($financialStatus['modalShare'] ?? 0, 2); ?></h4>
                             </div>
                         </div>
                         <div class="col-6">
                             <div class="border rounded p-3">
                                 <h6>Modal Yuran</h6>
-                                <h4 class="text-primary">RM <?php echo number_format($financialData['feeCapital'] ?? 0, 2); ?></h4>
+                                <h4>RM <?php echo number_format($financialStatus['feeCapital'] ?? 0, 2); ?></h4>
                             </div>
                         </div>
                         <div class="col-6">
                             <div class="border rounded p-3">
                                 <h6>Simpanan Tetap</h6>
-                                <h4 class="text-primary">RM <?php echo number_format($financialData['fixedDeposit'] ?? 0, 2); ?></h4>
+                                <h4>RM <?php echo number_format($financialStatus['fixedDeposit'] ?? 0, 2); ?></h4>
                             </div>
                         </div>
                         <div class="col-6">
                             <div class="border rounded p-3">
                                 <h6>Tabung Anggota</h6>
-                                <h4 class="text-primary">RM <?php echo number_format($financialData['contribution'] ?? 0, 2); ?></h4>
+                                <h4>RM <?php echo number_format($financialStatus['contribution'] ?? 0, 2); ?></h4>
                             </div>
                         </div>
                     </div>
@@ -308,14 +293,13 @@ mysqli_close($conn);
                         <div class="col-6">
                             <div class="border rounded p-3">
                                 <h6>Al-Innah</h6>
-                                <h4 class="text-success">RM <?php 
-                                    echo number_format(
-                                        (isset($loanData['loanType']) && 
-                                         strtoupper($loanData['loanType']) == 'AL-INNAH' && 
-                                         isset($loanData['balance'])) ? $loanData['balance'] : 0, 
-                                        2
-                                    ); 
-                                ?></h4>
+                                <?php 
+                                $alInnahAmount = (isset($loanData['loanType']) && 
+                                                strtoupper($loanData['loanType']) == 'AL-INNAH' && 
+                                                isset($loanData['balance'])) ? $loanData['balance'] : 0;
+                                error_log("Al-Innah amount: " . $alInnahAmount);
+                                ?>
+                                <h4 class="text-success">RM <?php echo number_format($alInnahAmount, 2); ?></h4>
                             </div>
                         </div>
                         <div class="col-6">
@@ -450,6 +434,15 @@ h6 {
         </div>
     </div>
 </div> -->
+
+<!-- 显示当前余额
+$sql_display = "SELECT f.* 
+                FROM tb_financialstatus f
+                WHERE f.employeeID = ?";
+$stmt_display = mysqli_prepare($conn, $sql_display);
+mysqli_stmt_bind_param($stmt_display, 'i', $employeeID);
+mysqli_stmt_execute($stmt_display);
+$financialStatus = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_display)); -->
 
 
 

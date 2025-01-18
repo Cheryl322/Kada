@@ -31,6 +31,10 @@ if (!$result) {
 }
 
 $totalAmount = 0;
+
+function formatNumber($number) {
+    return str_pad($number, 4, '0', STR_PAD_LEFT);
+}
 ?>
 
 <div class="container mt-4">
