@@ -181,6 +181,149 @@
     margin-left: 250px;
     max-width: calc(100% - 270px);
 }
+
+.custom-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.custom-table th, 
+.custom-table td {
+    padding: 12px;
+    text-align: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    border: 1px solid #ddd;
+}
+
+.custom-table th {
+    background-color: MediumAquamarine;
+    color: white;
+    font-weight: 500;
+}
+
+.custom-table tr:nth-child(even) {
+    background-color: #f8f9fa;
+}
+
+.custom-table tr:hover {
+    background-color: #f5f5f5;
+}
+
+.table-wrapper {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+.table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.table-header h3 {
+    color: rgb(34, 119, 210);
+    margin: 0;
+}
+
+.search-container input {
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 8px 12px;
+}
+
+.search-container input:focus {
+    outline: none;
+    border-color: MediumAquamarine;
+    box-shadow: 0 0 5px rgba(102, 205, 170, 0.3);
+}
+
+/* Column widths for loan table */
+.custom-table th:nth-child(1),
+.custom-table td:nth-child(1) {
+    width: 5%;  /* No. */
+}
+
+.custom-table th:nth-child(2),
+.custom-table td:nth-child(2) {
+    width: 10%; /* Jenis Pinjaman */
+}
+
+.custom-table th:nth-child(3),
+.custom-table td:nth-child(3) {
+    width: 8%;  /* ID Pinjaman */
+}
+
+.custom-table th:nth-child(4),
+.custom-table td:nth-child(4) {
+    width: 8%;  /* ID Permohonan */
+}
+
+.custom-table th:nth-child(5),
+.custom-table td:nth-child(5) {
+    width: 8%;  /* ID Pekerja */
+}
+
+.custom-table th:nth-child(6),
+.custom-table td:nth-child(6) {
+    width: 10%; /* Jumlah Dipohon */
+}
+
+.custom-table th:nth-child(7),
+.custom-table td:nth-child(7) {
+    width: 8%;  /* Tempoh Pembiayaan */
+}
+
+.custom-table th:nth-child(8),
+.custom-table td:nth-child(8) {
+    width: 8%;  /* Ansuran Bulanan */
+}
+
+.custom-table th:nth-child(9),
+.custom-table td:nth-child(9) {
+    width: 12%; /* Nama Majikan */
+}
+
+.custom-table th:nth-child(10),
+.custom-table td:nth-child(10) {
+    width: 8%;  /* IC Majikan */
+}
+
+.custom-table th:nth-child(11),
+.custom-table td:nth-child(11) {
+    width: 8%;  /* Gaji Pokok */
+}
+
+.custom-table th:nth-child(12),
+.custom-table td:nth-child(12) {
+    width: 8%;  /* Gaji Bersih */
+}
+
+.custom-table th:nth-child(13),
+.custom-table td:nth-child(13) {
+    width: 8%;  /* Fail Gaji Pokok */
+}
+
+.custom-table th:nth-child(14),
+.custom-table td:nth-child(14) {
+    width: 8%;  /* Fail Gaji Bersih */
+}
+
+/* Add responsive styles */
+@media screen and (max-width: 1200px) {
+    .table-responsive {
+        overflow-x: auto;
+    }
+    
+    .custom-table {
+        min-width: 1200px;
+    }
+}
 </style>
 </head>
 
@@ -236,78 +379,76 @@
         <a class="nav-link" href="adminviewreport.php">Cek Laporan</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" href="#">Info KADA</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="#">Media</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="#">Hubungi Kami</a>
+        <a class="nav-link" href="login.php">Log Keluar</a>
       </li>
     </ul>
   </div>
 </div>
 
 <div class="tables-container" style="margin-top: 80px; padding: 20px;">
-    <!-- Add search bar -->
-    <div class="search-container" style="margin-bottom: 20px; text-align: right;">
-        <input type="text" id="searchInput" class="form-control" style="width: 300px; display: inline-block;" placeholder="Cari...">
-    </div>
-    <div class="table-responsive">
-        <table class="table table-striped table-bordered" id="dataTable">
-            <thead>
-                <tr>
-                    <th>No.</th>
-                    <th>Jenis Pinjaman</th>
-                    <th>ID Pinjaman</th>
-                    <th>ID Permohonan</th>
-                    <th>ID Pekerja</th>
-                    <th>Jumlah Dipohon</th>
-                    <th>Tempoh Pembiayaan</th>
-                    <th>Ansuran Bulanan</th>
-                    <th>Nama Majikan</th>
-                    <th>IC Majikan</th>
-                    <th>Gaji Pokok</th>
-                    <th>Gaji Bersih</th>
-                    <th>Fail Gaji Pokok</th>
-                    <th>Fail Gaji Bersih</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php
-                include 'dbconnect.php';
+    <div class="table-wrapper" style="width: 100%; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1);">
+        <div class="table-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="color: rgb(34, 119, 210); margin: 0;">Senarai Permohonan Pinjaman</h3>
+            <div class="search-container">
+                <input type="text" id="searchInput" class="form-control" style="width: 300px;" placeholder="Cari...">
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="custom-table" id="dataTable">
+                <thead>
+                    <tr>
+                        <th>No.</th>
+                        <th>Jenis Pinjaman</th>
+                        <th>ID Pinjaman</th>
+                        <th>ID Permohonan</th>
+                        <th>ID Pekerja</th>
+                        <th>Jumlah Dipohon</th>
+                        <th>Tempoh Pembiayaan</th>
+                        <th>Ansuran Bulanan</th>
+                        <th>Nama Majikan</th>
+                        <th>IC Majikan</th>
+                        <th>Gaji Pokok</th>
+                        <th>Gaji Bersih</th>
+                        <th>Fail Gaji Pokok</th>
+                        <th>Fail Gaji Bersih</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php
+                    include 'dbconnect.php';
 
-                $sql = "SELECT * FROM tb_loan";
-                $result = $conn->query($sql);
-                
-                if ($result->num_rows > 0) {
-                    $count = 1;
-                    while($row = $result->fetch_assoc()) {
-                        echo "<tr>";
-                        echo "<td>" . $count . "</td>";
-                        echo "<td>" . $row['loanType'] . "</td>";
-                        echo "<td>" . $row['loanID'] . "</td>";
-                        echo "<td>" . $row['loanApplicationID'] . "</td>";
-                        echo "<td>" . $row['employeeID'] . "</td>";
-                        echo "<td>" . $row['amountRequested'] . "</td>";
-                        echo "<td>" . $row['financingPeriod'] . "</td>";
-                        echo "<td>" . $row['monthlyInstallments'] . "</td>";
-                        echo "<td>" . $row['employerName'] . "</td>";
-                        echo "<td>" . $row['employerIC'] . "</td>";
-                        echo "<td>" . $row['basicSalary'] . "</td>";
-                        echo "<td>" . $row['netSalary'] . "</td>";
-                        echo "<td>" . $row['basicSalaryFile'] . "</td>";
-                        echo "<td>" . $row['netSalaryFile'] . "</td>";
-                        echo "</tr>";
-                        $count++;
+                    $sql = "SELECT * FROM tb_loan";
+                    $result = $conn->query($sql);
+                    
+                    if ($result->num_rows > 0) {
+                        $count = 1;
+                        while($row = $result->fetch_assoc()) {
+                            echo "<tr>";
+                            echo "<td>" . $count . "</td>";
+                            echo "<td>" . (empty($row['loanType']) ? '-' : $row['loanType']) . "</td>";
+                            echo "<td>" . $row['loanID'] . "</td>";
+                            echo "<td>" . $row['loanApplicationID'] . "</td>";
+                            echo "<td>" . $row['employeeID'] . "</td>";
+                            echo "<td>" . $row['amountRequested'] . "</td>";
+                            echo "<td>" . $row['financingPeriod'] . "</td>";
+                            echo "<td>" . $row['monthlyInstallments'] . "</td>";
+                            echo "<td>" . $row['employerName'] . "</td>";
+                            echo "<td>" . $row['employerIC'] . "</td>";
+                            echo "<td>" . $row['basicSalary'] . "</td>";
+                            echo "<td>" . $row['netSalary'] . "</td>";
+                            echo "<td>" . $row['basicSalaryFile'] . "</td>";
+                            echo "<td>" . $row['netSalaryFile'] . "</td>";
+                            echo "</tr>";
+                            $count++;
+                        }
+                    } else {
+                        echo "<tr><td colspan='14'>Tiada rekod ditemui</td></tr>";
                     }
-                } else {
-                    echo "<tr><td colspan='14'>Tiada rekod ditemui</td></tr>";
-                }
-                $conn->close();
-                ?>
-            </tbody>
-        </table>
+                    $conn->close();
+                    ?>
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
