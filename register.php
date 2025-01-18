@@ -1,3 +1,14 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+</head>
+
+
 <?php 
 session_start();
 include 'headermain.php'; 
@@ -167,6 +178,29 @@ body::before {
         margin: 20px auto;
     }
 }
+
+.password-requirements {
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+}
+
+.password-requirements ul {
+    list-style-type: none;
+    padding-left: 0;
+    margin-bottom: 0;
+}
+
+.password-requirements li {
+    margin-bottom: 0.25rem;
+}
+
+.text-success {
+    color: #28a745 !important;
+}
+
+.text-muted {
+    color: #6c757d !important;
+}
 </style>
 
 <div class="container">
@@ -204,23 +238,34 @@ body::before {
                         </label>
                         <div class="input-group">
                             <input type="password" class="form-control" id="password" name="password" 
-                                   placeholder="Masukkan kata laluan" required>
+                                   placeholder="Masukkan kata laluan" 
+                                   pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"
+                                   required>
                             <button class="btn btn-outline-secondary" type="button" id="togglePassword">
-                                <i class="fas fa-eye"></i>
+                                <i class="fas fa-eye-slash"></i>
                             </button>
+                        </div>
+                        <div class="password-requirements mt-2 small text-danger" style="display: none;">
+                            <ul class="ps-3">
+                                <li id="length">Sekurang-kurangnya 8 aksara</li>
+                                <li id="uppercase">Sekurang-kurangnya 1 huruf besar</li>
+                                <li id="lowercase">Sekurang-kurangnya 1 huruf kecil</li>
+                                <li id="number">Sekurang-kurangnya 1 nombor</li>
+                                <li id="special">Sekurang-kurangnya 1 simbol khas (@$!%*?&)</li>
+                            </ul>
                         </div>
                     </div>
                     
                     <div class="mb-4">
                         <label for="admin_key" class="form-label">
-                            <i class="fas fa-key"></i>
+                            <i class="fas fa-eye"></i>
                             Admin Key (Optional)
                         </label>
                         <div class="input-group">
                             <input type="password" class="form-control" id="admin_key" name="admin_key" 
                                    placeholder="Masukkan admin key jika mendaftar sebagai admin">
                             <button class="btn btn-outline-secondary" type="button" id="toggleAdminKey">
-                                <i class="fas fa-eye"></i>
+                                <i class="fas fa-eye-slash"></i>
                             </button>
                         </div>
                     </div>
@@ -256,12 +301,71 @@ function validateForm() {
     return true;
 }
 
-document.getElementById('togglePassword').addEventListener('click', function() {
-    const password = document.getElementById('password');
-    const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
-    password.setAttribute('type', type);
-    this.querySelector('i').classList.toggle('fa-eye');
-    this.querySelector('i').classList.toggle('fa-eye-slash');
+const passwordInput = document.getElementById('password');
+const requirements = document.querySelector('.password-requirements');
+
+function checkPassword(password) {
+    const requirements = {
+        length: password.length >= 8,
+        uppercase: /[A-Z]/.test(password),
+        lowercase: /[a-z]/.test(password),
+        number: /\d/.test(password),
+        special: /[@$!%*?&]/.test(password)
+    };
+    
+    // Update each requirement's display
+    for (const [req, met] of Object.entries(requirements)) {
+        const element = document.getElementById(req);
+        if (met) {
+            element.style.color = '#75B798'; // 青色 for met requirements
+            element.innerHTML = `✓ ${element.textContent.replace('✓ ', '')}`; // 只添加一个勾号
+        } else {
+            element.style.color = '#dc3545'; // Red for unmet requirements
+            element.innerHTML = element.textContent.replace('✓ ', ''); // 移除勾号
+        }
+    }
+
+    return Object.values(requirements).every(Boolean);
+}
+
+passwordInput.addEventListener('input', function() {
+    if (this.value) {
+        requirements.style.display = 'block';
+        checkPassword(this.value);
+    } else {
+        requirements.style.display = 'none';
+    }
+});
+
+// When focus is lost (blur)
+passwordInput.addEventListener('blur', function() {
+    if (this.value && !checkPassword(this.value)) {
+        requirements.style.display = 'block';
+    }
+});
+
+// When input is focused
+passwordInput.addEventListener('focus', function() {
+    if (this.value && !checkPassword(this.value)) {
+        requirements.style.display = 'block';
+    }
+});
+
+document.getElementById('togglePassword').addEventListener('click', function(e) {
+    e.preventDefault();
+    const passwordInput = document.getElementById('password');
+    const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+    passwordInput.setAttribute('type', type);
+    
+    // 切换图标
+    const icon = this.querySelector('i');
+    if (type === 'text') {
+        icon.classList.remove('fa-eye-slash');  // 移除闭眼
+        icon.classList.add('fa-eye');          // 添加睁眼
+    } else {
+        icon.classList.remove('fa-eye');       // 移除睁眼
+        icon.classList.add('fa-eye-slash');    // 添加闭眼
+    }
 });
 </script>
 

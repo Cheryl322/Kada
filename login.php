@@ -9,29 +9,35 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $password = $_POST['password'];
 
     // Query to check credentials and get role
-    $sql = "SELECT * FROM tb_employee WHERE employeeID = ? AND password = ?";
+    $sql = "SELECT * FROM tb_employee WHERE employeeID = ?";
     $stmt = mysqli_prepare($conn, $sql);
-    mysqli_stmt_bind_param($stmt, "ss", $employeeID, $password);
+    mysqli_stmt_bind_param($stmt, "s", $employeeID);
     mysqli_stmt_execute($stmt);
     $result = mysqli_stmt_get_result($stmt);
 
     if (mysqli_num_rows($result) == 1) {
         $user = mysqli_fetch_assoc($result);
-        $_SESSION['employeeID'] = $employeeID;
-        $_SESSION['role'] = $user['role'];
+        // Verify password using password_verify
+        if (password_verify($password, $user['password'])) {
+            $_SESSION['employeeID'] = $employeeID;
+            $_SESSION['role'] = $user['role'];
 
-        // Redirect based on role
-        if ($user['role'] === 'admin') {
-            header("Location: adminmainpage.php");
+            // Redirect based on role
+            if ($user['role'] === 'admin') {
+                header("Location: adminmainpage.php");
+            } else {
+                header("Location: mainpage.php");
+            }
+            exit();
         } else {
-            header("Location: mainpage.php");
+            $_SESSION['error_message'] = "ID Pekerja atau kata laluan tidak sah!";
         }
-        exit();
     } else {
-        $_SESSION['error'] = "Invalid employee ID or password!";
-        header("Location: login.php");
-        exit();
+        $_SESSION['error_message'] = "ID Pekerja atau kata laluan tidak sah!";
     }
+    
+    header("Location: login.php");
+    exit();
 }
 ?>
 
