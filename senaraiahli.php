@@ -181,6 +181,146 @@
     margin-left: 250px;
     max-width: calc(100% - 270px);
 }
+
+.custom-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.custom-table th, 
+.custom-table td {
+    padding: 12px;
+    text-align: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    border: 1px solid #ddd;
+}
+
+.custom-table th {
+    background-color: MediumAquamarine;
+    color: white;
+    font-weight: 500;
+}
+
+.custom-table tr:nth-child(even) {
+    background-color: #f8f9fa;
+}
+
+.custom-table tr:hover {
+    background-color: #f5f5f5;
+}
+
+.table-wrapper {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+.table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.table-header h3 {
+    color: rgb(34, 119, 210);
+    margin: 0;
+}
+
+.search-container input {
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 8px 12px;
+}
+
+.search-container input:focus {
+    outline: none;
+    border-color: MediumAquamarine;
+    box-shadow: 0 0 5px rgba(102, 205, 170, 0.3);
+}
+
+/* Update table column widths */
+.custom-table th:nth-child(1),
+.custom-table td:nth-child(1) {
+    width: 5%;  /* No. */
+}
+
+.custom-table th:nth-child(2),
+.custom-table td:nth-child(2) {
+    width: 15%; /* Nama */
+}
+
+.custom-table th:nth-child(3),
+.custom-table td:nth-child(3) {
+    width: 12%; /* No. Kad Pengenalan */
+}
+
+.custom-table th:nth-child(4),
+.custom-table td:nth-child(4) {
+    width: 15%; /* Emel - increased width */
+    white-space: normal; /* Allow email to wrap */
+    word-break: break-word; /* Break long email addresses */
+}
+
+.custom-table th:nth-child(5),
+.custom-table td:nth-child(5) {
+    width: 10%; /* No. Telefon */
+}
+
+.custom-table th:nth-child(6),
+.custom-table td:nth-child(6) {
+    width: 10%; /* No. Telefon Rumah */
+}
+
+.custom-table th:nth-child(7),
+.custom-table td:nth-child(7) {
+    width: 8%; /* Jantina */
+}
+
+.custom-table th:nth-child(8),
+.custom-table td:nth-child(8) {
+    width: 8%; /* Agama */
+}
+
+.custom-table th:nth-child(9),
+.custom-table td:nth-child(9) {
+    width: 12%; /* Status Perkahwinan */
+}
+
+.custom-table th:nth-child(10),
+.custom-table td:nth-child(10) {
+    width: 10%; /* Warganegara */
+}
+
+.custom-table th:nth-child(11),
+.custom-table td:nth-child(11) {
+    width: 10%; /* Jawatan */
+}
+
+.custom-table th:nth-child(12),
+.custom-table td:nth-child(12) {
+    width: 10%; /* Gaji Bulanan */
+}
+
+.custom-table th:nth-child(13),
+.custom-table td:nth-child(13) {
+    width: 8%; /* No. PF */
+}
+
+/* Add responsive styles */
+@media screen and (max-width: 1200px) {
+    .table-responsive {
+        overflow-x: auto;
+    }
+    
+    .custom-table {
+        min-width: 1000px;
+    }
+}
 </style>
 </head>
 
@@ -236,73 +376,71 @@
         <a class="nav-link" href="adminviewreport.php">Cek Laporan</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" href="#">Info KADA</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="#">Media</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="#">Hubungi Kami</a>
+        <a class="nav-link" href="login.php">Log Keluar</a>
       </li>
     </ul>
   </div>
 </div>
 
 <div class="tables-container" style="margin-top: 80px; padding: 20px;">
-    <!-- Add search bar -->
-    <div class="search-container" style="margin-bottom: 20px; text-align: right;">
-        <input type="text" id="searchInput" class="form-control" style="width: 300px; display: inline-block;" placeholder="Cari...">
-    </div>
-    <div class="table-responsive">
-        <table class="table table-striped table-bordered" id="dataTable">
-            <thead>
-                <tr>
-                    <th>No.</th>
-                    <th>Nama</th>
-                    <th>No. Kad Pengenalan</th>
-                    <th>Emel</th>
-                    <th>No. Telefon</th>
-                    <th>No. Telefon Rumah</th>
-                    <th>Jantina</th>
-                    <th>Agama</th>
-                    <th>Status Perkahwinan</th>
-                    <th>Warganegara</th>
-                    <th>Jawatan</th>
-                    <th>Gaji Bulanan</th>
-                    <th>No. PF</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php
-                // Database connection
-                include 'dbconnect.php';
+    <div class="table-wrapper" style="width: 100%; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1);">
+        <div class="table-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="color: rgb(34, 119, 210); margin: 0;">Senarai Ahli Semasa</h3>
+            <div class="search-container">
+                <input type="text" id="searchInput" class="form-control" style="width: 300px;" placeholder="Cari...">
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="custom-table" id="dataTable">
+                <thead>
+                    <tr>
+                        <th>No.</th>
+                        <th>Nama</th>
+                        <th>No. Kad Pengenalan</th>
+                        <th>Emel</th>
+                        <th>No. Telefon</th>
+                        <th>No. Telefon Rumah</th>
+                        <th>Jantina</th>
+                        <th>Agama</th>
+                        <th>Status Perkahwinan</th>
+                        <th>Warganegara</th>
+                        <th>Jawatan</th>
+                        <th>Gaji Bulanan</th>
+                        <th>No. PF</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php
+                    // Database connection
+                    include 'dbconnect.php';
 
-                // Prepare and execute the query
-                $sql = "SELECT * FROM tb_member";
-                $result = mysqli_query($conn, $sql);
-                
-                $counter = 1;
-                while ($row = mysqli_fetch_assoc($result)) {
-                    echo "<tr>";
-                    echo "<td>" . $counter++ . "</td>";
-                    echo "<td>" . htmlspecialchars($row['memberName']) . "</td>";
-                    echo "<td>" . htmlspecialchars($row['ic']) . "</td>";
-                    echo "<td>" . htmlspecialchars($row['email']) . "</td>";
-                    echo "<td>" . htmlspecialchars($row['phoneNumber']) . "</td>";
-                    echo "<td>" . htmlspecialchars($row['phoneHome']) . "</td>";
-                    echo "<td>" . htmlspecialchars($row['sex']) . "</td>";
-                    echo "<td>" . htmlspecialchars($row['religion']) . "</td>";
-                    echo "<td>" . htmlspecialchars($row['maritalStatus']) . "</td>";
-                    echo "<td>" . htmlspecialchars($row['nation']) . "</td>";
-                    echo "<td>" . htmlspecialchars($row['position']) . "</td>";
-                    echo "<td>RM " . number_format($row['monthlySalary'], 2) . "</td>";
-                    echo "<td>" . htmlspecialchars($row['no_pf']) . "</td>";
-                    echo "</tr>";
-                }
-                mysqli_close($conn);
-                ?>
-            </tbody>
-        </table>
+                    // Prepare and execute the query
+                    $sql = "SELECT * FROM tb_member";
+                    $result = mysqli_query($conn, $sql);
+                    
+                    $counter = 1;
+                    while ($row = mysqli_fetch_assoc($result)) {
+                        echo "<tr>";
+                        echo "<td>" . $counter++ . "</td>";
+                        echo "<td>" . htmlspecialchars($row['memberName']) . "</td>";
+                        echo "<td>" . htmlspecialchars($row['ic']) . "</td>";
+                        echo "<td>" . htmlspecialchars($row['email']) . "</td>";
+                        echo "<td>" . htmlspecialchars($row['phoneNumber']) . "</td>";
+                        echo "<td>" . htmlspecialchars($row['phoneHome']) . "</td>";
+                        echo "<td>" . htmlspecialchars($row['sex']) . "</td>";
+                        echo "<td>" . htmlspecialchars($row['religion']) . "</td>";
+                        echo "<td>" . htmlspecialchars($row['maritalStatus']) . "</td>";
+                        echo "<td>" . htmlspecialchars($row['nation']) . "</td>";
+                        echo "<td>" . htmlspecialchars($row['position']) . "</td>";
+                        echo "<td>RM " . number_format($row['monthlySalary'], 2) . "</td>";
+                        echo "<td>" . htmlspecialchars($row['no_pf']) . "</td>";
+                        echo "</tr>";
+                    }
+                    mysqli_close($conn);
+                    ?>
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
