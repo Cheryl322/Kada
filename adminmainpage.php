@@ -533,14 +533,14 @@ if (!isset($_SESSION['employeeID']) || $_SESSION['role'] !== 'admin') {
                         <th>No.</th>
                         <th>ID</th>
                         <th>Nama</th>
-                        <th>Jumlah Pinjaman</th>
+                        <th>Tarikh Daftar</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php
                     include 'dbconnect.php';
                     
-                    $sql = "SELECT l.loanApplicationID, m.memberName, l.amountRequested 
+                    $sql = "SELECT l.loanApplicationID, m.memberName, l.created_at 
                            FROM tb_loan l
                            JOIN tb_member m ON l.employeeID = m.employeeID
                            ORDER BY l.loanApplicationID DESC LIMIT 3";
@@ -553,7 +553,7 @@ if (!isset($_SESSION['employeeID']) || $_SESSION['role'] !== 'admin') {
                             echo "<td>" . $count . "</td>";
                             echo "<td>" . $row['loanApplicationID'] . "</td>";
                             echo "<td>" . $row['memberName'] . "</td>";
-                            echo "<td>RM " . number_format($row['amountRequested'], 2) . "</td>";
+                            echo "<td>" . date('d/m/Y', strtotime($row['created_at'])) . "</td>";
                             echo "</tr>";
                             $count++;
                         }
