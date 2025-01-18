@@ -98,6 +98,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         // If everything is successful, commit the transaction
         $conn->commit();
         
+        // Update member registration status to 'Belum Selesai'
+        $updateStatusSql = "INSERT INTO tb_memberregistration_memberapplicationdetails 
+                           (memberRegistrationID, regisDate, regisStatus) 
+                           VALUES (?, NOW(), 'Belum Selesai')
+                           ON DUPLICATE KEY UPDATE 
+                           regisDate = NOW(),
+                           regisStatus = 'Belum Selesai'";
+        
+        $statusStmt = $conn->prepare($updateStatusSql);
+        $statusStmt->bind_param("i", $employeeID);
+        
+        if (!$statusStmt->execute()) {
+            throw new Exception("Error updating registration status: " . $statusStmt->error);
+        }
+        
         // Redirect to success page
         $_SESSION['success_message'] = "Maklumat berjaya disimpan!";
         header("Location: success_page.php");
