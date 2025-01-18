@@ -28,25 +28,63 @@ try {
     $pdf->SetMargins(15, 15, 15);
     $pdf->AddPage();
     
-    // Query loan data
-    $query = "SELECT * FROM tb_loan WHERE employeeID = ?";
+    // Query loan data and employee data
+    $query = "SELECT l.*, e.name, e.staffNo, e.icNo, e.pfNo 
+              FROM tb_loan l 
+              JOIN tb_employee e ON l.employeeID = e.employeeID 
+              WHERE l.employeeID = ?";
     $stmt = mysqli_prepare($conn, $query);
     mysqli_stmt_bind_param($stmt, 's', $employeeID);
     mysqli_stmt_execute($stmt);
     $result = mysqli_stmt_get_result($stmt);
-    $loan = mysqli_fetch_assoc($result);
+    $data = mysqli_fetch_assoc($result);
 
-    // Add financial details to PDF
-    $pdf->SetFont('helvetica', '', 12);
-    $pdf->Cell(0, 10, 'Financial Statement', 0, 1, 'C');
-    $pdf->Cell(0, 10, 'Employee ID: ' . htmlspecialchars($employeeID), 0, 1);
+    // Add content to PDF
+    $pdf->SetFont('helvetica', 'B', 14);
+    $pdf->Cell(0, 10, 'Pengesahan Penyata Kewangan Ahli Koperasi Kakitangan KADA', 0, 1, 'C');
+    $pdf->Cell(0, 10, 'Kelantan Berhad', 0, 1, 'C');
+    $pdf->Ln(10);
+
+    // Maklumat Peribadi section
+    $pdf->SetFont('helvetica', 'B', 12);
+    $pdf->Cell(0, 10, 'Maklumat Peribadi', 0, 1, 'L');
+    $pdf->SetFont('helvetica', '', 11);
     
-    if ($loan) {
-        $pdf->Cell(0, 10, 'Loan ID: ' . htmlspecialchars($loan['loanID']), 0, 1);
-        $pdf->Cell(0, 10, 'Loan Amount: RM ' . number_format($loan['loanAmount'], 2), 0, 1);
-    } else {
-        $pdf->Cell(0, 10, 'No loan records found', 0, 1);
-    }
+    $pdf->Cell(40, 8, 'Nama', 1, 0);
+    $pdf->Cell(150, 8, $data['name'], 1, 1);
+    
+    $pdf->Cell(40, 8, 'No. Pekerja', 1, 0);
+    $pdf->Cell(150, 8, $data['staffNo'], 1, 1);
+    
+    $pdf->Cell(40, 8, 'No. Kad Pengenalan', 1, 0);
+    $pdf->Cell(150, 8, $data['ic'], 1, 1);
+    
+    $pdf->Cell(40, 8, 'No. PF', 1, 0);
+    $pdf->Cell(150, 8, $data['no_pf'], 1, 1);
+    
+    $pdf->Ln(10);
+
+    // Maklumat Pembiayaan section
+    $pdf->SetFont('helvetica', 'B', 12);
+    $pdf->Cell(0, 10, 'Maklumat Pembiayaan', 0, 1, 'L');
+    $pdf->SetFont('helvetica', '', 11);
+    
+    $pdf->Cell(40, 8, 'Jenis Pembiayaan', 1, 0);
+    $pdf->Cell(150, 8, $data['loanType'], 1, 1);
+    
+    $pdf->Cell(40, 8, 'Amaun Dipohon', 1, 0);
+    $pdf->Cell(150, 8, 'RM ' . number_format($data['amountRequestd'], 2), 1, 1);
+    
+    $pdf->Cell(40, 8, 'Tempoh Pembiayaan', 1, 0);
+    $pdf->Cell(150, 8, $data['financingPeriod'] . ' bulan', 1, 1);
+    
+    $pdf->Cell(40, 8, 'Ansuran Bulanan', 1, 0);
+    $pdf->Cell(150, 8, 'RM ' . number_format($data['monthlyInstallments'], 2), 1, 1);
+
+    // Add timestamp
+    $pdf->Ln(10);
+    $pdf->SetFont('helvetica', '', 10);
+    $pdf->Cell(0, 10, 'Laporan dijana pada: ' . date('d/m/Y H:i:s'), 0, 1, 'L');
 
     // Clear any output buffers
     ob_end_clean();
