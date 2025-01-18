@@ -100,14 +100,14 @@ if (!isset($_GET['download'])) {
     $pdf->Cell(60, 10, 'Nama', 1, 0, 'L', true);
     $pdf->Cell(130, 10, $data['memberName'], 1, 1, 'L', true);
     
-    $pdf->Cell(60, 10, 'No. Pekerja', 1, 0, 'L', true);
+    $pdf->Cell(60, 10, 'No. Anggota', 1, 0, 'L', true);
     $pdf->Cell(130, 10, $data['employeeID'], 1, 1, 'L', true);
     
     $pdf->Cell(60, 10, 'No. Kad Pengenalan', 1, 0, 'L', true);
     $pdf->Cell(130, 10, $data['ic'], 1, 1, 'L', true);
     
     $pdf->Cell(60, 10, 'No. PF', 1, 0, 'L', true);
-    $pdf->Cell(130, 10, $data['employeeID'], 1, 1, 'L', true);
+    $pdf->Cell(130, 10, $data['no_pf'], 1, 1, 'L', true);
 
     $pdf->Ln(10);
 
