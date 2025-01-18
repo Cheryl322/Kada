@@ -1,316 +1,141 @@
-<!DOCTYPE html>
-<html lang="en">
+<?php 
+session_start();
+include 'headeradmin.php';
 
-<head>
-  <title>Sistem Koperasi KADA</title>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link href="css/bootstrap.min (1).css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+// Add title tag right after header inclusion
+echo '<title>Cek Laporan</title>';
 
-  <style>
-.footer {
-   position: fixed;
-   left: 0;
-   bottom: 0;
-   width: 100%;
-   background-color: MediumAquamarine;
-   color: white;
-   text-align: center;
+// Initialize reportData array if not exists
+if (!isset($_SESSION['reportData'])) {
+    $_SESSION['reportData'] = [];
 }
 
-.navbar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    height: 100%;
-    width: 250px;
-    background-color: rgb(34, 119, 210);
-    padding-top: 20px;
-    margin-top: 60px;
-    transform: translateX(-250px);
-    transition: transform 0.3s ease-in-out;
+// Process new selections from hasilreport.php
+if (isset($_POST['selected_members']) && is_array($_POST['selected_members'])) {
+    include 'dbconnect.php';
+    
+    try {
+        $selectedMembers = $_POST['selected_members'];
+        $isLoanReport = isset($_POST['reportType']) && $_POST['reportType'] === 'pembiayaan';
+        
+        if (!empty($selectedMembers)) {
+            $placeholders = implode(',', array_fill(0, count($selectedMembers), '?'));
+            
+            if ($isLoanReport) {
+                // Query for loan report - get all loan applications
+                $query = "SELECT 
+                            m.memberName,
+                            m.employeeID,
+                            DATE_FORMAT(m.created_at, '%d/%m/%Y') as tarikh_daftar,
+                            DATE_FORMAT(l.created_at, '%d/%m/%Y') as tarikh_pembiayaan,
+                            m.employeeID,
+                            l.loanID
+                         FROM tb_member m
+                         INNER JOIN tb_loan l ON m.employeeID = l.employeeID
+                         WHERE m.employeeID IN ($placeholders)
+                         ORDER BY l.created_at DESC
+                         LIMIT " . count($_POST['selected_loans']);
+                         
+                $stmt = mysqli_prepare($conn, $query);
+                if ($stmt) {
+                    $types = str_repeat('s', count($selectedMembers));
+                    mysqli_stmt_bind_param($stmt, $types, ...$selectedMembers);
+                    mysqli_stmt_execute($stmt);
+                    $result = mysqli_stmt_get_result($stmt);
+                    
+                    // Remove existing entries for the selected members
+                    $_SESSION['reportData'] = array_filter($_SESSION['reportData'], function($entry) use ($selectedMembers) {
+                        return !in_array($entry['employeeID'], $selectedMembers);
+                    });
+                    
+                    // Add only the newly selected entries
+                    while ($row = mysqli_fetch_assoc($result)) {
+                        $_SESSION['reportData'][] = $row;
+                    }
+                }
+            } else {
+                // Query for member report
+                $query = "SELECT 
+                            m.memberName,
+                            m.employeeID,
+                            DATE_FORMAT(m.created_at, '%d/%m/%Y') as tarikh_daftar,
+                            '' as tarikh_pembiayaan,
+                            m.employeeID,
+                            NULL as loanID
+                         FROM tb_member m
+                         WHERE m.employeeID IN ($placeholders)";
+                         
+                $stmt = mysqli_prepare($conn, $query);
+                if ($stmt) {
+                    $types = str_repeat('s', count($selectedMembers));
+                    mysqli_stmt_bind_param($stmt, $types, ...$selectedMembers);
+                    mysqli_stmt_execute($stmt);
+                    $result = mysqli_stmt_get_result($stmt);
+                    
+                    while ($row = mysqli_fetch_assoc($result)) {
+                        $exists = false;
+                        foreach ($_SESSION['reportData'] as $existing) {
+                            if ($existing['employeeID'] === $row['employeeID'] && empty($existing['tarikh_pembiayaan'])) {
+                                $exists = true;
+                                break;
+                            }
+                        }
+                        
+                        if (!$exists) {
+                            $_SESSION['reportData'][] = $row;
+                        }
+                    }
+                }
+            }
+            
+            if ($stmt) {
+                mysqli_stmt_close($stmt);
+            }
+        }
+    } catch (Exception $e) {
+        // Handle error silently or log it
+    }
 }
 
-.navbar.closed {
-    transform: translateX(-250px);
+// Sort the report data by tarikh_daftar and then by tarikh_pembiayaan
+if (!empty($_SESSION['reportData'])) {
+    usort($_SESSION['reportData'], function($a, $b) {
+        // First sort by tarikh_daftar
+        $dateCompare = strtotime($b['tarikh_daftar']) - strtotime($a['tarikh_daftar']);
+        if ($dateCompare !== 0) {
+            return $dateCompare;
+        }
+        // If same registration date, sort by loan date (if exists)
+        if (!empty($a['tarikh_pembiayaan']) && !empty($b['tarikh_pembiayaan'])) {
+            return strtotime($b['tarikh_pembiayaan']) - strtotime($a['tarikh_pembiayaan']);
+        }
+        return 0;
+    });
 }
 
-.navbar:not(.closed) {
-    transform: translateX(0);
+$reportData = $_SESSION['reportData'];
+
+// Handle delete requests
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_index'])) {
+    $indexToDelete = (int)$_POST['delete_index'];
+    if (isset($_SESSION['reportData'][$indexToDelete])) {
+        array_splice($_SESSION['reportData'], $indexToDelete, 1);
+    }
 }
 
-.navbar.initial-state {
-    transition: none !important;
-}
+// Use the session data for display
+$reportData = $_SESSION['reportData'];
+?>
 
-.container-fluid {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-.navbar-nav {
-    flex-direction: column;
-    width: 100%;
-}
-.nav-item {
-    width: 100%;
-}
-.nav-link {
-    color: white;
-    padding: 10px 15px;
-}
-
-#sidebarToggle {
-    position: fixed;
-    top: 20px;
-    left: 20px;
-    z-index: 1000;
-    display: none;
-}
-
-.navbar.closed + #sidebarToggle {
-    display: block;
-}
-
-#closeSidebar {
-    transition: transform 0.3s ease;
-}
-
-#closeSidebar:hover {
-    transform: scale(1.2);
-}
-
-.main-header {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 60px;
-    background-color: white;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 20px;
-    z-index: 999;
-}
-
-.menu-button {
-    background: none;
-    border: none;
-    font-size: 24px;
-    color: rgb(34, 119, 210);
-    cursor: pointer;
-    padding: 10px;
-    transition: transform 0.3s ease;
-}
-
-.menu-button:hover {
-    transform: scale(1.1);
-}
-
-.top-right-icons {
-    display: flex;
-    gap: 20px;
-    align-items: center;
-}
-
-.icon-button {
-    color: rgb(34, 119, 210);
-    font-size: 24px;
-    cursor: pointer;
-    transition: transform 0.3s ease;
-    position: relative;
-}
-
-.icon-button:hover {
-    transform: scale(1.1);
-}
-
-.profile-pic {
-    width: 35px;
-    height: 35px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 2px solid rgb(34, 119, 210);
-}
-
-.notification-badge {
-    position: absolute;
-    top: -5px;
-    right: -5px;
-    background-color: red;
-    color: white;
-    border-radius: 50%;
-    padding: 2px 6px;
-    font-size: 12px;
-}
-
-/* Add these new styles */
-.header-left {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-
-.home-button {
-    color: rgb(34, 119, 210);
-    font-size: 24px;
-    text-decoration: none;
-    transition: transform 0.3s ease;
-}
-
-.home-button:hover {
-    transform: scale(1.1);
-}
-
-/* Add this new style */
-.navbar.initial-state {
-    transform: translateX(-250px);
-}
-
-/* Add these new styles for when sidebar is open */
-.sidebar-open .circle-container {
-    width: calc(100% - 250px);
-    margin-left: 250px;
-}
-
-.sidebar-open .tables-container {
-    margin-left: 250px;
-    max-width: calc(100% - 270px);
-}
-
-/* Add/modify these styles */
-.main-content {
-    position: relative;
-    transition: transform 0.3s ease-in-out;
-    margin: 80px 20px 20px 20px; /* Top margin to clear header */
-    width: calc(100% - 40px);
-}
-
-body.sidebar-open .main-content {
-    transform: translateX(250px);
-    width: calc(100% - 40px); /* Keep original width */
-}
-
-/* For the table container */
-.table-responsive {
-    position: relative;
-    transition: transform 0.3s ease-in-out;
-    margin: 20px;
-    width: calc(100% - 40px);
-}
-
-body.sidebar-open .table-responsive {
-    transform: translateX(250px);
-    width: calc(100% - 40px);
-}
-
-/* For the search bar container */
-.search-container {
-    position: relative;
-    transition: transform 0.3s ease-in-out;
-    margin: 20px;
-    width: calc(100% - 40px);
-}
-
-body.sidebar-open .search-container {
-    transform: translateX(250px);
-    width: calc(100% - 40px);
-}
-
-/* For the pagination */
-.pagination-container {
-    position: relative;
-    transition: transform 0.3s ease-in-out;
-    margin: 20px;
-    width: calc(100% - 40px);
-}
-
-body.sidebar-open .pagination-container {
-    transform: translateX(250px);
-    width: calc(100% - 40px);
-}
-</style>
-</head>
-
-<body>
-
-<div class="main-header">
-    <div class="header-left">
-        <button class="menu-button" id="menuButton">
-            <i class="fas fa-bars"></i>
-        </button>
-        <a href="adminmainpage.php" class="home-button">
-            <i class="fas fa-home"></i>
-        </a>
-    </div>
-    <div class="top-right-icons">
-        <div class="icon-button">
-            <i class="fas fa-envelope"></i>
-        </div>
-        <div class="icon-button">
-            <i class="fas fa-bell"></i>
-            <span class="notification-badge">3</span>
-        </div>
-        <div class="icon-button">
-            <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Profile" class="profile-pic">
-        </div>
-    </div>
-</div>
-
-<div class="navbar initial-state closed" id="sidebar">
-  <div class="container-fluid">
-    <div style="display: flex; width: 100%; align-items: center; margin-bottom: 20px;">
-      <i class="fas fa-arrow-left" id="closeSidebar" style="cursor:pointer; font-size: 24px; color: white; position: absolute; left: 20px; top: 20px;"></i>
-      <a class="navbar-brand" href="index.php" style="margin: 0 auto;">
-        <img src="img/kadalogo.jpg" alt="logo" height="60">
-      </a>
-    </div>
-    <ul class="navbar-nav">
-      <li class="nav-item">
-        <a class="nav-link active" href="adminmainpage.php">Laman Utama
-          <span class="visually-hidden">(current)</span>
-        </a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="senaraiahli.php">Ahli Semasa</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="senaraipembiayaan.php">Permohonan Pinjaman</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="hasilreport.php">Hasil Laporan</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="adminviewreport.php">Cek Laporan</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="#">Info KADA</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="#">Media</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="#">Hubungi Kami</a>
-      </li>
-    </ul>
-  </div>
-</div>
-
-<div class="main-content">
+<div class="main-content" style="margin-top: 80px;">
     <h2 style="color: rgb(34, 119, 210);">Cek Laporan</h2>
     <hr style="border: 1px solid #ddd; margin-top: 10px; margin-bottom: 20px;">
-</div>
-
-<div class="search-container" style="display: flex; justify-content: flex-end; margin: 20px 20px 10px;">
-    <div class="input-group" style="width: 300px;">
-        <input type="text" class="form-control" id="searchInput" placeholder="Cari...">
-        <button class="btn btn-outline-primary" type="button">
-            <i class="fas fa-search"></i>
-        </button>
+    
+    <!-- Search bar only -->
+    <div class="d-flex justify-content-end align-items-center mb-3" style="margin: 0 20px;">
+        <div style="width: 300px;">
+            <input type="text" id="searchInput" class="form-control" placeholder="Cari...">
+        </div>
     </div>
 </div>
 
@@ -320,247 +145,175 @@ body.sidebar-open .pagination-container {
             <tr>
                 <th>No.</th>
                 <th>Nama</th>
-                <th>Status</th>
+                <th>ID</th>
                 <th>Tarikh Daftar</th>
                 <th>Penyata Ahli</th>
                 <th>Tarikh Pembiayaan</th>
                 <th>Penyata Kewangan</th>
+                <th>Tindakan</th>
             </tr>
         </thead>
         <tbody>
-            <tr>
-                <td>1</td>
-                <td>Ahmad bin Abdullah</td>
-                <td>Aktif</td>
-                <td>01/03/2024</td>
-                <td>
-                    <div class="btn-group" role="group">
-                        <button class="btn btn-primary btn-sm" onclick="viewMemberStatement(1)">
-                            <i class="fas fa-file-alt"></i> Lihat Penyata
-                        </button>
-                        <button class="btn btn-outline-primary btn-sm" onclick="downloadMemberStatement(1)">
-                            <i class="fas fa-download"></i>
-                        </button>
-                    </div>
-                </td>
-                <td>15/03/2024</td>
-                <td>
-                    <div class="btn-group" role="group">
-                        <button class="btn btn-success btn-sm" onclick="viewFinancialStatement(1)">
-                            <i class="fas fa-file-invoice-dollar"></i> Lihat Penyata
-                        </button>
-                        <button class="btn btn-outline-success btn-sm" onclick="downloadFinancialStatement(1)">
-                            <i class="fas fa-download"></i>
-                        </button>
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td>2</td>
-                <td>Siti Aminah binti Hassan</td>
-                <td>Aktif</td>
-                <td>03/03/2024</td>
-                <td>
-                    <div class="btn-group" role="group">
-                        <button class="btn btn-primary btn-sm" onclick="viewMemberStatement(2)">
-                            <i class="fas fa-file-alt"></i> Lihat Penyata
-                        </button>
-                        <button class="btn btn-outline-primary btn-sm" onclick="downloadMemberStatement(2)">
-                            <i class="fas fa-download"></i>
-                        </button>
-                    </div>
-                </td>
-                <td>18/03/2024</td>
-                <td>
-                    <div class="btn-group" role="group">
-                        <button class="btn btn-success btn-sm" onclick="viewFinancialStatement(2)">
-                            <i class="fas fa-file-invoice-dollar"></i> Lihat Penyata
-                        </button>
-                        <button class="btn btn-outline-success btn-sm" onclick="downloadFinancialStatement(2)">
-                            <i class="fas fa-download"></i>
-                        </button>
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td>3</td>
-                <td>Mohd Razak bin Ibrahim</td>
-                <td>Tidak Aktif</td>
-                <td>05/03/2024</td>
-                <td>
-                    <div class="btn-group" role="group">
-                        <button class="btn btn-primary btn-sm" onclick="viewMemberStatement(3)">
-                            <i class="fas fa-file-alt"></i> Lihat Penyata
-                        </button>
-                        <button class="btn btn-outline-primary btn-sm" onclick="downloadMemberStatement(3)">
-                            <i class="fas fa-download"></i>
-                        </button>
-                    </div>
-                </td>
-                <td>20/03/2024</td>
-                <td>
-                    <div class="btn-group" role="group">
-                        <button class="btn btn-success btn-sm" onclick="viewFinancialStatement(3)">
-                            <i class="fas fa-file-invoice-dollar"></i> Lihat Penyata
-                        </button>
-                        <button class="btn btn-outline-success btn-sm" onclick="downloadFinancialStatement(3)">
-                            <i class="fas fa-download"></i>
-                        </button>
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td>4</td>
-                <td>Nurul Izzah binti Kamal</td>
-                <td>Aktif</td>
-                <td>07/03/2024</td>
-                <td>
-                    <div class="btn-group" role="group">
-                        <button class="btn btn-primary btn-sm" onclick="viewMemberStatement(4)">
-                            <i class="fas fa-file-alt"></i> Lihat Penyata
-                        </button>
-                        <button class="btn btn-outline-primary btn-sm" onclick="downloadMemberStatement(4)">
-                            <i class="fas fa-download"></i>
-                        </button>
-                    </div>
-                </td>
-                <td>22/03/2024</td>
-                <td>
-                    <div class="btn-group" role="group">
-                        <button class="btn btn-success btn-sm" onclick="viewFinancialStatement(4)">
-                            <i class="fas fa-file-invoice-dollar"></i> Lihat Penyata
-                        </button>
-                        <button class="btn btn-outline-success btn-sm" onclick="downloadFinancialStatement(4)">
-                            <i class="fas fa-download"></i>
-                        </button>
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td>5</td>
-                <td>Tan Wei Ming</td>
-                <td>Aktif</td>
-                <td>10/03/2024</td>
-                <td>
-                    <div class="btn-group" role="group">
-                        <button class="btn btn-primary btn-sm" onclick="viewMemberStatement(5)">
-                            <i class="fas fa-file-alt"></i> Lihat Penyata
-                        </button>
-                        <button class="btn btn-outline-primary btn-sm" onclick="downloadMemberStatement(5)">
-                            <i class="fas fa-download"></i>
-                        </button>
-                    </div>
-                </td>
-                <td>25/03/2024</td>
-                <td>
-                    <div class="btn-group" role="group">
-                        <button class="btn btn-success btn-sm" onclick="viewFinancialStatement(5)">
-                            <i class="fas fa-file-invoice-dollar"></i> Lihat Penyata
-                        </button>
-                        <button class="btn btn-outline-success btn-sm" onclick="downloadFinancialStatement(5)">
-                            <i class="fas fa-download"></i>
-                        </button>
-                    </div>
-                </td>
-            </tr>
+            <?php if (!empty($reportData)): ?>
+                <?php foreach ($reportData as $index => $data): ?>
+                    <tr>
+                        <td><?php echo $index + 1; ?></td>
+                        <td><?php echo htmlspecialchars($data['memberName']); ?></td>
+                        <td><?php echo htmlspecialchars($data['employeeID']); ?></td>
+                        <td><?php echo htmlspecialchars($data['tarikh_daftar']); ?></td>
+                        <td class="text-center">
+                            <div class="btn-group" role="group">
+                                <button class="btn btn-primary" onclick="viewMemberStatement(<?php echo $data['employeeID']; ?>)">
+                                    Lihat Penyata
+                                </button>
+                                <button class="btn btn-success" onclick="downloadMemberStatement(<?php echo $data['employeeID']; ?>)">
+                                    <i class="fas fa-download"></i>
+                                </button>
+                            </div>
+                        </td>
+                        <td><?php echo empty($data['tarikh_pembiayaan']) ? '-' : htmlspecialchars($data['tarikh_pembiayaan']); ?></td>
+                        <td class="text-center">
+                            <div class="btn-group" role="group">
+                                <button class="btn btn-primary" onclick="viewFinancialStatement(<?php echo $data['employeeID']; ?>)">
+                                    Lihat Penyata
+                                </button>
+                                <button class="btn btn-success" onclick="downloadFinancialStatement(<?php echo $data['employeeID']; ?>)">
+                                    <i class="fas fa-download"></i>
+                                </button>
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            <button class="btn btn-danger btn-sm" onclick="deleteEntry(<?php echo $index; ?>)">
+                                Padam
+                            </button>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <tr>
+                    <td colspan="8" class="text-center">Tiada data</td>
+                </tr>
+            <?php endif; ?>
         </tbody>
     </table>
 </div>
 
-<div class="pagination-container" style="margin: 20px; display: flex; justify-content: flex-end;">
-    <nav aria-label="Page navigation">
-        <ul class="pagination">
-            <li class="page-item disabled">
-                <a class="page-link" href="#" tabindex="-1">Previous</a>
-            </li>
-            <li class="page-item active"><a class="page-link" href="#">1</a></li>
-            <li class="page-item"><a class="page-link" href="#">2</a></li>
-            <li class="page-item"><a class="page-link" href="#">3</a></li>
-            <li class="page-item">
-                <a class="page-link" href="#">Next</a>
-            </li>
-        </ul>
-    </nav>
-</div>
-
+<!-- Modal for viewing statements -->
 <div class="modal fade" id="statementModal" tabindex="-1" aria-labelledby="statementModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="statementModalLabel">Penyata</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                <img id="statementImage" src="" alt="Penyata" style="width: 100%; height: auto;">
+            <div class="modal-body" style="height: 80vh; padding: 0;">
+                <iframe id="statementFrame" style="width: 100%; height: 100%; border: none;"></iframe>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const sidebar = document.getElementById('sidebar');
-    const menuButton = document.getElementById('menuButton');
-    const closeSidebar = document.getElementById('closeSidebar');
+function viewMemberStatement(employeeID) {
+    const modal = new bootstrap.Modal(document.getElementById('statementModal'));
+    const frame = document.getElementById('statementFrame');
     
-    // Remove initial-state class after a brief delay
-    setTimeout(() => {
-        sidebar.classList.remove('initial-state');
-    }, 100);
-
-    menuButton.addEventListener('click', function() {
-        sidebar.classList.remove('closed');
-        document.body.classList.add('sidebar-open');
-    });
-
-    closeSidebar.addEventListener('click', function() {
-        sidebar.classList.add('closed');
-        document.body.classList.remove('sidebar-open');
-    });
-});
-
-function viewMemberStatement(id) {
-    // Set the image source based on the member ID
-    const imagePath = `statements/member_${id}.jpg`; // Adjust path as needed
-    document.getElementById('statementImage').src = imagePath;
+    // Set the source first
+    frame.src = `view_report_member.php?id=${employeeID}`;
     document.getElementById('statementModalLabel').textContent = 'Penyata Ahli';
     
-    // Show the modal
-    new bootstrap.Modal(document.getElementById('statementModal')).show();
+    // Show modal after setting source
+    modal.show();
+    
+    // Add error handling for iframe
+    frame.onerror = function() {
+        console.error('Failed to load member statement');
+        alert('Gagal memuat penyata. Sila cuba lagi.');
+    };
 }
 
-function downloadMemberStatement(id) {
-    // Add your logic to download member statement
-    alert('Downloading member statement for ID: ' + id);
-}
-
-function viewFinancialStatement(id) {
-    // Set the image source based on the member ID
-    const imagePath = `statements/financial_${id}.jpg`; // Adjust path as needed
-    document.getElementById('statementImage').src = imagePath;
+function viewFinancialStatement(employeeID) {
+    const modal = new bootstrap.Modal(document.getElementById('statementModal'));
+    const frame = document.getElementById('statementFrame');
+    
+    // Set the source first
+    frame.src = `view_report_loan.php?id=${employeeID}`;
     document.getElementById('statementModalLabel').textContent = 'Penyata Kewangan';
     
-    // Show the modal
-    new bootstrap.Modal(document.getElementById('statementModal')).show();
+    // Show modal after setting source
+    modal.show();
+    
+    // Add error handling for iframe
+    frame.onerror = function() {
+        console.error('Failed to load financial statement');
+        alert('Gagal memuat penyata. Sila cuba lagi.');
+    };
 }
 
-function downloadFinancialStatement(id) {
-    // Add your logic to download financial statement
-    alert('Downloading financial statement for ID: ' + id);
+function deleteEntry(index) {
+    if (confirm('Adakah anda pasti mahu memadamkan entri ini?')) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'delete_index';
+        input.value = index;
+        
+        form.appendChild(input);
+        document.body.appendChild(form);
+        form.submit();
+    }
 }
 
+function downloadMemberStatement(employeeID) {
+    window.location.href = `download_report_ahli.php?employeeID=${employeeID}`;
+}
+
+function downloadFinancialStatement(employeeID) {
+    window.location.href = `download_report_loan.php?employeeID=${employeeID}`;
+}
+
+// Add search functionality
 document.getElementById('searchInput').addEventListener('keyup', function() {
-    let searchText = this.value.toLowerCase();
-    let table = document.getElementById('dataTable');
-    let rows = table.getElementsByTagName('tr');
+    const searchValue = this.value.toLowerCase();
+    const table = document.getElementById('dataTable');
+    const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
 
-    for (let i = 1; i < rows.length; i++) {
-        let row = rows[i];
-        let text = row.textContent.toLowerCase();
-        row.style.display = text.includes(searchText) ? '' : 'none';
+    for (let row of rows) {
+        let text = '';
+        const cells = row.getElementsByTagName('td');
+        
+        // Skip the search if it's the "no data" row
+        if (cells.length === 1 && cells[0].getAttribute('colspan')) {
+            continue;
+        }
+
+        // Concatenate the text content of each cell (excluding button cells)
+        for (let i = 0; i < cells.length; i++) {
+            // Skip the button columns (index 4, 6, and 7)
+            if (i !== 4 && i !== 6 && i !== 7) {
+                text += cells[i].textContent.toLowerCase() + ' ';
+            }
+        }
+
+        // Show/hide row based on search match
+        if (text.includes(searchValue)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
     }
 });
+
+function viewLoanReport(employeeID) {
+    var iframe = document.getElementById('loanReportFrame');
+    // Add a console log to check the URL being generated
+    console.log('view_report_loan.php?id=' + employeeID);
+    iframe.src = 'view_report_loan.php?id=' + employeeID;
+    $('#loanReportModal').modal('show');
+}
 </script>
 
-<?php include 'footer.php';?>
+<?php include 'footer.php'; ?>
 

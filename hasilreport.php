@@ -311,16 +311,19 @@
 </div>
 
 <div class="content-container">
-    <!-- Add form wrapper -->
+    <!-- Update form to submit to adminviewreport.php -->
     <form id="reportForm" method="POST" action="adminviewreport.php">
-        <h2>Hasil Report</h2>
+        <!-- Add hidden input for selected members -->
+        <input type="hidden" name="selected_members" id="selectedMembersInput">
+        
+        <h2>Hasil Laporan</h2>
         <hr style="margin-top: 10px; margin-bottom: 20px;">
         
         <div class="report-boxes">
             <div class="report-box">
                 <h4>1. Pilih Jenis Laporan</h4>
                 <div class="form-check mt-3">
-                    <input class="form-check-input required-field" type="radio" name="reportType" id="ahli" value="ahli">
+                    <input class="form-check-input required-field" type="radio" name="reportType" id="ahli" value="ahli" checked>
                     <label class="form-check-label" for="ahli">
                         Ahli
                     </label>
@@ -343,10 +346,10 @@
                             <label class="me-2">Dalam:</label>
                             <div class="dropdown">
                                 <button class="btn btn-secondary dropdown-toggle" type="button" id="dateRangeDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                                    Select Range
+                                    Past 7 days
                                 </button>
                                 <ul class="dropdown-menu" aria-labelledby="dateRangeDropdown">
-                                    <li><a class="dropdown-item" href="#">Past 7 days</a></li>
+                                    <li><a class="dropdown-item active" href="#">Past 7 days</a></li>
                                     <li><a class="dropdown-item" href="#">Past 30 days</a></li>
                                 </ul>
                             </div>
@@ -375,9 +378,7 @@
                 <h4>3. Pilih Ahli</h4>
                 <div class="d-flex justify-content-between align-items-center mt-3 mb-2">
                     <div class="alert alert-info mb-0" id="selectedCount">
-
-                    Jumlah ahli dipilih: <span>0</span>
-
+                        Jumlah ahli dipilih: <span>0</span>
                     </div>
                     <div class="search-container">
                         <div class="input-group" style="width: 250px;">
@@ -386,7 +387,6 @@
                                 <i class="fas fa-search"></i>
                             </button>
                         </div>
-
                     </div>
                 </div>
                 <div class="table-responsive mt-3">
@@ -397,70 +397,21 @@
                                     <input type="checkbox" class="form-check-input" id="selectAll">
                                 </th>
                                 <th scope="col">No.</th>
+                                <th scope="col">ID </th>
                                 <th scope="col">Nama</th>
-                                <th scope="col">Status</th>
                                 <th scope="col">Tarikh Daftar</th>
+                                <th scope="col">Tindakan</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <tr>
-                                <td class="text-center">
-                                    <input type="checkbox" class="form-check-input member-checkbox" name="selected_members[]" value="1">
-                                </td>
-                                <td>1</td>
-                                <td>Ahmad bin Abdullah</td>
-                                <td>Aktif</td>
-                                <td>01/03/2024</td>
-                            </tr>
-                            <tr>
-                                <td class="text-center">
-                                    <input type="checkbox" class="form-check-input member-checkbox" name="selected_members[]" value="2">
-                                </td>
-                                <td>2</td>
-                                <td>Siti binti Rahman</td>
-                                <td>Aktif</td>
-                                <td>05/03/2024</td>
-                            </tr>
-                            <tr>
-                                <td class="text-center">
-                                    <input type="checkbox" class="form-check-input member-checkbox" name="selected_members[]" value="3">
-                                </td>
-                                <td>3</td>
-                                <td>Mohamed bin Ismail</td>
-                                <td>Aktif</td>
-                                <td>08/03/2024</td>
-                            </tr>
-                            <tr>
-                                <td class="text-center">
-                                    <input type="checkbox" class="form-check-input member-checkbox" name="selected_members[]" value="4">
-                                </td>
-                                <td>4</td>
-                                <td>Nurul binti Hassan</td>
-                                <td>Aktif</td>
-                                <td>10/03/2024</td>
-                            </tr>
-                            <tr>
-                                <td class="text-center">
-                                    <input type="checkbox" class="form-check-input member-checkbox" name="selected_members[]" value="5">
-                                </td>
-                                <td>5</td>
-                                <td>Kamal bin Zain</td>
-                                <td>Aktif</td>
-                                <td>12/03/2024</td>
+                        <tbody id="memberTableBody">
+                            <tr id="noSelectionMessage">
+                                <td colspan="6" class="text-center">Sila pilih jenis laporan terlebih dahulu</td>
                             </tr>
                         </tbody>
                     </table>
                     <nav aria-label="Page navigation" class="mt-3">
-                        <ul class="pagination justify-content-end">
-                            <li class="page-item disabled">
-                                <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Previous</a>
-                            </li>
-                            <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                            <li class="page-item"><a class="page-link" href="#">2</a></li>
-                            <li class="page-item"><a class="page-link" href="#">3</a></li>
-                            <li class="page-item">
-                                <a class="page-link" href="#">Next</a>
-                            </li>
+                        <ul class="pagination justify-content-end" id="pagination">
+                            <!-- Pagination will be populated by JavaScript -->
                         </ul>
                     </nav>
                 </div>
@@ -469,24 +420,18 @@
                 </div>
             </div>
             <div class="report-box">
-                <h4>4. Hasil Report</h4>
+                <h4>4. Hasil Laporan</h4>
                 <div class="form-check mt-3">
                     <input class="form-check-input required-field" type="radio" name="reportFormat" id="pdf" value="pdf">
                     <label class="form-check-label" for="pdf">
                         PDF
                     </label>
                 </div>
-                <div class="form-check mb-3">
-                    <input class="form-check-input" type="radio" name="reportFormat" id="excel" value="excel">
-                    <label class="form-check-label" for="excel">
-                        Excel
-                    </label>
-                </div>
                 <div class="invalid-feedback">
                     Sila pilih format laporan
                 </div>
 
-                <button type="button" class="btn btn-primary" onclick="validateAndSubmit()">Hasil Report</button>
+                <button type="button" class="btn btn-primary mt-4" onclick="validateAndSubmit()">Hasil Laporan</button>
             </div>
         </div>
     </form>
@@ -519,13 +464,7 @@
         <a class="nav-link" href="adminviewreport.php">Cek Laporan</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" href="#">Info KADA</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="#">Media</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="#">Hubungi Kami</a>
+        <a class="nav-link" href="login.php">Log Keluar</a>
       </li>
     </ul>
   </div>
@@ -544,88 +483,266 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tidak</button>
-                <button type="button" class="btn btn-primary" onclick="downloadReport()">Ya</button>
+                <button type="button" class="btn btn-primary">Ya</button>
             </div>
         </div>
     </div>
-
 </div>
 
 <script>
-const memberData = {
-    1: [
-        { id: 1, name: 'Ahmad bin Abdullah', status: 'Aktif', date: '01/03/2024' },
-        { id: 2, name: 'Siti binti Rahman', status: 'Aktif', date: '05/03/2024' },
-        { id: 3, name: 'Mohamed bin Ismail', status: 'Aktif', date: '08/03/2024' },
-        { id: 4, name: 'Nurul binti Hassan', status: 'Aktif', date: '10/03/2024' },
-        { id: 5, name: 'Kamal bin Zain', status: 'Aktif', date: '12/03/2024' }
-    ],
-    2: [
-        { id: 6, name: 'Sarah binti Ali', status: 'Aktif', date: '15/03/2024' },
-        { id: 7, name: 'Razak bin Omar', status: 'Aktif', date: '18/03/2024' },
-        { id: 8, name: 'Farah binti Karim', status: 'Aktif', date: '20/03/2024' },
-        { id: 9, name: 'Hassan bin Ahmad', status: 'Aktif', date: '22/03/2024' },
-        { id: 10, name: 'Aminah binti Yusof', status: 'Aktif', date: '25/03/2024' }
-    ],
-    3: [
-        { id: 11, name: 'Zainab binti Mahmud', status: 'Aktif', date: '27/03/2024' },
-        { id: 12, name: 'Ismail bin Hashim', status: 'Aktif', date: '29/03/2024' },
-        { id: 13, name: 'Fatimah binti Abdul', status: 'Aktif', date: '01/04/2024' },
-        { id: 14, name: 'Aziz bin Rahman', status: 'Aktif', date: '03/04/2024' },
-        { id: 15, name: 'Noraini binti Said', status: 'Aktif', date: '05/04/2024' }
-    ]
-};
+function fetchMembers(page = 1, search = '') {
+    const type = document.querySelector('input[name="reportType"]:checked')?.value;
+    const fromDate = document.getElementById('fromDate').value;
+    const toDate = document.getElementById('toDate').value;
 
-function updateTable(pageNumber) {
-    const tbody = document.querySelector('table tbody');
-    const members = memberData[pageNumber];
-    
-    // Clear existing rows
-    tbody.innerHTML = '';
-    
-    // Add new rows
-    members.forEach(member => {
-        tbody.innerHTML += `
-            <tr>
-                <td class="text-center">
-                    <input type="checkbox" class="form-check-input member-checkbox" name="selected_members[]" value="${member.id}">
-                </td>
-                <td>${member.id}</td>
-                <td>${member.name}</td>
-                <td>${member.status}</td>
-                <td>${member.date}</td>
-            </tr>
+    if (!type) {
+        document.getElementById('loadingScreen').style.display = 'none';
+        return;
+    }
+
+    document.getElementById('loadingScreen').style.display = 'flex';
+
+    fetch(`get_report_data.php?page=${page}&search=${search}&type=${type}&fromDate=${fromDate}&toDate=${toDate}&limit=5`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            const tbody = document.getElementById('memberTableBody');
+            tbody.innerHTML = '';
+
+            if (data.members.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center">Tiada rekod ditemui</td>
+                    </tr>
+                `;
+            } else {
+                data.members.forEach((member, index) => {
+                    const row = document.createElement('tr');
+                    const rowNum = ((page - 1) * 5) + index + 1;
+                    
+                    if (type === 'pembiayaan') {
+                        row.innerHTML = `
+                            <td class="text-center">
+                                <input type="checkbox" class="form-check-input member-checkbox" 
+                                       name="selected_loans[]" value="${member.loanApplicationID}">
+                            </td>
+                            <td>${rowNum}</td>
+                            <td>${member.employeeID}</td>
+                            <td>${member.memberName}</td>
+                            <td>${new Date(member.created_at).toLocaleDateString('en-GB')}</td>
+                            <td>
+                                <a href="penyatapermohonanpinjaman.php?id=${member.loanApplicationID}" 
+                                   class="btn btn-primary btn-sm">
+                                    Lihat
+                                </a>
+                            </td>
+                        `;
+                    } else {
+                        row.innerHTML = `
+                            <td class="text-center">
+                                <input type="checkbox" class="form-check-input member-checkbox" 
+                                       name="selected_members[]" value="${member.employeeID}">
+                            </td>
+                            <td>${rowNum}</td>
+                            <td>${member.employeeID}</td>
+                            <td>${member.memberName}</td>
+                            <td>${new Date(member.created_at).toLocaleDateString('en-GB')}</td>
+                            <td>
+                                <a href="penyatapermohonananggota.php?id=${member.employeeID}" 
+                                   class="btn btn-primary btn-sm">
+                                    Lihat
+                                </a>
+                            </td>
+                        `;
+                    }
+                    tbody.appendChild(row);
+                });
+            }
+
+            updatePagination(Math.ceil(data.totalRecords / 5), page);
+            
+            const selectAll = document.getElementById('selectAll');
+            if (selectAll) {
+                selectAll.checked = false;
+            }
+            updateSelectedCount();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            const tbody = document.getElementById('memberTableBody');
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="text-center">Error loading data: ${error.message}</td>
+                </tr>
+            `;
+        })
+        .finally(() => {
+            document.getElementById('loadingScreen').style.display = 'none';
+        });
+}
+
+function updatePagination(totalPages, currentPage) {
+    const pagination = document.getElementById('pagination');
+    pagination.innerHTML = '';
+
+    // Previous button
+    pagination.innerHTML += `
+        <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+            <a class="page-link" href="#" data-page="${currentPage - 1}">Previous</a>
+        </li>
+    `;
+
+    // Page numbers
+    for (let i = 1; i <= totalPages; i++) {
+        pagination.innerHTML += `
+            <li class="page-item ${currentPage === i ? 'active' : ''}">
+                <a class="page-link" href="#" data-page="${i}">${i}</a>
+            </li>
         `;
-    });
+    }
 
-    // Update active page in pagination
-    document.querySelectorAll('.pagination .page-item').forEach(item => {
-        item.classList.remove('active');
-    });
-    document.querySelector(`.pagination .page-item:nth-child(${pageNumber + 1})`).classList.add('active');
+    // Next button
+    pagination.innerHTML += `
+        <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+            <a class="page-link" href="#" data-page="${currentPage + 1}">Next</a>
+        </li>
+    `;
 
-    // Update Previous/Next buttons
-    const prevButton = document.querySelector('.pagination .page-item:first-child');
-    const nextButton = document.querySelector('.pagination .page-item:last-child');
+    // Add click listeners to pagination
+    document.querySelectorAll('.page-link').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const page = parseInt(e.target.dataset.page);
+            if (!isNaN(page)) {
+                fetchMembers(page, document.getElementById('searchInput').value);
+            }
+        });
+    });
+}
+
+// Add this function to format dates in DD/MM/YYYY format
+function formatDate(date) {
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${year}-${month}-${day}`; // Format for input[type="date"]
+}
+
+// Add this function to automatically update dates
+function updateDateRange() {
+    const today = new Date();
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(today.getDate() - 6);
     
-    prevButton.classList.toggle('disabled', pageNumber === 1);
-    nextButton.classList.toggle('disabled', pageNumber === 3);
+    const fromDate = document.getElementById('fromDate');
+    const toDate = document.getElementById('toDate');
+    
+    fromDate.value = formatDate(sevenDaysAgo);
+    toDate.value = formatDate(today);
+}
 
-    // Reset select all checkbox
-    document.getElementById('selectAll').checked = false;
+// Add event listeners when document is ready
+document.addEventListener('DOMContentLoaded', function() {
+    // Initial update of dates
+    updateDateRange();
 
-    // After updating the table content, add event listeners to new checkboxes
-    document.querySelectorAll('.member-checkbox').forEach(checkbox => {
+    // Update dates every day at midnight
+    setInterval(() => {
+        const now = new Date();
+        if (now.getHours() === 0 && now.getMinutes() === 0) {
+            updateDateRange();
+        }
+    }, 60000); // Check every minute
+
+    // Trigger initial data fetch with default values
+    fetchMembers(1, document.getElementById('searchInput').value);
+
+    // Report type selection listener
+    document.querySelectorAll('input[name="reportType"]').forEach(radio => {
+        radio.addEventListener('change', () => {
+            fetchMembers(1, document.getElementById('searchInput').value);
+        });
+    });
+
+    // Search input listener
+    const searchInput = document.getElementById('searchInput');
+    const searchButton = document.getElementById('searchButton');
+    
+    searchButton.addEventListener('click', () => {
+        fetchMembers(1, searchInput.value);
+    });
+
+    searchInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            fetchMembers(1, searchInput.value);
+        }
+    });
+
+    // Date range dropdown handler
+    const dateRangeDropdown = document.getElementById('dateRangeDropdown');
+    const fromDate = document.getElementById('fromDate');
+    const toDate = document.getElementById('toDate');
+
+    document.querySelectorAll('.dropdown-item').forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            const range = this.textContent;
+            dateRangeDropdown.textContent = range;
+
+            const today = new Date();
+            let startDate = new Date();
+
+            switch(range) {
+                case 'Past 7 days':
+                    startDate.setDate(today.getDate() - 6);
+                    break;
+                case 'Past 30 days':
+                    startDate.setDate(today.getDate() - 29);
+                    break;
+            }
+
+            fromDate.value = startDate.toISOString().split('T')[0];
+            toDate.value = today.toISOString().split('T')[0];
+
+            // Fetch updated data with date range
+            fetchMembers(1, document.getElementById('searchInput').value);
+        });
+    });
+
+    // Date input handlers
+    fromDate.addEventListener('change', () => updateTableWithDateRange());
+    toDate.addEventListener('change', () => updateTableWithDateRange());
+});
+
+function updateTableWithDateRange() {
+    fetchMembers(1, document.getElementById('searchInput').value);
+}
+
+function attachCheckboxListeners() {
+    // Select all checkbox
+    const selectAll = document.getElementById('selectAll');
+    const memberCheckboxes = document.getElementsByClassName('member-checkbox');
+    
+    selectAll.addEventListener('change', function() {
+        Array.from(memberCheckboxes).forEach(checkbox => {
+            checkbox.checked = this.checked;
+        });
+        updateSelectedCount();
+    });
+
+    // Individual checkboxes
+    Array.from(memberCheckboxes).forEach(checkbox => {
         checkbox.addEventListener('change', updateSelectedCount);
     });
-
-    // Reset counter when changing pages
-    updateSelectedCount();
 }
 
 function updateSelectedCount() {
-    const checkedBoxes = document.querySelectorAll('.member-checkbox:checked').length;
-    document.querySelector('#selectedCount span').textContent = checkedBoxes;
+    const checkedCount = document.querySelectorAll('.member-checkbox:checked').length;
+    document.querySelector('#selectedCount span').textContent = checkedCount;
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -652,22 +769,26 @@ document.addEventListener('DOMContentLoaded', function() {
         link.addEventListener('click', function(e) {
             e.preventDefault();
             const text = this.textContent;
+            const selectedType = document.querySelector('input[name="reportType"]:checked')?.value || 'ahli';
             
             if (text === 'Previous') {
                 const activePage = parseInt(document.querySelector('.pagination .active').textContent);
                 if (activePage > 1) {
-                    updateTable(activePage - 1);
+                    updateTable(activePage - 1, selectedType);
                 }
             } else if (text === 'Next') {
                 const activePage = parseInt(document.querySelector('.pagination .active').textContent);
                 if (activePage < 3) {
-                    updateTable(activePage + 1);
+                    updateTable(activePage + 1, selectedType);
                 }
             } else {
-                updateTable(parseInt(text));
+                updateTable(parseInt(text), selectedType);
             }
         });
     });
+
+    // Initialize table with empty state
+    updateTable(1, null);
 });
 
 document.getElementById('selectAll').addEventListener('change', function() {
@@ -697,52 +818,37 @@ function showLoadingScreen() {
     }, 2000);
 }
 
-function downloadReport() {
-    // Redirect to adminviewreport.php
-    window.location.href = 'adminviewreport.php';
-
-}
-
-// Add these new functions
 function validateAndSubmit() {
-    const form = document.getElementById('reportForm');
-    let isValid = true;
-
-    // Check report type
-    const reportType = document.querySelector('input[name="reportType"]:checked');
-    if (!reportType) {
-        isValid = false;
-        document.querySelector('.report-box:nth-child(1) .invalid-feedback').style.display = 'block';
-    }
-
-    // Check dates
-    const fromDate = document.getElementById('fromDate').value;
-    const toDate = document.getElementById('toDate').value;
-    if (!fromDate || !toDate) {
-        isValid = false;
-        document.querySelector('.report-box:nth-child(2) .invalid-feedback').style.display = 'block';
-    }
-
-    // Check member selection
-    const selectedMembers = document.querySelectorAll('.member-checkbox:checked');
-    if (selectedMembers.length === 0) {
-        isValid = false;
-        document.querySelector('.report-box:nth-child(3) .invalid-feedback').style.display = 'block';
-    }
-
-    // Check report format
+    // Get all checked checkboxes
+    const selectedCheckboxes = document.querySelectorAll('.member-checkbox:checked');
     const reportFormat = document.querySelector('input[name="reportFormat"]:checked');
+    
+    // Validate selections
+    if (selectedCheckboxes.length === 0) {
+        alert('Sila pilih sekurang-kurangnya seorang ahli');
+        return;
+    }
+    
     if (!reportFormat) {
-        isValid = false;
-        document.querySelector('.report-box:nth-child(4) .invalid-feedback').style.display = 'block';
+        alert('Sila pilih format laporan');
+        return;
     }
-
-    if (isValid) {
-        showLoadingScreen();
-        form.submit();
-    } else {
-        alert('Sila lengkapkan semua maklumat yang diperlukan.');
-    }
+    
+    // Create a hidden input for each selected member
+    const selectedMembers = Array.from(selectedCheckboxes).map(checkbox => checkbox.value);
+    selectedMembers.forEach((memberId, index) => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'selected_members[]';
+        input.value = memberId;
+        document.getElementById('reportForm').appendChild(input);
+    });
+    
+    // Show loading screen
+    document.getElementById('loadingScreen').style.display = 'flex';
+    
+    // Submit the form
+    document.getElementById('reportForm').submit();
 }
 
 // Add event listeners to hide validation messages when user makes selections
@@ -757,6 +863,94 @@ document.querySelectorAll('#fromDate, #toDate').forEach(input => {
         document.querySelector('.report-box:nth-child(2) .invalid-feedback').style.display = 'none';
     });
 });
+
+// Add event listeners for report type radio buttons
+document.querySelectorAll('input[name="reportType"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        const selectedType = this.value; // 'ahli' or 'pembiayaan'
+        updateTable(1, selectedType); // Reset to first page when switching types
+    });
+});
+
+// Update the search functionality
+document.addEventListener('DOMContentLoaded', function() {
+    // ... existing code ...
+
+    // Add event listeners for search
+    const searchInput = document.getElementById('searchInput');
+    const searchButton = document.getElementById('searchButton');
+    
+    // Prevent form submission on Enter key in search input
+    searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault(); // Prevent form submission
+            fetchMembers(1, searchInput.value);
+        }
+    });
+
+    // Search on button click
+    searchButton.addEventListener('click', (e) => {
+        e.preventDefault(); // Prevent any default button behavior
+        fetchMembers(1, searchInput.value);
+    });
+});
+
+// Update the report type change handler
+function handleReportTypeChange() {
+    const reportType = document.querySelector('input[name="reportType"]:checked').value;
+    
+    // Update table headers based on report type
+    const thead = document.querySelector('#memberTable thead tr');
+    if (reportType === 'pembiayaan') {
+        thead.innerHTML = `
+            <th class="text-center"><input type="checkbox" id="selectAll"></th>
+            <th>No.</th>
+            <th>ID</th>
+            <th>Nama</th>
+            <th>Jumlah Dipinjam</th>
+        `;
+    } else {
+        thead.innerHTML = `
+            <th class="text-center"><input type="checkbox" id="selectAll"></th>
+            <th>No.</th>
+            <th>ID</th>
+            <th>Nama</th>
+            <th>Tarikh Daftar</th>
+        `;
+    }
+
+    // Fetch new data based on selected type
+    fetchMembers(1, document.getElementById('searchInput').value);
+
+    // Reattach select all functionality
+    const selectAll = document.getElementById('selectAll');
+    if (selectAll) {
+        selectAll.addEventListener('change', handleSelectAll);
+    }
+}
+
+// Add event listener to radio buttons
+document.querySelectorAll('input[name="reportType"]').forEach(radio => {
+    radio.addEventListener('change', handleReportTypeChange);
+});
+
+// Add this new function for handling the view action
+function viewMember(employeeID) {
+    // Get the selected report type
+    const reportType = document.querySelector('input[name="reportType"]:checked').value;
+    
+    // Determine which page to redirect to based on report type
+    if (reportType === 'pembiayaan') {
+        // For loan applications, redirect to loan application form
+        window.location.href = `senaraiPermohonanPinjaman.php?id=${employeeID}`;
+    } else {
+        // For members, redirect to member details form
+        window.location.href = `senaraiahli.php?id=${employeeID}`;
+    }
+}
+
+// Update the modal button to use validateAndSubmit instead
+document.querySelector('#confirmationModal .btn-primary').onclick = validateAndSubmit;
 </script>
 
 <?php include 'footer.php';?>

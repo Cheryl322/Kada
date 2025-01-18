@@ -1,8 +1,6 @@
 <?php
 session_start();
 
-include "headeradmin.php";
-
 // Debug lines
 error_log("Admin page access - Session data: " . print_r($_SESSION, true));
 
@@ -204,17 +202,17 @@ if (!isset($_SESSION['employeeID']) || $_SESSION['role'] !== 'admin') {
 /* Ensure consistent column widths across both tables */
 .custom-table th:nth-child(1),
 .custom-table td:nth-child(1) {
-    width: 20%;
+    width: 10%;
 }
 
 .custom-table th:nth-child(2),
 .custom-table td:nth-child(2) {
-    width: 35%;
+    width: 20%;
 }
 
 .custom-table th:nth-child(3),
 .custom-table td:nth-child(3) {
-    width: 20%;
+    width: 45%;
 }
 
 .custom-table th:nth-child(4),
@@ -430,17 +428,53 @@ if (!isset($_SESSION['employeeID']) || $_SESSION['role'] !== 'admin') {
   }
   }
 
-/* 调整导航栏样式 */
-.navbar {
-    position: relative;
-    z-index: 0;
+/* First table (Senarai Ahli) column widths */
+.table-wrapper:first-child .custom-table th:nth-child(1),
+.table-wrapper:first-child .custom-table td:nth-child(1) {
+    width: 10%;
+}
+
+.table-wrapper:first-child .custom-table th:nth-child(2),
+.table-wrapper:first-child .custom-table td:nth-child(2) {
+    width: 15%;
+}
+
+.table-wrapper:first-child .custom-table th:nth-child(3),
+.table-wrapper:first-child .custom-table td:nth-child(3) {
+    width: 50%;
+}
+
+.table-wrapper:first-child .custom-table th:nth-child(4),
+.table-wrapper:first-child .custom-table td:nth-child(4) {
+    width: 25%;
+}
+
+/* Second table (Senarai Pinjaman) column widths */
+.table-wrapper:last-child .custom-table th:nth-child(1),
+.table-wrapper:last-child .custom-table td:nth-child(1) {
+    width: 10%;
+}
+
+.table-wrapper:last-child .custom-table th:nth-child(2),
+.table-wrapper:last-child .custom-table td:nth-child(2) {
+    width: 15%;
+}
+
+.table-wrapper:last-child .custom-table th:nth-child(3),
+.table-wrapper:last-child .custom-table td:nth-child(3) {
+    width: 50%;
+}
+
+.table-wrapper:last-child .custom-table th:nth-child(4),
+.table-wrapper:last-child .custom-table td:nth-child(4) {
+    width: 25%;
 }
 </style>
 </head>
 
 <body>
     <?php
-    // Include header and footer
+    // Include only once
     include "headeradmin.php";
     ?>
 
@@ -489,30 +523,34 @@ if (!isset($_SESSION['employeeID']) || $_SESSION['role'] !== 'admin') {
                 <thead>
                     <tr>
                         <th>No.</th>
+                        <th>ID</th>
                         <th>Nama</th>
-                        <th>Status</th>
                         <th>Tarikh Daftar</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td>A001</td>
-                        <td>Ahmad bin Abdullah</td>
-                        <td>Lulus</td>
-                        <td>01/03/2024</td>
-                    </tr>
-                    <tr>
-                        <td>A002</td>
-                        <td>Siti Aminah</td>
-                        <td>Lulus</td>
-                        <td>02/03/2024</td>
-                    </tr>
-                    <tr>
-                        <td>A003</td>
-                        <td>Raj Kumar</td>
-                        <td>Lulus</td>
-                        <td>03/03/2024</td>
-                    </tr>
+                    <?php
+                    include 'dbconnect.php';
+                    
+                    $sql = "SELECT employeeID,memberName, created_at FROM tb_member ORDER BY created_at DESC LIMIT 3";
+                    $result = $conn->query($sql);
+                    
+                    if ($result->num_rows > 0) {
+                        $count = 1;
+                        while($row = $result->fetch_assoc()) {
+                            echo "<tr>";
+                            echo "<td>" . $count . "</td>";
+                            echo "<td>" . $row['employeeID'] . "</td>";
+                            echo "<td>" . $row['memberName'] . "</td>";
+                            echo "<td>" . date('d/m/Y', strtotime($row['created_at'])) . "</td>";
+                            echo "</tr>";
+                            $count++;
+                        }
+                    } else {
+                        echo "<tr><td colspan='3'>Tiada rekod ditemui</td></tr>";
+                    }
+                    $conn->close();
+                    ?>
                 </tbody>
             </table>
         </div>
@@ -528,30 +566,36 @@ if (!isset($_SESSION['employeeID']) || $_SESSION['role'] !== 'admin') {
                 <thead>
                     <tr>
                         <th>No.</th>
+                        <th>ID</th>
                         <th>Nama</th>
-                        <th>Status</th>
-                        <th>Tarikh Pinjaman</th>
+                        <th>Tarikh Daftar</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td>P001</td>
-                        <td>Muhammad Ali</td>
-                        <td>Dalam Proses</td>
-                        <td>01/03/2024</td>
-                    </tr>
-                    <tr>
-                        <td>P002</td>
-                        <td>Lee Wei Ming</td>
-                        <td>Lulus</td>
-                        <td>02/03/2024</td>
-                    </tr>
-                    <tr>
-                        <td>P003</td>
-                        <td>Sarah Abdullah</td>
-                        <td>Dalam Proses</td>
-                        <td>03/03/2024</td>
-                    </tr>
+                    <?php
+                    include 'dbconnect.php';
+                    
+                    $sql = "SELECT l.loanApplicationID, m.memberName, l.created_at 
+                           FROM tb_loan l
+                           JOIN tb_member m ON l.employeeID = m.employeeID
+                           ORDER BY l.loanApplicationID DESC LIMIT 3";
+                    $result = $conn->query($sql);
+                    
+                    if ($result->num_rows > 0) {
+                        $count = 1;
+                        while($row = $result->fetch_assoc()) {
+                            echo "<tr>";
+                            echo "<td>" . $count . "</td>";
+                            echo "<td>" . $row['loanApplicationID'] . "</td>";
+                            echo "<td>" . $row['memberName'] . "</td>";
+                            echo "<td>" . date('d/m/Y', strtotime($row['created_at'])) . "</td>";
+                            echo "</tr>";
+                            $count++;
+                        }
+                    } else {
+                        echo "<tr><td colspan='4'>Tiada rekod ditemui</td></tr>";
+                    }
+                    ?>
                 </tbody>
             </table>
         </div>
