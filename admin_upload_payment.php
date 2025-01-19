@@ -117,6 +117,10 @@ function formatNumber($number) {
             background: white;
             border-radius: 10px;
             box-shadow: 0 0 15px rgba(0,0,0,0.1);
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
         }
     </style>
 </head>
