@@ -287,6 +287,21 @@ if (isset($_SESSION['error'])) {
     right: 0;
     padding: 1.25rem;
 }
+
+.invalid-feedback {
+    display: block;
+    color: #dc3545;
+    font-size: 0.875em;
+    margin-top: 0.25rem;
+}
+
+.is-invalid {
+    border-color: #dc3545 !important;
+}
+
+.is-valid {
+    border-color: #198754 !important;
+}
 </style>
 
 <div class="container mt-4">
@@ -509,39 +524,120 @@ if (isset($_SESSION['error'])) {
 </div>
 
 <script>
-// Form validation
 document.addEventListener('DOMContentLoaded', function() {
+    // Form validation
     const form = document.querySelector('form');
     
-    // Validate IC number
+    // Validate IC number (12 digits)
     const icInput = document.querySelector('input[name="ic"]');
     icInput.addEventListener('input', function() {
         this.value = this.value.replace(/[^0-9]/g, '').slice(0, 12);
+        validateInput(this, /^\d{12}$/, 'Sila masukkan 12 digit nombor kad pengenalan');
     });
 
-    // Validate postcodes
-    const postcodeInputs = document.querySelectorAll('input[pattern="[0-9]{5}"]');
+    // Validate postcodes (5 digits)
+    const postcodeInputs = document.querySelectorAll('input[name="homePostcode"], input[name="officePostcode"]');
     postcodeInputs.forEach(input => {
         input.addEventListener('input', function() {
             this.value = this.value.replace(/[^0-9]/g, '').slice(0, 5);
+            validateInput(this, /^\d{5}$/, 'Sila masukkan 5 digit poskod');
         });
     });
 
     // Validate phone numbers
-    const phoneInputs = document.querySelectorAll('input[pattern="[0-9]{9,11}"]');
+    const phoneInputs = document.querySelectorAll('input[name="phoneNumber"], input[name="phoneHome"]');
     phoneInputs.forEach(input => {
         input.addEventListener('input', function() {
-            this.value = this.value.replace(/[^0-9]/g, '');
+            this.value = this.value.replace(/[^0-9]/g, '').slice(0, 11);
+            validateInput(this, /^\d{10,11}$/, 'Sila masukkan nombor telefon yang sah');
         });
     });
 
-    // Form submission validation
-    form.addEventListener('submit', function(e) {
-        if (!form.checkValidity()) {
-            e.preventDefault();
-            e.stopPropagation();
+    // Validate salary (numbers and decimal point only)
+    const salaryInput = document.querySelector('input[name="monthlySalary"]');
+    salaryInput.addEventListener('input', function() {
+        this.value = this.value.replace(/[^0-9.]/g, '');
+        validateInput(this, /^\d+(\.\d{0,2})?$/, 'Sila masukkan nilai gaji yang sah');
+    });
+
+    // Validate name (letters, spaces, and special characters)
+    const nameInput = document.querySelector('input[name="nama_penuh"]');
+    nameInput.addEventListener('input', function() {
+        validateInput(this, /^[A-Za-z\s@\-\/'\.]+$/, 'Sila masukkan nama yang sah');
+    });
+
+    // Validate email
+    const emailInput = document.querySelector('input[name="alamat_emel"]');
+    emailInput.addEventListener('input', function() {
+        validateInput(this, /^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Sila masukkan alamat emel yang sah');
+    });
+
+    // Helper function to validate input and show error message
+    function validateInput(input, regex, errorMessage) {
+        const isValid = regex.test(input.value);
+        const errorDiv = input.nextElementSibling?.classList.contains('invalid-feedback') 
+            ? input.nextElementSibling 
+            : createErrorDiv();
+        
+        if (!isValid && input.value !== '') {
+            input.classList.add('is-invalid');
+            input.classList.remove('is-valid');
+            errorDiv.textContent = errorMessage;
+            if (!input.nextElementSibling?.classList.contains('invalid-feedback')) {
+                input.parentNode.insertBefore(errorDiv, input.nextSibling);
+            }
+        } else if (input.value !== '') {
+            input.classList.remove('is-invalid');
+            input.classList.add('is-valid');
+            errorDiv.remove();
+        } else {
+            input.classList.remove('is-invalid', 'is-valid');
+            errorDiv.remove();
         }
-        form.classList.add('was-validated');
+        return isValid;
+    }
+
+    // Helper function to create error message div
+    function createErrorDiv() {
+        const div = document.createElement('div');
+        div.className = 'invalid-feedback';
+        return div;
+    }
+
+    // Form submission handler
+    form.addEventListener('submit', function(e) {
+        let isValid = true;
+        
+        // Validate all required fields
+        const requiredInputs = form.querySelectorAll('[required]');
+        requiredInputs.forEach(input => {
+            if (!input.value) {
+                isValid = false;
+                input.classList.add('is-invalid');
+            }
+        });
+
+        // Validate specific fields
+        if (!validateInput(icInput, /^\d{12}$/, 'Sila masukkan 12 digit nombor kad pengenalan')) isValid = false;
+        postcodeInputs.forEach(input => {
+            if (!validateInput(input, /^\d{5}$/, 'Sila masukkan 5 digit poskod')) isValid = false;
+        });
+        phoneInputs.forEach(input => {
+            if (!validateInput(input, /^\d{10,11}$/, 'Sila masukkan nombor telefon yang sah')) isValid = false;
+        });
+        if (!validateInput(salaryInput, /^\d+(\.\d{0,2})?$/, 'Sila masukkan nilai gaji yang sah')) isValid = false;
+        if (!validateInput(nameInput, /^[A-Za-z\s@\-\/'\.]+$/, 'Sila masukkan nama yang sah')) isValid = false;
+        if (!validateInput(emailInput, /^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Sila masukkan alamat emel yang sah')) isValid = false;
+
+        if (!isValid) {
+            e.preventDefault();
+            Swal.fire({
+                title: 'Ralat!',
+                text: 'Sila semak semula borang anda.',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
+        }
     });
 });
 </script>
