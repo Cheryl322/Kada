@@ -22,7 +22,7 @@ if (!isset($_SESSION['status'])) {
                 icon: 'success',
                 title: 'Berjaya!',
                 text: '<?php echo $_SESSION['message']; ?>',
-                confirmButtonText: 'Kembali ke Laman Utama',
+                confirmButtonText: 'Semakan Status',
                 confirmButtonColor: '#75B798',
                 allowOutsideClick: false
             }).then((result) => {
@@ -35,12 +35,12 @@ if (!isset($_SESSION['status'])) {
                 icon: 'error',
                 title: 'Ralat!',
                 text: '<?php echo $_SESSION['error']; ?>',
-                confirmButtonText: 'Kembali ke Laman Utama',
+                confirmButtonText: 'Kembali',
                 confirmButtonColor: '#75B798',
                 allowOutsideClick: false
             }).then((result) => {
                 if (result.isConfirmed) {
-                    window.location.href = 'statuspermohonanloan.php';
+                    window.location.href = 'permohonanloan.php';
                 }
             });
         <?php } ?>
