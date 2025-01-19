@@ -137,38 +137,36 @@ Simpanan Tetap: $simpananTetap
 Tabung Anggota: $tabungAnggota
 -->";
 
-// 计算总存款
-$totalSavings = $trans_data['total_all'] ?? 0;
+// 计算总储蓄
+$sql_savings = "SELECT 
+    modalShare,
+    feeCapital,
+    contribution,
+    fixedDeposit
+FROM tb_memberregistration_feesandcontribution
+WHERE employeeID = ?";
 
-// 获取会员的存款总额
-$sqlSavings = "SELECT 
-    m.employeeID,
-    m.memberName,
-    b.accountNo,
-    COALESCE(SUM(t.transAmt), 0) as total_savings,
-    MAX(t.transDate) as last_update
-FROM tb_member m
-LEFT JOIN tb_bank b ON m.employeeID = b.employeeID
-LEFT JOIN tb_transaction t ON m.employeeID = t.employeeID
-WHERE m.employeeID = ?
-GROUP BY m.employeeID, m.memberName, b.accountNo";
+$stmt_savings = mysqli_prepare($conn, $sql_savings);
+mysqli_stmt_bind_param($stmt_savings, 's', $employeeID);
+mysqli_stmt_execute($stmt_savings);
+$result_savings = mysqli_stmt_get_result($stmt_savings);
+$savings_data = mysqli_fetch_assoc($result_savings);
 
-$stmt = mysqli_prepare($conn, $sqlSavings);
+// 计算实际的总储蓄
+$totalSavings = 
+    ($savings_data['modalShare'] ?? 0) +
+    ($savings_data['feeCapital'] ?? 0) +
+    ($savings_data['contribution'] ?? 0) +
+    ($savings_data['fixedDeposit'] ?? 0);
+
+// 获取账号信息
+$sqlBank = "SELECT accountNo FROM tb_bank WHERE employeeID = ? ORDER BY bankID DESC LIMIT 1";
+$stmt = mysqli_prepare($conn, $sqlBank);
 mysqli_stmt_bind_param($stmt, "s", $employeeID);
 mysqli_stmt_execute($stmt);
 $result = mysqli_stmt_get_result($stmt);
-
-if ($row = mysqli_fetch_assoc($result)) {
-    $totalSavings = $row['total_savings'];
-    $accountNo = $row['accountNo'];
-    $memberName = $row['memberName'];
-    $lastUpdate = $row['last_update'] ? date('d M Y, h:i A', strtotime($row['last_update'])) : date('d M Y, h:i A');
-} else {
-    $totalSavings = 0;
-    $accountNo = '-';
-    $memberName = '-';
-    $lastUpdate = date('d M Y, h:i A');
-}
+$accountNo = ($row = mysqli_fetch_assoc($result)) ? $row['accountNo'] : '-';
+$lastUpdate = date('d M Y, h:i A');
 
 // 获取贷款信息
 $sql_loan = "SELECT 
