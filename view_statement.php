@@ -12,162 +12,268 @@ $employeeID = $_SESSION['employeeID'];
 $month = $_GET['month'];
 $year = $_GET['year'];
 
-// 获取会员信息 - 简化查询
-$sql_member = "SELECT * FROM tb_employee WHERE employeeID = ?";
+// 获取会员信息
+$sql_member = "SELECT m.*, f.* 
+               FROM tb_member m
+               LEFT JOIN tb_memberregistration_feesandcontribution f ON m.employeeID = f.employeeID
+               WHERE m.employeeID = ?";
 $stmt_member = mysqli_prepare($conn, $sql_member);
 mysqli_stmt_bind_param($stmt_member, 's', $employeeID);
 mysqli_stmt_execute($stmt_member);
 $member = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_member));
 
 // 获取月度交易记录
-$sql = "SELECT t.transDate, t.transType, t.transAmt
-        FROM tb_transaction t
-        WHERE t.employeeID = ? 
-        AND MONTH(t.transDate) = ?
-        AND YEAR(t.transDate) = ?
-        ORDER BY t.transDate";
+$sql_trans = "SELECT * FROM tb_transaction 
+              WHERE employeeID = ? 
+              AND MONTH(transDate) = ? 
+              AND YEAR(transDate) = ?
+              ORDER BY transDate";
+$stmt_trans = mysqli_prepare($conn, $sql_trans);
+mysqli_stmt_bind_param($stmt_trans, 'sii', $employeeID, $month, $year);
+mysqli_stmt_execute($stmt_trans);
+$transactions = mysqli_fetch_all(mysqli_stmt_get_result($stmt_trans), MYSQLI_ASSOC);
 
-$stmt = mysqli_prepare($conn, $sql);
-mysqli_stmt_bind_param($stmt, 'sii', $employeeID, $month, $year);
-mysqli_stmt_execute($stmt);
-$transactions = mysqli_fetch_all(mysqli_stmt_get_result($stmt), MYSQLI_ASSOC);
-
-// 计算月度总结
-$total_amount = 0;
-$total_contribution = 0;
-$total_withdrawal = 0;
-$latest_balance = 0;
-$latest_account1 = 0;
-$latest_account2 = 0;
-
+// 计算总额
+$total_transactions = 0;
 foreach($transactions as $trans) {
-    if($trans['transactionType'] == 'Caruman') {
-        $total_contribution += $trans['amount'];
-    } else {
-        $total_withdrawal += $trans['amount'];
-    }
-    $total_amount += $trans['amount'];
-    
-    // 获取最新余额
-    $latest_account1 = $trans['account1Balance'];
-    $latest_account2 = $trans['account2Balance'];
+    $total_transactions += $trans['transAmt'];
 }
-$latest_balance = $latest_account1 + $latest_account2;
 
+// 辅助函数：格式化数字为4位
+function formatNumber($number) {
+    return str_pad($number, 4, '0', STR_PAD_LEFT);
+}
+
+// 获取贷款信息
+$sql_loan = "SELECT 
+    la.*,
+    l.loanID,
+    COALESCE(l.balance, la.amountRequested) as balance,
+    COALESCE(l.loanType, 'Unknown') as loanType,
+    la.amountRequested,
+    la.monthlyInstallments
+FROM tb_loanapplication la
+LEFT JOIN tb_loan l ON l.loanApplicationID = la.loanApplicationID
+WHERE la.employeeID = ? 
+    AND la.loanStatus = 'Diluluskan'
+ORDER BY la.loanApplicationID DESC 
+LIMIT 1";
+
+$stmt_loan = mysqli_prepare($conn, $sql_loan);
+mysqli_stmt_bind_param($stmt_loan, 's', $employeeID);
+mysqli_stmt_execute($stmt_loan);
+$loan_data = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_loan));
 ?>
 
 <div class="container mt-5">
-    <div class="mb-4">
+    <div class="mb-4 no-print">
         <a href="monthly_statements.php" class="btn btn-secondary">
             <i class="fas fa-arrow-left"></i> Kembali
         </a>
+        <button onclick="window.print()" class="btn btn-primary">
+            <i class="fas fa-print"></i> Cetak
+        </button>
     </div>
     
     <div class="card">
         <div class="card-body">
-            <h3 class="text-center mb-4">PENYATA KIRA-KIRA AHLI TAHUN <?php echo $year; ?></h3>
+            <!-- Logo 和报表头部 -->
+            <div class="text-center mb-4">
+                <img src="img/kadalogo.jpg" alt="KADA Logo" class="mb-3" style="height: 80px;">
+                <h2 class="mb-2">Koperasi Kakitangan Kada Kelantan Berhad</h2>
+                <h4 class="mb-3">PENYATA KEWANGAN BULANAN</h4>
+                <h5><?php echo strtoupper(date('F Y', mktime(0, 0, 0, $month, 1, $year))); ?></h5>
+            </div>
             
             <!-- 会员信息 -->
-            <div class="mb-4">
-                <div class="row">
-                    <div class="col-12">
-                        <p class="mb-1"><strong>No Ahli:</strong> <?php echo $member['employeeID']; ?></p>
-                        <p class="mb-1"><strong>No Kad Pengenalan:</strong> <?php echo $member['ic']; ?></p>
-                        <p class="mb-1 text-end">Tarikh: <?php echo date('d/m/Y'); ?></p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 月度总结 -->
             <div class="row mb-4">
                 <div class="col-md-6">
-                    <div class="card bg-light">
-                        <div class="card-body">
-                            <h5 class="card-title">Ringkasan Bulan <?php echo date('F Y', mktime(0, 0, 0, $month, 1, $year)); ?></h5>
-                            <div class="table-responsive">
-                                <table class="table table-sm">
-                                    <tr>
-                                        <td>Jumlah Caruman:</td>
-                                        <td class="text-end">RM <?php echo number_format($total_contribution, 2); ?></td>
-                                    </tr>
-                                    <tr>
-                                        <td>Jumlah Pengeluaran:</td>
-                                        <td class="text-end">RM <?php echo number_format($total_withdrawal, 2); ?></td>
-                                    </tr>
-                                    <tr>
-                                        <td>Baki Akaun 1:</td>
-                                        <td class="text-end">RM <?php echo number_format($latest_account1, 2); ?></td>
-                                    </tr>
-                                    <tr>
-                                        <td>Baki Akaun 2:</td>
-                                        <td class="text-end">RM <?php echo number_format($latest_account2, 2); ?></td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>Jumlah Baki:</strong></td>
-                                        <td class="text-end"><strong>RM <?php echo number_format($latest_balance, 2); ?></strong></td>
-                                    </tr>
-                                </table>
-                            </div>
-                        </div>
+                    <table class="table table-borderless">
+                        <tr>
+                            <td width="150"><strong>No. Anggota</strong></td>
+                            <td>: <?php echo formatNumber($member['employeeID']); ?></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Nama</strong></td>
+                            <td>: <?php echo $member['memberName']; ?></td>
+                        </tr>
+                        <tr>
+                            <td><strong>No. K/P</strong></td>
+                            <td>: <?php echo $member['ic']; ?></td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="col-md-6 text-end">
+                    <p class="mb-1">Tarikh Cetak: <?php echo date('d/m/Y'); ?></p>
+                </div>
+            </div>
+
+            <!-- 储蓄信息 -->
+            <div class="mb-4">
+                <h5 class="border-bottom pb-2">MAKLUMAT SIMPANAN</h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <td width="150">Modal Saham</td>
+                                <td>: RM <?php echo number_format($member['modalShare'] ?? 0, 2); ?></td>
+                            </tr>
+                            <tr>
+                                <td>ModalYuran</td>
+                                <td>: RM <?php echo number_format($member['feeCapital'] ?? 0, 2); ?></td>
+                            </tr>
+                            <tr>
+                                <td>Tabung Anggota</td>
+                                <td>: RM <?php echo number_format($member['contribution'] ?? 0, 2); ?></td>
+                            </tr>
+                            <tr>
+                                <td>Simpanan Tetap</td>
+                                <td>: RM <?php echo number_format($member['fixedDeposit'] ?? 0, 2); ?></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Jumlah</strong></td>
+                                <td><strong>: RM <?php echo number_format(
+                                    ($member['modalShare'] ?? 0) + 
+                                    ($member['feeCapital'] ?? 0) + 
+                                    ($member['contribution'] ?? 0) + 
+                                    ($member['fixedDeposit'] ?? 0), 
+                                    2); ?></strong></td>
+                            </tr>
+                        </table>
                     </div>
                 </div>
             </div>
 
-            <!-- 交易表格 -->
-            <div class="table-responsive">
-                <table class="table table-bordered">
-                    <thead>
-                        <tr>
-                            <th>Transaksi</th>
-                            <th>Tarikh</th>
-                            <th>Bulan Caruman</th>
-                            <th>Jumlah (RM)</th>
-                            <th colspan="3" class="text-center">Baki Simpanan (RM)</th>
-                        </tr>
-                        <tr>
-                            <th colspan="4"></th>
-                            <th>Akaun 1</th>
-                            <th>Akaun 2</th>
-                            <th>Jumlah</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach($transactions as $trans): ?>
+            <!-- 贷款信息 -->
+            <div class="mb-4">
+                <h5 class="border-bottom pb-2">MAKLUMAT PINJAMAN</h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <?php if ($loan_data): ?>
+                                <tr>
+                                    <td width="150">Jenis Pinjaman</td>
+                                    <td>: <?php echo $loan_data['loanType']; ?></td>
+                                </tr>
+                                <tr>
+                                    <td>Jumlah Pinjaman</td>
+                                    <td>: RM <?php echo number_format($loan_data['amountRequested'], 2); ?></td>
+                                </tr>
+                                <tr>
+                                    <td>Baki Pinjaman</td>
+                                    <td>: RM <?php echo number_format($loan_data['balance'], 2); ?></td>
+                                </tr>
+                                <tr>
+                                    <td>Bayaran Bulanan</td>
+                                    <td>: RM <?php echo number_format($loan_data['monthlyInstallments'], 2); ?></td>
+                                </tr>
+                            <?php else: ?>
+                                <tr>
+                                    <td colspan="2">Tiada pinjaman aktif</td>
+                                </tr>
+                            <?php endif; ?>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            
+            <div class="mb-4">
+                <h5 class="border-bottom pb-2">BUTIRAN TRANSAKSI BULANAN</h5>
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead class="table-light">
                             <tr>
-                                <td><?php echo $trans['transactionType']; ?></td>
-                                <td><?php echo date('d/m/y', strtotime($trans['transactionDate'])); ?></td>
-                                <td><?php echo date('M-y', strtotime($trans['transactionDate'])); ?></td>
-                                <td class="text-end"><?php echo number_format($trans['amount'], 2); ?></td>
-                                <td class="text-end"><?php echo number_format($trans['account1Balance'], 2); ?></td>
-                                <td class="text-end"><?php echo number_format($trans['account2Balance'], 2); ?></td>
-                                <td class="text-end"><?php 
-                                    echo number_format(
-                                        $trans['account1Balance'] + $trans['account2Balance'], 
-                                        2
-                                    ); 
-                                ?></td>
+                                <th>No.</th>
+                                <th>Tarikh</th>
+                                <th>Jenis Transaksi</th>
+                                <th class="text-end">Amaun (RM)</th>
                             </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            <?php if (count($transactions) > 0): ?>
+                                <?php foreach($transactions as $index => $trans): ?>
+                                <tr>
+                                    <td><?php echo formatNumber($index + 1); ?></td>
+                                    <td><?php echo date('d/m/Y', strtotime($trans['transDate'])); ?></td>
+                                    <td><?php echo $trans['transType']; ?></td>
+                                    <td class="text-end"><?php echo number_format($trans['transAmt'], 2); ?></td>
+                                </tr>
+                                <?php endforeach; ?>
+                                <tr class="table-light">
+                                    <td colspan="3"><strong>JUMLAH</strong></td>
+                                    <td class="text-end"><strong>RM <?php echo number_format($total_transactions, 2); ?></strong></td>
+                                </tr>
+                            <?php else: ?>
+                                <tr>
+                                    <td colspan="4" class="text-center">Tiada transaksi untuk bulan ini</td>
+                                </tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 页脚 -->
+            <div class="mt-5 pt-4 border-top">
+                <p class="text-center mb-0">Ini adalah cetakan komputer. Tandatangan tidak diperlukan.</p>
             </div>
         </div>
     </div>
 </div>
 
 <style>
-    .table th {
-        background-color: #f8f9fa;
+    @media print {
+        /* 隐藏顶部导航和标题 */
+        nav,
+        header,
+        .navbar,
+        .nav,
+        .header,
+        #header,
+        .kada-header,
+        .header-section {
+            display: none !important;
+        }
+
+        /* 移除页面顶部空白 */
+        body {
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        .container {
+            margin-top: 0 !important;
+            padding-top: 0 !important;
+        }
+
+        /* 确保内容从页面顶部开始 */
+        .card {
+            margin-top: 0 !important;
+            border: none !important;
+            box-shadow: none !important;
+        }
+
+        /* 其他打印样式保持不变... */
+        .no-print { 
+            display: none !important; 
+        }
+        
+        /* 确保内容区域占满整个页面宽度 */
+        .container { 
+            width: 100% !important;
+            max-width: none !important;
+            padding: 20px 40px !important;
+        }
+    }
+    .card-title {
+        color: inherit;
         font-weight: bold;
     }
     .text-end {
         text-align: right;
     }
-    .card-title {
-        color: #2c3e50;
-        font-weight: bold;
-    }
-    .table-sm td {
-        padding: 0.5rem;
+    .table-borderless td {
+        padding: 4px 0;
     }
 </style> 

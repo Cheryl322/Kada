@@ -17,7 +17,12 @@ $employeeID = $_SESSION['employeeID']; // Make sure this matches your session va
 
 // Get the registration status
 $sql = "SELECT 
-            COALESCE(mr.regisStatus, 'Belum Selesai') as regisStatus,
+            CASE 
+                WHEN mr.memberRegistrationID IS NOT NULL AND mr.regisStatus = 'Diluluskan' THEN 'Diluluskan'
+                WHEN mr.memberRegistrationID IS NOT NULL AND mr.regisStatus = 'Ditolak' THEN 'Ditolak'
+                WHEN mr.memberRegistrationID IS NOT NULL THEN 'Belum Selesai'
+                ELSE 'Tiada Rekod'
+            END as regisStatus,
             CASE 
                 WHEN mr.regisDate IS NOT NULL THEN DATE(mr.regisDate)
                 WHEN m.created_at IS NOT NULL THEN DATE(m.created_at)
@@ -34,13 +39,12 @@ mysqli_stmt_execute($stmt);
 $result = mysqli_stmt_get_result($stmt);
 
 // Set default values
-$status = 'Belum Selesai';
+$status = 'Tiada Rekod';
 $regisDate = date('d/m/Y'); // Default to today's date
 
 // Only update values if we have results
 if ($result && $row = mysqli_fetch_assoc($result)) {
-    $status = $row['regisStatus'] ?? 'Belum Selesai';
-    // Format the date properly
+    $status = $row['regisStatus'];
     $regisDate = !empty($row['regisDate']) 
         ? date('d/m/Y', strtotime($row['regisDate'])) 
         : date('d/m/Y');
@@ -60,7 +64,7 @@ echo "<script>
 <div class="container mt-3">
     <h3>Status Permohonan Anggota</h3>
 
-    <?php if ($status == 'Diluluskan'): ?>
+    <!-- <?php if ($status == 'Diluluskan'): ?>
         <div class="success-status">
             <div class="status-circle">
                 <i class="fas fa-check"></i>
@@ -74,16 +78,22 @@ echo "<script>
             </div>
             <div class="status-text">Permohonan Ditolak</div>
         </div>
-    <?php else: ?>
-        <div class="progress-steps">
-            <div class="step-item active">
-                <div class="step-circle">1</div>
-                <div class="step-line"></div>
-                <div class="step-label">Permohonan serahkan</div>
-                <div class="step-date">Tarikh: <?php echo $regisDate; ?></div>
+    <?php elseif ($status == 'Belum Selesai'): ?>
+        <div class="pending-status">
+            <div class="status-circle">
+                <i class="fas fa-clock"></i>
             </div>
+            <div class="status-text">Permohonan Belum Selesai</div>
+            <div class="status-date">Tarikh: <?php echo $regisDate; ?></div>
         </div>
-    <?php endif; ?>
+    <?php else: // 'Tiada Rekod' ?>
+        <div class="no-record-status">
+            <div class="status-circle">
+                <i class="fas fa-exclamation"></i>
+            </div>
+            <div class="status-text">Tiada Rekod Permohonan</div>
+        </div>
+    <?php endif; ?> -->
 </div>
 
 <!-- Add Font Awesome for icons -->
@@ -119,15 +129,22 @@ function updateProgressSteps(status) {
                 <div class="status-text">Permohonan Ditolak</div>
             </div>
         `;
-    } else {
+    } else if (status === 'Belum Selesai') {
         html = `
-            <div class="progress-steps">
-                <div class="step-item active">
-                    <div class="step-circle">1</div>
-                    <div class="step-line"></div>
-                    <div class="step-label">Permohonan serahkan</div>
-                    <div class="step-date">Tarikh: ${regisDate}</div>
+            <div class="pending-status">
+                <div class="status-circle">
+                    <i class="fas fa-clock"></i>
                 </div>
+                <div class="status-text">Permohonan Belum Disahkan</div>
+            </div>
+        `;
+    } else { // 'Tiada Rekod'
+        html = `
+            <div class="no-record-status">
+                <div class="status-circle">
+                    <i class="fas fa-exclamation"></i>
+                </div>
+                <div class="status-text">Tiada Rekod Permohonan</div>
             </div>
         `;
     }
@@ -141,28 +158,39 @@ function updateProgressSteps(status) {
     h3.insertAdjacentHTML('afterend', html);
 }
 
-function checkStatus() {
-    const employeeID = document.getElementById('currentEmployeeID').value;
-    
+function updateStatus(memberId, newStatus) {
     $.ajax({
-        url: 'check_status.php',
+        url: 'update_status.php',
         method: 'POST',
-        data: { employeeID: employeeID },
+        data: {
+            memberId: memberId,
+            status: newStatus
+        },
         success: function(response) {
             try {
                 const data = JSON.parse(response);
-                const currentStatus = document.getElementById('currentStatus').value;
-                if (data.status !== currentStatus) {
+                if (data.success) {
+                    // Update the status immediately
                     document.getElementById('currentStatus').value = data.status;
                     document.getElementById('currentStatus').setAttribute('data-date', data.date);
                     updateProgressSteps(data.status);
+                    
+                    // Optional: Show success message
+                    alert('Status updated successfully');
+                    
+                    // Reload the page to refresh all data
+                    window.location.reload();
+                } else {
+                    alert('Failed to update status');
                 }
             } catch (e) {
                 console.error('Error parsing response:', e);
+                alert('Error updating status');
             }
         },
         error: function(xhr, status, error) {
-            console.error('Error checking status:', error);
+            console.error('Error updating status:', error);
+            alert('Error updating status');
         }
     });
 }
@@ -379,5 +407,44 @@ setInterval(checkStatus, 5000);
 
 .failed-status .status-date {
     color: #dc3545;
+}
+
+.no-record-status {
+    text-align: center;
+    padding: 2rem;
+    margin: 2rem auto;
+    max-width: 300px;
+}
+
+.no-record-status .status-circle {
+    background: #6c757d;
+    box-shadow: 0 0 0 15px rgba(108, 117, 125, 0.2);
+}
+
+.no-record-status .status-text {
+    color: #6c757d;
+}
+
+/* Add pending status styles */
+.pending-status {
+    text-align: center;
+    padding: 2rem;
+    margin: 2rem auto;
+    max-width: 300px;
+}
+
+.pending-status .status-circle {
+    background: #ffc107;
+    box-shadow: 0 0 0 15px rgba(255, 193, 7, 0.2);
+}
+
+.pending-status .status-text {
+    color: #ffc107;
+}
+
+.pending-status .status-date {
+    color: #ffc107;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
 }
 </style>

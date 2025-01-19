@@ -11,27 +11,32 @@ if (!isset($_SESSION['employeeID'])) {
 $employeeID = $_SESSION['employeeID'];
 
 // Fetch member details
-$sqlMember = "SELECT * FROM tb_member WHERE employeeID = ?";
+$sqlMember = "SELECT m.*, f.* 
+              FROM tb_member m
+              LEFT JOIN tb_memberregistration_feesandcontribution f ON m.employeeID = f.employeeID 
+              WHERE m.employeeID = ?";
 $stmtMember = mysqli_prepare($conn, $sqlMember);
 mysqli_stmt_bind_param($stmtMember, 's', $employeeID);
 mysqli_stmt_execute($stmtMember);
-$resultMember = mysqli_stmt_get_result($stmtMember);
-$memberData = mysqli_fetch_assoc($resultMember);
+$memberData = mysqli_fetch_assoc(mysqli_stmt_get_result($stmtMember));
 
-// Fetch financial data
-$sql = "SELECT f.* FROM tb_financialstatus f
-        WHERE f.accountID IN (
-            SELECT accountID 
-            FROM tb_member_financialstatus 
-            WHERE employeeID = ?
-        )
-        ORDER BY f.dateUpdated DESC LIMIT 1";
+// Fetch loan data
+$sqlLoan = "SELECT 
+    SUM(CASE WHEN l.loanType = 'AL-BAI' THEN l.amountRequested ELSE 0 END) as alBai,
+    SUM(CASE WHEN l.loanType = 'AL-INAH' THEN l.amountRequested ELSE 0 END) as alnnah,
+    SUM(CASE WHEN l.loanType = 'B/PULIH KENDERAAN' THEN l.amountRequested ELSE 0 END) as bPulihKenderaan,
+    SUM(CASE WHEN l.loanType = 'ROAD TAX & INSURAN' THEN l.amountRequested ELSE 0 END) as roadTaxInsurance
+    FROM tb_loan l
+    JOIN tb_loanapplication la ON l.loanApplicationID = la.loanApplicationID
+    WHERE l.employeeID = ? AND la.loanStatus = 'Diluluskan'";
+$stmtLoan = mysqli_prepare($conn, $sqlLoan);
+mysqli_stmt_bind_param($stmtLoan, 's', $employeeID);
+mysqli_stmt_execute($stmtLoan);
+$loanData = mysqli_fetch_assoc(mysqli_stmt_get_result($stmtLoan));
 
-$stmt = mysqli_prepare($conn, $sql);
-mysqli_stmt_bind_param($stmt, 's', $employeeID);
-mysqli_stmt_execute($stmt);
-$result = mysqli_stmt_get_result($stmt);
-$financialData = mysqli_fetch_assoc($result);
+function formatNumber($number) {
+    return str_pad($number, 4, '0', STR_PAD_LEFT);
+}
 ?>
 
 <div class="container" style="max-width: 800px; background-color: white; padding: 20px; box-shadow: 0 0 10px rgba(0,0,0,0.1);">
@@ -82,19 +87,19 @@ $financialData = mysqli_fetch_assoc($result);
             <table class="table table-bordered">
                 <tr>
                     <td width="50%">Modal Saham</td>
-                    <td>RM <?php echo number_format($financialData['memberSaving'] ?? 0, 2); ?></td>
+                    <td>RM <?php echo number_format($memberData['modalShare'] ?? 0, 2); ?></td>
                 </tr>
                 <tr>
                     <td>Modal Yuran</td>
-                    <td>RM <?php echo number_format($financialData['feeCapital'] ?? 0, 2); ?></td>
+                    <td>RM <?php echo number_format($memberData['feeCapital'] ?? 0, 2); ?></td>
                 </tr>
                 <tr>
                     <td>Simpanan Tetap</td>
-                    <td>RM <?php echo number_format($financialData['fixedDeposit'] ?? 0, 2); ?></td>
+                    <td>RM <?php echo number_format($memberData['fixedDeposit'] ?? 0, 2); ?></td>
                 </tr>
                 <tr>
                     <td>Tabung Anggota</td>
-                    <td>RM <?php echo number_format($financialData['contribution'] ?? 0, 2); ?></td>
+                    <td>RM <?php echo number_format($memberData['contribution'] ?? 0, 2); ?></td>
                 </tr>
             </table>
         </div>
@@ -105,44 +110,51 @@ $financialData = mysqli_fetch_assoc($result);
             <table class="table table-bordered">
                 <tr>
                     <td width="50%">Al-Bai</td>
-                    <td>RM <?php echo number_format($financialData['alBai'] ?? 0, 2); ?></td>
+                    <td>RM <?php echo number_format($loanData['alBai'] ?? 0, 2); ?></td>
                 </tr>
                 <tr>
                     <td>Al-Innah</td>
-                    <td>RM <?php echo number_format($financialData['alnnah'] ?? 0, 2); ?></td>
+                    <td>RM <?php echo number_format($loanData['alnnah'] ?? 0, 2); ?></td>
                 </tr>
                 <tr>
                     <td>B/Pulih Kenderaan</td>
-                    <td>RM <?php echo number_format($financialData['bPulihKenderaan'] ?? 0, 2); ?></td>
+                    <td>RM <?php echo number_format($loanData['bPulihKenderaan'] ?? 0, 2); ?></td>
                 </tr>
                 <tr>
                     <td>Road Tax & Insuran</td>
-                    <td>RM <?php echo number_format($financialData['roadTaxInsurance'] ?? 0, 2); ?></td>
+                    <td>RM <?php echo number_format($loanData['roadTaxInsurance'] ?? 0, 2); ?></td>
                 </tr>
             </table>
         </div>
     </div>
 
     <!-- Confirmation Section -->
-    <div class="mt-5">
-        <p><b>PENGESAHAN BAGI PENYATA KEWANGAN</b></p>
-        <p>Saya <b><?php echo htmlspecialchars($memberData['memberName']); ?></b> No. Ahli: <b><?php echo htmlspecialchars($memberData['employeeID']); ?></b> mengesahkan bahawa Penyata Kewangan Koperasi Kakitangan KADA Kelantan Berhad adalah benar:</p>
-        
-        <form method="post" action="submit_confirmation.php" class="mt-3">
-            <div class="form-check mb-2">
-                <input class="form-check-input" type="radio" name="confirmation" id="agree" value="agree" required>
-                <label class="form-check-label" for="agree">Setuju</label>
-            </div>
-            <div class="form-check mb-3">
-                <input class="form-check-input" type="radio" name="confirmation" id="disagree" value="disagree">
-                <label class="form-check-label" for="disagree">Tidak Setuju</label>
-            </div>
-            <!-- <button type="submit" class="btn btn-primary">Hantar Pengesahan</button> -->
-        </form>
+    <div class="confirmation-section mt-4">
+        <div class="border-top pt-4">
+            <p><strong>PENGESAHAN BAGI PENYATA KEWANGAN</strong></p>
+            <p>Saya <strong><?php echo htmlspecialchars($memberData['memberName']); ?></strong> 
+               No. Ahli: <strong><?php echo formatNumber($memberData['employeeID']); ?></strong> 
+               mengesahkan bahawa Penyata Kewangan Koperasi Kakitangan KADA Kelantan Berhad adalah benar.</p>
+            
+            <?php if (isset($_POST['confirmation']) && $_POST['confirmation'] == 'agree'): ?>
+                <p><strong>Status: Setuju</strong></p>
+            <?php elseif (isset($_POST['confirmation']) && $_POST['confirmation'] == 'disagree'): ?>
+                <p><strong>Status: Tidak Setuju</strong></p>
+            <?php else: ?>
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="radio" name="confirmation" id="agree" value="agree" required>
+                    <label class="form-check-label" for="agree">Setuju</label>
+                </div>
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="radio" name="confirmation" id="disagree" value="disagree">
+                    <label class="form-check-label" for="disagree">Tidak Setuju</label>
+                </div>
+            <?php endif; ?>
+        </div>
     </div>
 
     <!-- Print Button -->
-    <div class="text-end mt-4">
+    <div class="text-end mt-4 no-print">
         <button onclick="window.print()" class="btn btn-secondary">
             <i class="fas fa-print"></i> Cetak
         </button>
@@ -151,26 +163,78 @@ $financialData = mysqli_fetch_assoc($result);
 
 <style>
 @media print {
-    .btn, .form-check {
-        display: none;
+    /* 移除所有边框和背景 */
+    body, html {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: none !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
     }
-    body {
-        background-color: white;
-    }
+
+    /* 内容区域样式 */
     .container {
+        width: 100% !important;
+        max-width: none !important;
+        margin: 0 !important;
+        padding: 20px 40px !important; /* 调整左右内边距 */
         box-shadow: none !important;
+        background: none !important;
+    }
+
+    /* 表格样式 */
+    .table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        margin-bottom: 20px !important;
+    }
+
+    .table td {
+        border: 1px solid black !important;
+        padding: 8px !important;
+    }
+
+    /* 隐藏所有不需要的元素 */
+    .no-print,
+    nav,
+    header,
+    footer,
+    .btn,
+    .content-wrapper::before,
+    .content-wrapper::after {
+        display: none !important;
+    }
+
+    /* 移除所有边框和阴影 */
+    * {
+        box-shadow: none !important;
+        border-radius: 0 !important;
+    }
+
+    /* 确保文本清晰可见 */
+    * {
+        color: black !important;
+        text-shadow: none !important;
+    }
+
+    /* 移除所有背景图片和颜色 */
+    body::before,
+    body::after,
+    .container::before,
+    .container::after {
+        display: none !important;
     }
 }
 
-.table {
-    margin-bottom: 0;
-}
-
-.table td {
-    padding: 8px 15px;
-}
+/* 正常显示时的样式保持不变 */
 </style>
+
+<!-- 添加内容包装器 -->
+<div class="content-wrapper">
+    <!-- 现有的内容 -->
+</div>
 
 <!-- Add Font Awesome for icons -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</div> 
 </div> 

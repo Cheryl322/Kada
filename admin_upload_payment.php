@@ -2,8 +2,9 @@
 session_start();
 include "dbconnect.php";
 require_once "functions.php";
+include "headeradmin.php";
 
-// 检查管理员权限
+// 检查admin权限
 checkAdminAccess();
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -23,50 +24,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $stmt = mysqli_prepare($conn, $sql_fees);
             mysqli_stmt_bind_param($stmt, 's', $employeeID);
             mysqli_stmt_execute($stmt);
-            $result = mysqli_stmt_get_result($stmt);
-            $fees = mysqli_fetch_assoc($result);
+            $result = mysqli_stmt_get_result($stmt);  // 获取结果集
+            $fees = mysqli_fetch_assoc($result);      // 现在可以安全地获取数据
             
-            // 计算总预设金额
-            $total_preset = $fees['modalShare'] + $fees['feeCapital'] + 
-                          $fees['fixedDeposit'] + $fees['contribution'];
-            
-            if ($total_preset > 0) {
-                // 计算每个类型应得的比例
-                $modalShare_ratio = $fees['modalShare'] / $total_preset;
-                $feeCapital_ratio = $fees['feeCapital'] / $total_preset;
-                $fixedDeposit_ratio = $fees['fixedDeposit'] / $total_preset;
-                $contribution_ratio = $fees['contribution'] / $total_preset;
-                
-                // 计算每个类型应得的金额
-                $modalShare_amount = round($transAmt * $modalShare_ratio, 2);
-                $feeCapital_amount = round($transAmt * $feeCapital_ratio, 2);
-                $fixedDeposit_amount = round($transAmt * $fixedDeposit_ratio, 2);
-                $contribution_amount = $transAmt - $modalShare_amount - 
-                                    $feeCapital_amount - $fixedDeposit_amount; // 确保总和等于输入金额
-                
-                // 更新各个字段
-                $update_sql = "UPDATE tb_memberregistration_feesandcontribution 
-                             SET modalShare = modalShare + ?,
-                                 feeCapital = feeCapital + ?,
-                                 fixedDeposit = fixedDeposit + ?,
-                                 contribution = contribution + ?
-                             WHERE employeeID = ?";
-                $stmt = mysqli_prepare($conn, $update_sql);
-                mysqli_stmt_bind_param($stmt, 'dddds', 
-                    $modalShare_amount,
-                    $feeCapital_amount,
-                    $fixedDeposit_amount,
-                    $contribution_amount,
-                    $employeeID
-                );
-                mysqli_stmt_execute($stmt);
-                
-                // 记录各个类型的交易
+            // 检查是否成功获取费用设置
+            if ($fees) {
+                // 记录交易
                 $transaction_types = [
-                    ['Simpanan-Modal Saham', $modalShare_amount],
-                    ['Simpanan-Modal Yuran', $feeCapital_amount],
-                    ['Simpanan-Simpanan Tetap', $fixedDeposit_amount],
-                    ['Simpanan-Tabung Anggota', $contribution_amount]
+                    ['Simpanan-M', $fees['modalShare']],
+                    ['Simpanan-Y', $fees['feeCapital']],
+                    ['Simpanan-S', $fees['fixedDeposit']],
+                    ['Simpanan-T', $fees['contribution']]
                 ];
                 
                 foreach ($transaction_types as $trans) {
@@ -76,13 +44,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         $stmt = mysqli_prepare($conn, $sql);
                         mysqli_stmt_bind_param($stmt, 'ssds', 
                             $employeeID, 
-                            $trans[0], 
-                            $trans[1], 
+                            $trans[0],  // 使用新的交易类型
+                            $trans[1],  // 使用设定的固定金额
                             $transDate
                         );
                         mysqli_stmt_execute($stmt);
                     }
                 }
+            } else {
+                throw new Exception("无法获取会员的缴费设置");
             }
         } elseif ($transType == 'Bayaran Balik Pinjaman') {
             // 获取所有活跃贷款类型的余额
@@ -148,6 +118,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 $sql_members = "SELECT employeeID, memberName FROM tb_member 
                 ORDER BY employeeID ASC";
 $result_members = mysqli_query($conn, $sql_members);
+
+function formatNumber($number) {
+    return str_pad($number, 4, '0', STR_PAD_LEFT);
+}
 ?>
 
 <!DOCTYPE html>
