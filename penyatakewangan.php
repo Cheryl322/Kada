@@ -23,20 +23,40 @@ if ($stmt) {
     mysqli_stmt_close($stmt);
 }
 
-// 获取交易数据
-$sql_trans = "SELECT 
-    COUNT(DISTINCT transDate) as payment_count,
-    SUM(CASE WHEN transType = 'Simpanan-M' THEN transAmt ELSE 0 END) as modal_saham,
-    SUM(CASE WHEN transType = 'Simpanan-S' THEN transAmt ELSE 0 END) as simpanan_tetap,
-    SUM(CASE WHEN transType = 'Simpanan-T' THEN transAmt ELSE 0 END) as tabung_anggota,
-    SUM(CASE WHEN transType = 'Simpanan-Y' THEN transAmt ELSE 0 END) as model_yuran
-FROM tb_transaction 
-WHERE employeeID = ?";
+// 获取实际交易总额
+$sql_trans = "SELECT transType, transAmt 
+              FROM tb_transaction 
+              WHERE employeeID = ?";
 
 $stmt_trans = mysqli_prepare($conn, $sql_trans);
 mysqli_stmt_bind_param($stmt_trans, 'i', $employeeID);
 mysqli_stmt_execute($stmt_trans);
-$trans_data = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_trans));
+$result_trans = mysqli_stmt_get_result($stmt_trans);
+
+// 添加调试信息
+echo "<!-- Transaction Records:";
+while ($row = mysqli_fetch_assoc($result_trans)) {
+    echo "\nType: " . $row['transType'] . ", Amount: " . $row['transAmt'];
+}
+echo " -->";
+
+// 重置结果集指针
+mysqli_data_seek($result_trans, 0);
+
+// 计算总额
+$totalSavings = 0;
+while ($row = mysqli_fetch_assoc($result_trans)) {
+    switch($row['transType']) {
+        case 'Simpanan-M':
+        case 'Simpanan-S':
+        case 'Simpanan-T':
+        case 'Simpanan-Y':
+        case 'BAYARAN':
+        case 'DEPOSIT':
+            $totalSavings += $row['transAmt'];
+            break;
+    }
+}
 
 // 获取费用分配信息
 $sql_fees = "SELECT 
@@ -136,28 +156,6 @@ Modal Yuran: $modalYuran
 Simpanan Tetap: $simpananTetap
 Tabung Anggota: $tabungAnggota
 -->";
-
-// 计算总储蓄
-$sql_savings = "SELECT 
-    modalShare,
-    feeCapital,
-    contribution,
-    fixedDeposit
-FROM tb_memberregistration_feesandcontribution
-WHERE employeeID = ?";
-
-$stmt_savings = mysqli_prepare($conn, $sql_savings);
-mysqli_stmt_bind_param($stmt_savings, 's', $employeeID);
-mysqli_stmt_execute($stmt_savings);
-$result_savings = mysqli_stmt_get_result($stmt_savings);
-$savings_data = mysqli_fetch_assoc($result_savings);
-
-// 计算实际的总储蓄
-$totalSavings = 
-    ($savings_data['modalShare'] ?? 0) +
-    ($savings_data['feeCapital'] ?? 0) +
-    ($savings_data['contribution'] ?? 0) +
-    ($savings_data['fixedDeposit'] ?? 0);
 
 // 获取账号信息
 $sqlBank = "SELECT accountNo FROM tb_bank WHERE employeeID = ? ORDER BY bankID DESC LIMIT 1";
