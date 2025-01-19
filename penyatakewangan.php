@@ -447,7 +447,7 @@ h6 {
     background-color: #FF9999;
     color: white;
     padding: 8px 20px;
-    /* border-radius: 20px; */
+    
     border: none;
     font-size: 14px;
     transition: all 0.3s ease;

@@ -92,7 +92,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 }
 
-// 获取所有会员列表
+// 获取所有会员列表..
 $sql_members = "SELECT employeeID, memberName FROM tb_member ORDER BY employeeID ASC";
 $result_members = mysqli_query($conn, $sql_members);
 
