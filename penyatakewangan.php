@@ -172,7 +172,7 @@ $lastUpdate = date('d M Y, h:i A');
 $sql_loan = "SELECT 
     la.*,
     l.loanID,
-    COALESCE(l.balance, la.amountRequested) as balance,  
+    COALESCE(l.balance, la.amountRequested) as balance,
     COALESCE(l.loanType, 'Unknown') as loanType,
     la.amountRequested,
     la.monthlyInstallments
@@ -191,17 +191,14 @@ $loan_data = mysqli_fetch_assoc($result_loan);
 
 // 设置贷款变量
 $loanAmount = $loan_data['amountRequested'] ?? 0;
-$balance = $loan_data['balance'] ?? $loanAmount;  // 如果 balance 为空，使用 amountRequested
+$balance = $loan_data['balance'] ?? $loanAmount;
 $monthlyPayment = $loan_data['monthlyInstallments'] ?? 0;
 $loanType = $loan_data['loanType'] ?? '';
 
 // 添加调试信息
 echo "<!-- LOAN DEBUG
-SQL: $sql_loan
-EmployeeID: $employeeID
-Loan Data: " . print_r($loan_data, true) . "
-Balance: $balance
-LoanAmount: $loanAmount
+Loan Amount: $loanAmount
+Balance from DB: $balance
 -->";
 
 // 初始化贷款类型金额
