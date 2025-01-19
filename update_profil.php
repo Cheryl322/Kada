@@ -72,7 +72,9 @@ try {
     
     if ($successMember && $successHome && $successOffice) {
         $_SESSION['success_message'] = "Profil berjaya dikemaskini!";
-        header('Location: profil2.php');
+        // 根据来源页面决定重定向目标
+        $redirect_page = $_POST['source_page'] ?? 'profil.php';
+        header("Location: $redirect_page");
         exit();
     } else {
         throw new Exception("Ralat semasa mengemaskini data");
@@ -80,7 +82,9 @@ try {
     
 } catch (Exception $e) {
     $_SESSION['error_message'] = $e->getMessage();
-    header('Location: profil2.php');
+    // 错误时也使用相同的重定向逻辑
+    $redirect_page = $_POST['source_page'] ?? 'profil.php';
+    header("Location: $redirect_page");
     exit();
 }
 

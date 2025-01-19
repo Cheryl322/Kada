@@ -136,6 +136,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             // Debug: Office address inserted successfully
             error_log("Office address inserted successfully");
 
+            // Insert initial registration status
+            $statusQuery = "INSERT INTO tb_memberregistration_memberapplicationdetails 
+                           (memberRegistrationID, regisDate, regisStatus) 
+                           VALUES (?, NOW(), 'Belum Selesai')";
+            
+            $statusStmt = mysqli_prepare($conn, $statusQuery);
+            mysqli_stmt_bind_param($statusStmt, "i", $employeeID);
+            
+            if (!mysqli_stmt_execute($statusStmt)) {
+                throw new Exception("Error setting initial registration status: " . mysqli_error($conn));
+            }
+
             mysqli_commit($conn);
             $_SESSION['employeeID'] = $employeeID;
             
