@@ -60,13 +60,16 @@ $userData = mysqli_fetch_assoc($result);
                             Profil
                         </a>
                         <?php if ($isMember): ?>
-                        <a href="statuspermohonanloan.php" class="btn w-75 mx-auto" style="background-color: #75B798; color: white;">
-                            Status Permohonan
-                        </a>
+                            <a href="statuspermohonanloan.php" class="btn w-75 mx-auto" style="background-color: #75B798; color: white;">
+                                Status Permohonan
+                            </a>
+                            <a href="penyatakewangan.php" class="btn w-75 mx-auto" style="background-color: #75B798; color: white;">
+                                Penyata Kewangan
+                            </a>
                         <?php else: ?>
-                        <a href="daftar_ahli.php" class="btn w-75 mx-auto" style="background-color: #75B798; color: white;">
-                            Mohon Keahlian
-                        </a>
+                            <a href="daftar_ahli.php" class="btn w-75 mx-auto" style="background-color: #75B798; color: white;">
+                                Mohon Keahlian
+                            </a>
                         <?php endif; ?>
                         <a href="logout.php" class="btn w-75 mx-auto" style="background-color: #75B798; color: white;">
                             Log Keluar

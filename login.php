@@ -19,30 +19,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $employeeID = $_POST['employeeID'];
     $password = $_POST['password'];
 
-<<<<<<< HEAD
-    // Query to check credentials and get role
-    $sql = "SELECT * FROM tb_employee WHERE employeeID = ? AND password = ?";
-=======
     // 首先检查 employee 表
     $sql = "SELECT * FROM tb_employee WHERE employeeID = ?";
->>>>>>> c192cad77138727941329f7971937c256663f65a
     $stmt = mysqli_prepare($conn, $sql);
-    mysqli_stmt_bind_param($stmt, "ss", $employeeID, $password);
+    mysqli_stmt_bind_param($stmt, "s", $employeeID);
     mysqli_stmt_execute($stmt);
     $result = mysqli_stmt_get_result($stmt);
 
     if (mysqli_num_rows($result) == 1) {
         $user = mysqli_fetch_assoc($result);
-<<<<<<< HEAD
-        $_SESSION['employeeID'] = $employeeID;
-        $_SESSION['role'] = $user['role'];
-
-        // Redirect based on role
-        if ($user['role'] === 'admin') {
-            header("Location: adminmainpage.php");
-        } else {
-            header("Location: mainpage.php");
-=======
         
         // 添加调试信息
         error_log("Attempting login for employeeID: " . $employeeID);
@@ -64,19 +49,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         } else {
             error_log("Password verification failed for employeeID: " . $employeeID);
             $_SESSION['error_message'] = "ID Pekerja atau kata laluan tidak sah!";
->>>>>>> c192cad77138727941329f7971937c256663f65a
         }
-        exit();
     } else {
-<<<<<<< HEAD
-        $_SESSION['error'] = "Invalid employee ID or password!";
-        header("Location: login.php");
-        exit();
-=======
         error_log("No user found with employeeID: " . $employeeID);
         $_SESSION['error_message'] = "ID Pekerja atau kata laluan tidak sah!";
->>>>>>> c192cad77138727941329f7971937c256663f65a
     }
+    
+    header("Location: login.php");
+    exit();
 }
 
 ?>
