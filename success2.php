@@ -17,11 +17,11 @@ if (!isset($_SESSION['status'])) {
 <body>
     <script>
     $(document).ready(function() {
-        <?php if($_SESSION['status'] == "success"){ ?>
+        <?php if(isset($_SESSION['status']) && $_SESSION['status'] == "success"){ ?>
             Swal.fire({
                 icon: 'success',
                 title: 'Berjaya!',
-                text: '<?php echo $_SESSION['message']; ?>',
+                text: 'Permohonan anda telah berjaya dihantar!',
                 confirmButtonText: 'Semakan Status',
                 confirmButtonColor: '#75B798',
                 allowOutsideClick: false
@@ -34,7 +34,7 @@ if (!isset($_SESSION['status'])) {
             Swal.fire({
                 icon: 'error',
                 title: 'Ralat!',
-                text: '<?php echo $_SESSION['error']; ?>',
+                text: '<?php echo isset($_SESSION['error']) ? $_SESSION['error'] : "Ralat sistem"; ?>',
                 confirmButtonText: 'Kembali',
                 confirmButtonColor: '#75B798',
                 allowOutsideClick: false

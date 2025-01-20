@@ -117,7 +117,7 @@ mysqli_stmt_close($stmt);
 
     <!-- Form content starts here -->
     <div class="form-section">
-        <form id="loanForm" method="POST" enctype="multipart/form-data">
+        <form id="loanForm" method="POST" action="loanApplicationProcess.php" enctype="multipart/form-data" class="needs-validation" novalidate>
             <input type="hidden" name="employeeID" value="<?php echo isset($_SESSION['employeeID']) ? $_SESSION['employeeID'] : ''; ?>">
             <!-- Step 1: Maklumat Peribadi -->
             <div class="form-step" id="step1">
@@ -308,7 +308,7 @@ mysqli_stmt_close($stmt);
                         <h4>Maklumat Penjamin</h4>
                     </div>
 
-                    <!-- Guarantor 1 -->
+                    <!-- First Guarantor -->
                     <div class="form-container">
                         <div class="form-title">
                             <h5>Butir-butir Penjamin 1</h5>
@@ -349,7 +349,7 @@ mysqli_stmt_close($stmt);
                         </div>
                     </div>
 
-                    <!-- Guarantor 2 -->
+                    <!-- Second Guarantor -->
                     <div class="form-container mt-4">
                         <div class="form-title">
                             <h5>Butir-butir Penjamin 2</h5>
@@ -434,29 +434,29 @@ mysqli_stmt_close($stmt);
 
                 <div class="row mb-3">
                     <div class="col-md-6">
-                        <label for="basicSalarySlip" class="form-label">Lampiran Slip Gaji Pokok</label>
-                        <input type="file" 
-                               class="form-control" 
-                               id="basicSalarySlip" 
-                               name="basicSalarySlip" 
-                               accept=".pdf"
-                               max-size="5120"
-                               required>
-                        <div class="invalid-feedback">
-                            Sila muat naik slip gaji pokok
+                        <label for="netSalaryFile" class="form-label">Lampiran Slip Gaji</label>
+                        <div class="mb-2">
+                            <small class="text-grey">
+                                <i class="fas fa-info-circle"></i> 
+                                Nota: Sila pastikan slip gaji TELAH DISAHKAN sebelum dimuat naik
+                            </small>
                         </div>
-                    </div>
-                    <div class="col-md-6">
-                        <label for="netSalarySlip" class="form-label">Lampiran Slip Gaji Bersih</label>
-                        <input type="file" 
-                               class="form-control" 
-                               id="netSalarySlip" 
-                               name="netSalarySlip" 
-                               accept=".pdf"
-                               max-size="5120"
-                               required>
+                        <div class="input-group">
+                            <input type="file" 
+                                   class="form-control" 
+                                   id="netSalaryFile" 
+                                   name="netSalaryFile" 
+                                   accept=".pdf"
+                                   max-size="5120"
+                                   required>
+                            <a href="img\slipgaji.pdf" 
+                               class="btn btn-outline-secondary" 
+                               target="_blank">
+                                <i class="fas fa-eye"></i> Lihat Contoh
+                            </a>
+                        </div>
                         <div class="invalid-feedback">
-                            Sila muat naik slip gaji bersih
+                            Sila muat naik slip gaji yang TELAH DISAHKAN
                         </div>
                     </div>
                 </div>
@@ -491,7 +491,7 @@ mysqli_stmt_close($stmt);
                     </div>
 
                     <!-- Navigation Buttons -->
-                    <div class="button-group">
+                    <div class="button-group mt-3">
                         <button type="button" class="btn btn-secondary prev-step">Kembali</button>
                         <button type="submit" class="btn btn-success" id="submitBtn">Hantar Permohonan</button>
                     </div>
@@ -1261,10 +1261,9 @@ $(document).ready(function() {
         e.preventDefault();
         
         // Validate file sizes before submission
-        const basicSalarySlip = $('#basicSalarySlip')[0].files[0];
-        const netSalarySlip = $('#netSalarySlip')[0].files[0];
+        const netSalaryFile = $('#netSalaryFile')[0].files[0];
         
-        if (!validateFileSize(basicSalarySlip) || !validateFileSize(netSalarySlip)) {
+        if (!validateFileSize(netSalaryFile)) {
             Swal.fire({
                 title: 'Ralat!',
                 text: 'Saiz fail tidak boleh melebihi 5MB',
@@ -1358,26 +1357,6 @@ $(document).ready(function() {
     $('#jumlah_pinjaman, #tempoh_pembayaran').on('input', calculateMonthlyPayment);
 });
 </script>
-<!-- Success Modal
-<div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-body text-center p-5">
-                <div class="success-icon mb-4">
-                    <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
-                        <circle cx="40" cy="40" r="38" stroke="#5CBA9B" stroke-width="4"/>
-                        <path d="M25 40L35 50L55 30" stroke="#5CBA9B" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </div>
-                <h3 class="modal-title mb-3">Berjaya!</h3>
-                <p class="text-muted mb-4">Permohonan pinjaman anda telah berjaya dihantar.</p>
-                <button type="button" class="btn btn-success px-5" onclick="window.location.href='mainpage.php'">
-                    OK
-                </button>
-            </div>
-        </div>
-    </div>
-</div> -->
 
 <script>
 $(document).ready(function() {
@@ -1435,3 +1414,51 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
+<script>
+document.getElementById('loanForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    if (this.checkValidity()) {
+        // Submit form data
+        this.submit();
+    }
+});
+</script>
+
+<script>
+// Add form submission handling
+document.getElementById('submitBtn').addEventListener('click', function(e) {
+    // Prevent double submission
+    this.disabled = true;
+    this.form.submit();
+});
+</script>
+
+<script>
+function submitForm() {
+    console.log('Form submission started'); // Debug line
+    
+    // Get the form element
+    var form = document.getElementById('loanForm');
+    
+    // Submit the form
+    if (form) {
+        form.submit();
+    } else {
+        console.log('Form not found'); // Debug line
+    }
+}
+
+// Add form submission event listener
+document.getElementById('loanForm').addEventListener('submit', function(e) {
+    console.log('Form submitted via event listener'); // Debug line
+    
+    // Prevent default only if validation fails
+    if (!this.checkValidity()) {
+        e.preventDefault();
+        return false;
+    }
+    
+    // If validation passes, let the form submit
+    return true;
+});
+</script>
