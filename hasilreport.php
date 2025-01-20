@@ -1,3 +1,11 @@
+<?php
+// Start the session if needed
+session_start();
+
+// Include the header file
+include 'headeradmin.php';
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -10,21 +18,19 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
   <style>
-.footer {
-   position: fixed;
-   left: 0;
-   bottom: 0;
-   width: 100%;
-   background-color: MediumAquamarine;
-   color: white;
-   text-align: center;
+/* Reset any inherited styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
+/* Critical sidebar styles */
 .navbar {
     position: fixed;
     top: 0;
     left: 0;
-    height: 100%;
+    height: 100vh;
     width: 250px;
     background-color: rgb(34, 119, 210);
     padding-top: 20px;
@@ -42,15 +48,35 @@
     transform: translateX(0);
 }
 
-.navbar.initial-state {
-    transition: none !important;
+/* Content positioning */
+.content-container {
+    padding: 80px 20px 20px 20px;
+    transition: margin-left 0.3s ease-in-out;
+    width: 100%;
+    position: relative;
 }
 
-.container-fluid {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+/* Sidebar open state */
+body.sidebar-open .content-container {
+    margin-left: 250px;
+    width: calc(100% - 250px);
 }
+
+/* Ensure the main header stays on top */
+.main-header {
+    z-index: 999;
+}
+
+.footer {
+   position: fixed;
+   left: 0;
+   bottom: 0;
+   width: 100%;
+   background-color: MediumAquamarine;
+   color: white;
+   text-align: center;
+}
+
 .navbar-nav {
     flex-direction: column;
     width: 100%;
@@ -95,7 +121,6 @@
     align-items: center;
     justify-content: space-between;
     padding: 0 20px;
-    z-index: 999;
 }
 
 .menu-button {
@@ -220,14 +245,12 @@
 
 /* Add these styles for sidebar-aware content shifting */
 .content-container {
-    transition: all 0.3s ease-in-out;
-    margin-left: 0;
+    padding: 80px 20px 20px 20px;
+    transition: margin-left 0.3s ease-in-out;
     width: 100%;
-    padding: 80px 20px 20px;  /* Add top padding to account for header */
 }
 
-/* Style for when sidebar is open */
-.sidebar-open .content-container {
+body.sidebar-open .content-container {
     margin-left: 250px;
     width: calc(100% - 250px);
 }
@@ -253,6 +276,13 @@
 
 .required-field.is-invalid {
     border-color: #dc3545;
+}
+
+/* Remove any sidebar-related responsive styles */
+.sidebar-open .content-container,
+.sidebar-closed .content-container {
+    margin-left: 250px !important;
+    width: calc(100% - 250px) !important;
 }
 </style>
 </head>
@@ -289,8 +319,8 @@
         <!-- Add hidden input for selected members -->
         <input type="hidden" name="selected_members" id="selectedMembersInput">
         
-        <h2>Hasil Laporan</h2>
-        <hr style="margin-top: 10px; margin-bottom: 20px;">
+        <h2 style="color: rgb(34, 119, 210);">Hasil Laporan</h2>
+        <hr style="border: 1px solid #ddd; margin-top: 10px; margin-bottom: 20px;">
         
         <div class="report-boxes">
             <div class="report-box">
@@ -410,53 +440,20 @@
     </form>
 </div>
 
-<div class="navbar initial-state closed" id="sidebar">
-  <div class="container-fluid">
-    <div style="display: flex; width: 100%; align-items: center; margin-bottom: 20px;">
-      <i class="fas fa-arrow-left" id="closeSidebar" style="cursor:pointer; font-size: 24px; color: white; position: absolute; left: 20px; top: 20px;"></i>
-      <a class="navbar-brand" href="index.php" style="margin: 0 auto;">
-        <img src="img/kadalogo.jpg" alt="logo" height="60">
-      </a>
-    </div>
-    <ul class="navbar-nav">
-      <li class="nav-item">
-        <a class="nav-link active" href="adminmainpage.php">Laman Utama
-          <span class="visually-hidden">(current)</span>
-        </a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="senaraiahli.php">Ahli Semasa</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="senaraipembiayaan.php">Permohonan Pinjaman</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="hasilreport.php">Hasil Laporan</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="adminviewreport.php">Cek Laporan</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="login.php">Log Keluar</a>
-      </li>
-    </ul>
-  </div>
-</div>
-
-<!-- Add this new modal -->
+<!-- Update the confirmation modal -->
 <div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="confirmationModalLabel">Laporan Berjaya Disiapkan</h5>
+                <h5 class="modal-title" id="confirmationModalLabel">Pengesahan Hasil Laporan</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                Report anda telah berjaya disiapkan. Adakah anda mahu cek/muat turn report ini?
+                Adakah anda pasti untuk menghasilkan laporan ini?
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tidak</button>
-                <button type="button" class="btn btn-primary">Ya</button>
+                <button type="button" class="btn btn-primary" id="confirmSubmit">Ya</button>
             </div>
         </div>
     </div>
@@ -734,67 +731,6 @@ function updateSelectedCount() {
     document.querySelector('#selectedCount span').textContent = selectedItems.size;
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-    const sidebar = document.getElementById('sidebar');
-    const menuButton = document.getElementById('menuButton');
-    const closeSidebar = document.getElementById('closeSidebar');
-    const mainContent = document.body;
-
-    // Remove initial-state class after a brief delay
-    setTimeout(() => {
-        sidebar.classList.remove('initial-state');
-    }, 100);
-
-    function toggleSidebar() {
-        sidebar.classList.toggle('closed');
-        mainContent.classList.toggle('sidebar-open');
-    }
-
-    menuButton.addEventListener('click', toggleSidebar);
-    closeSidebar.addEventListener('click', toggleSidebar);
-
-    // Add pagination click handlers
-    document.querySelectorAll('.pagination .page-link').forEach(link => {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-            const text = this.textContent;
-            const selectedType = document.querySelector('input[name="reportType"]:checked')?.value || 'ahli';
-            
-            if (text === 'Previous') {
-                const activePage = parseInt(document.querySelector('.pagination .active').textContent);
-                if (activePage > 1) {
-                    updateTable(activePage - 1, selectedType);
-                }
-            } else if (text === 'Next') {
-                const activePage = parseInt(document.querySelector('.pagination .active').textContent);
-                if (activePage < 3) {
-                    updateTable(activePage + 1, selectedType);
-                }
-            } else {
-                updateTable(parseInt(text), selectedType);
-            }
-        });
-    });
-
-    // Initialize table with empty state
-    updateTable(1, null);
-});
-
-document.getElementById('selectAll').addEventListener('change', function() {
-    const checkboxes = document.getElementsByClassName('member-checkbox');
-    for(let checkbox of checkboxes) {
-        checkbox.checked = this.checked;
-    }
-    updateSelectedCount();
-});
-
-// Add event listener for individual checkboxes
-document.addEventListener('change', function(e) {
-    if (e.target.classList.contains('member-checkbox')) {
-        updateSelectedCount();
-    }
-});
-
 function showLoadingScreen() {
     // Show confirmation modal immediately instead of after delay
     const confirmationModal = new bootstrap.Modal(document.getElementById('confirmationModal'));
@@ -807,18 +743,21 @@ function validateAndSubmit() {
         return;
     }
     
-    const reportType = document.querySelector('input[name="reportType"]:checked').value;
-    document.getElementById('reportTypeInput').value = reportType;
-    
     const reportFormat = document.querySelector('input[name="reportFormat"]:checked');
     if (!reportFormat) {
         alert('Sila pilih format laporan');
         return;
     }
     
-    // Debug output
-    console.log("Selected items:", Array.from(selectedItems));
-    console.log("Report type:", document.querySelector('input[name="reportType"]:checked').value);
+    const confirmationModal = new bootstrap.Modal(document.getElementById('confirmationModal'));
+    confirmationModal.show();
+}
+
+// Add event listener for the confirm submit button
+document.getElementById('confirmSubmit').addEventListener('click', function() {
+    // Set the report type
+    const reportType = document.querySelector('input[name="reportType"]:checked').value;
+    document.getElementById('reportTypeInput').value = reportType;
     
     // Clear any existing hidden inputs
     const existingInputs = document.querySelectorAll('input[name="selected_members[]"]');
@@ -830,12 +769,16 @@ function validateAndSubmit() {
         input.type = 'hidden';
         input.name = 'selected_members[]';
         input.value = id;
-        console.log("Adding input with value:", id);
         document.getElementById('reportForm').appendChild(input);
     });
     
+    // Hide the modal
+    const confirmationModal = bootstrap.Modal.getInstance(document.getElementById('confirmationModal'));
+    confirmationModal.hide();
+    
+    // Submit the form
     document.getElementById('reportForm').submit();
-}
+});
 
 // Add event listeners to hide validation messages when user makes selections
 document.querySelectorAll('input[name="reportType"]').forEach(radio => {
@@ -934,9 +877,6 @@ function viewMember(employeeID) {
         window.location.href = `senaraiahli.php?id=${employeeID}`;
     }
 }
-
-// Update the modal button to use validateAndSubmit instead
-document.querySelector('#confirmationModal .btn-primary').onclick = validateAndSubmit;
 
 // Add this to clear selections when changing report type
 document.querySelectorAll('input[name="reportType"]').forEach(radio => {

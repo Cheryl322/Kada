@@ -22,21 +22,50 @@ mysqli_stmt_bind_param($stmt_member, 's', $employeeID);
 mysqli_stmt_execute($stmt_member);
 $member = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_member));
 
-// 获取月度交易记录
-$sql_trans = "SELECT * FROM tb_transaction 
-              WHERE employeeID = ? 
-              AND MONTH(transDate) = ? 
-              AND YEAR(transDate) = ?
-              ORDER BY transDate";
-$stmt_trans = mysqli_prepare($conn, $sql_trans);
-mysqli_stmt_bind_param($stmt_trans, 'sii', $employeeID, $month, $year);
-mysqli_stmt_execute($stmt_trans);
-$transactions = mysqli_fetch_all(mysqli_stmt_get_result($stmt_trans), MYSQLI_ASSOC);
+// 获取会员的第一次付款日期
+$sql_first_payment = "SELECT MIN(transDate) as first_payment 
+                     FROM tb_transaction 
+                     WHERE employeeID = ?";
+$stmt_first = mysqli_prepare($conn, $sql_first_payment);
+mysqli_stmt_bind_param($stmt_first, 's', $employeeID);
+mysqli_stmt_execute($stmt_first);
+$first_payment = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_first))['first_payment'];
+
+// 检查当前选择的月份是否是第一次付款的月份
+$is_first_month = false;
+if ($first_payment) {
+    $first_payment_month = date('m', strtotime($first_payment));
+    $first_payment_year = date('Y', strtotime($first_payment));
+    $is_first_month = ($month == $first_payment_month && $year == $first_payment_year);
+}
+
+// 修改主查询
+$sql = "SELECT t.transDate, t.transType, t.transAmt 
+        FROM tb_transaction t
+        WHERE t.employeeID = ? 
+        AND MONTH(t.transDate) = ? 
+        AND YEAR(t.transDate) = ?";
+
+// 如果不是第一个月，排除 entry fee 和 deposit
+if (!$is_first_month) {
+    $sql .= " AND t.transType NOT IN ('Entry Fee', 'Deposit')";
+}
+
+$sql .= " ORDER BY t.transDate DESC";
+
+$stmt = mysqli_prepare($conn, $sql);
+mysqli_stmt_bind_param($stmt, 'sii', $employeeID, $month, $year);
+mysqli_stmt_execute($stmt);
+$result = mysqli_stmt_get_result($stmt);
 
 // 计算总额
-$total_transactions = 0;
-foreach($transactions as $trans) {
-    $total_transactions += $trans['transAmt'];
+$totalAmount = 0;
+if (mysqli_num_rows($result) > 0) {
+    while ($row = mysqli_fetch_assoc($result)) {
+        $totalAmount += $row['transAmt'];
+    }
+    // 重置结果集指针
+    mysqli_data_seek($result, 0);
 }
 
 // 辅助函数：格式化数字为4位
@@ -46,23 +75,61 @@ function formatNumber($number) {
 
 // 获取贷款信息
 $sql_loan = "SELECT 
-    la.*,
-    l.loanID,
-    COALESCE(l.balance, la.amountRequested) as balance,
-    COALESCE(l.loanType, 'Unknown') as loanType,
+    l.loanType,
     la.amountRequested,
     la.monthlyInstallments
-FROM tb_loanapplication la
-LEFT JOIN tb_loan l ON l.loanApplicationID = la.loanApplicationID
-WHERE la.employeeID = ? 
-    AND la.loanStatus = 'Diluluskan'
-ORDER BY la.loanApplicationID DESC 
-LIMIT 1";
+FROM tb_loan l
+JOIN tb_loanapplication la ON l.employeeID = la.employeeID 
+WHERE l.employeeID = ?
+AND la.loanStatus = 'Diluluskan'";
 
 $stmt_loan = mysqli_prepare($conn, $sql_loan);
 mysqli_stmt_bind_param($stmt_loan, 's', $employeeID);
 mysqli_stmt_execute($stmt_loan);
 $loan_data = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_loan));
+
+if ($loan_data) {
+    $totalLoanAmount = $loan_data['amountRequested'];
+    
+    // 获取到指定月份为止的所有还款记录
+    $sql_payments = "SELECT SUM(transAmt) as total_paid
+                    FROM tb_transaction 
+                    WHERE employeeID = ? 
+                    AND transType = 'Bayaran Ba'
+                    AND (
+                        YEAR(transDate) < ? 
+                        OR (YEAR(transDate) = ? AND MONTH(transDate) <= ?)
+                    )";
+
+    $stmt_payments = mysqli_prepare($conn, $sql_payments);
+    mysqli_stmt_bind_param($stmt_payments, 'siii', $employeeID, $year, $year, $month);
+    mysqli_stmt_execute($stmt_payments);
+    $payments = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_payments));
+    
+    $total_paid = $payments['total_paid'] ?? 0;
+    $currentBalance = $totalLoanAmount - $total_paid;
+    
+   
+}
+
+// 获取到选定月份为止的累计储蓄金额
+$sql_savings = "SELECT 
+    SUM(CASE WHEN transType = 'Simpanan-M' THEN transAmt ELSE 0 END) as modalShare,
+    SUM(CASE WHEN transType = 'Simpanan-Y' THEN transAmt ELSE 0 END) as feeCapital,
+    SUM(CASE WHEN transType = 'Simpanan-T' THEN transAmt ELSE 0 END) as contribution,
+    SUM(CASE WHEN transType = 'Simpanan-S' THEN transAmt ELSE 0 END) as fixedDeposit
+FROM tb_transaction 
+WHERE employeeID = ? 
+AND (
+    YEAR(transDate) < ? 
+    OR (YEAR(transDate) = ? AND MONTH(transDate) <= ?)
+)
+AND transType IN ('Simpanan-M', 'Simpanan-Y', 'Simpanan-T', 'Simpanan-S')";
+
+$stmt_savings = mysqli_prepare($conn, $sql_savings);
+mysqli_stmt_bind_param($stmt_savings, 'siii', $employeeID, $year, $year, $month);
+mysqli_stmt_execute($stmt_savings);
+$savings = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_savings));
 ?>
 
 <div class="container mt-5">
@@ -116,27 +183,27 @@ $loan_data = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_loan));
                         <table class="table table-borderless">
                             <tr>
                                 <td width="150">Modal Saham</td>
-                                <td>: RM <?php echo number_format($member['modalShare'] ?? 0, 2); ?></td>
+                                <td>: RM <?php echo number_format($savings['modalShare'], 2); ?></td>
                             </tr>
                             <tr>
                                 <td>ModalYuran</td>
-                                <td>: RM <?php echo number_format($member['feeCapital'] ?? 0, 2); ?></td>
+                                <td>: RM <?php echo number_format($savings['feeCapital'], 2); ?></td>
                             </tr>
                             <tr>
                                 <td>Tabung Anggota</td>
-                                <td>: RM <?php echo number_format($member['contribution'] ?? 0, 2); ?></td>
+                                <td>: RM <?php echo number_format($savings['contribution'], 2); ?></td>
                             </tr>
                             <tr>
                                 <td>Simpanan Tetap</td>
-                                <td>: RM <?php echo number_format($member['fixedDeposit'] ?? 0, 2); ?></td>
+                                <td>: RM <?php echo number_format($savings['fixedDeposit'], 2); ?></td>
                             </tr>
                             <tr>
                                 <td><strong>Jumlah</strong></td>
                                 <td><strong>: RM <?php echo number_format(
-                                    ($member['modalShare'] ?? 0) + 
-                                    ($member['feeCapital'] ?? 0) + 
-                                    ($member['contribution'] ?? 0) + 
-                                    ($member['fixedDeposit'] ?? 0), 
+                                    $savings['modalShare'] + 
+                                    $savings['feeCapital'] + 
+                                    $savings['contribution'] + 
+                                    $savings['fixedDeposit'], 
                                     2); ?></strong></td>
                             </tr>
                         </table>
@@ -150,28 +217,22 @@ $loan_data = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_loan));
                 <div class="row">
                     <div class="col-md-6">
                         <table class="table table-borderless">
-                            <?php if ($loan_data): ?>
-                                <tr>
-                                    <td width="150">Jenis Pinjaman</td>
-                                    <td>: <?php echo $loan_data['loanType']; ?></td>
-                                </tr>
-                                <tr>
-                                    <td>Jumlah Pinjaman</td>
-                                    <td>: RM <?php echo number_format($loan_data['amountRequested'], 2); ?></td>
-                                </tr>
-                                <tr>
-                                    <td>Baki Pinjaman</td>
-                                    <td>: RM <?php echo number_format($loan_data['balance'], 2); ?></td>
-                                </tr>
-                                <tr>
-                                    <td>Bayaran Bulanan</td>
-                                    <td>: RM <?php echo number_format($loan_data['monthlyInstallments'], 2); ?></td>
-                                </tr>
-                            <?php else: ?>
-                                <tr>
-                                    <td colspan="2">Tiada pinjaman aktif</td>
-                                </tr>
-                            <?php endif; ?>
+                            <tr>
+                                <td width="150">Jenis Pinjaman</td>
+                                <td>: <?php echo $loan_data['loanType'] ?? '-'; ?></td>
+                            </tr>
+                            <tr>
+                                <td>Jumlah Pinjaman</td>
+                                <td>: RM <?php echo number_format($totalLoanAmount ?? 0, 2); ?></td>
+                            </tr>
+                            <tr>
+                                <td>Baki Pinjaman</td>
+                                <td>: RM <?php echo number_format($currentBalance ?? 0, 2); ?></td>
+                            </tr>
+                            <tr>
+                                <td>Bayaran Bulanan</td>
+                                <td>: RM <?php echo number_format($loan_data['monthlyInstallments'] ?? 0, 2); ?></td>
+                            </tr>
                         </table>
                     </div>
                 </div>
@@ -191,20 +252,29 @@ $loan_data = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_loan));
                             </tr>
                         </thead>
                         <tbody>
-                            <?php if (count($transactions) > 0): ?>
-                                <?php foreach($transactions as $index => $trans): ?>
+                            <?php 
+                            $no = 1;
+                            if (mysqli_num_rows($result) > 0): 
+                                while ($row = mysqli_fetch_assoc($result)): 
+                            ?>
                                 <tr>
-                                    <td><?php echo formatNumber($index + 1); ?></td>
-                                    <td><?php echo date('d/m/Y', strtotime($trans['transDate'])); ?></td>
-                                    <td><?php echo $trans['transType']; ?></td>
-                                    <td class="text-end"><?php echo number_format($trans['transAmt'], 2); ?></td>
+                                    <td><?php echo $no++; ?></td>
+                                    <td><?php echo isset($row['transDate']) ? date('d/m/Y', strtotime($row['transDate'])) : '-'; ?></td>
+                                    <td><?php echo $row['transType'] ?? '-'; ?></td>
+                                    <td class="text-end"><?php echo isset($row['transAmt']) ? number_format($row['transAmt'], 2) : '0.00'; ?></td>
                                 </tr>
-                                <?php endforeach; ?>
+                            <?php 
+                                endwhile;
+                                if ($totalAmount > 0):
+                            ?>
                                 <tr class="table-light">
                                     <td colspan="3"><strong>JUMLAH</strong></td>
-                                    <td class="text-end"><strong>RM <?php echo number_format($total_transactions, 2); ?></strong></td>
+                                    <td class="text-end"><strong>RM <?php echo number_format($totalAmount, 2); ?></strong></td>
                                 </tr>
-                            <?php else: ?>
+                            <?php 
+                                endif;
+                            else: 
+                            ?>
                                 <tr>
                                     <td colspan="4" class="text-center">Tiada transaksi untuk bulan ini</td>
                                 </tr>
@@ -277,3 +347,14 @@ $loan_data = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_loan));
         padding: 4px 0;
     }
 </style> 
+
+<!-- 添加调试信息 -->
+<?php
+echo "<!-- DEBUG Info:\n";
+echo "Month: $month\n";
+echo "Year: $year\n";
+echo "Total Loan: $totalLoanAmount\n";
+echo "Total Paid: $total_paid\n";
+echo "Current Balance: $currentBalance\n";
+echo "-->";
+?> 

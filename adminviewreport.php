@@ -36,12 +36,32 @@ if (isset($_POST['selected_members']) && is_array($_POST['selected_members'])) {
             // Create a set of existing IDs to avoid duplicates
             $existingIds = array();
             foreach ($_SESSION['reportData'] as $item) {
-                $existingIds[] = $isLoanReport ? $item['loanApplicationID'] : $item['employeeID'];
+                if ($isLoanReport) {
+                    // For loan reports, use combination of employeeID and loanApplicationID
+                    $existingIds[] = $item['employeeID'] . '_' . $item['loanApplicationID'];
+                } else {
+                    // For member reports, just use employeeID
+                    $existingIds[] = $item['employeeID'];
+                }
             }
             
             // Filter out already existing members/loans
-            $newMembers = array_filter($selectedMembers, function($id) use ($existingIds) {
-                return !in_array($id, $existingIds);
+            $newMembers = array_filter($selectedMembers, function($id) use ($existingIds, $isLoanReport, $conn) {
+                if ($isLoanReport) {
+                    // For loan reports, get both employeeID and loanApplicationID
+                    $query = "SELECT employeeID, loanApplicationID FROM tb_loan WHERE loanApplicationID = ?";
+                    $stmt = mysqli_prepare($conn, $query);
+                    mysqli_stmt_bind_param($stmt, 's', $id);
+                    mysqli_stmt_execute($stmt);
+                    $result = mysqli_stmt_get_result($stmt);
+                    $row = mysqli_fetch_assoc($result);
+                    
+                    // Check if this combination already exists
+                    return !in_array($row['employeeID'] . '_' . $row['loanApplicationID'], $existingIds);
+                } else {
+                    // For member reports, just check employeeID
+                    return !in_array($id, $existingIds);
+                }
             });
             
             if (!empty($newMembers)) {
@@ -68,17 +88,34 @@ if (isset($_POST['selected_members']) && is_array($_POST['selected_members'])) {
                         $result = mysqli_stmt_get_result($stmt);
                         
                         while ($row = mysqli_fetch_assoc($result)) {
-                            // Check if this specific loan already exists
-                            $loanExists = false;
-                            foreach ($_SESSION['reportData'] as $existingRow) {
-                                if ($existingRow['loanApplicationID'] === $row['loanApplicationID']) {
-                                    $loanExists = true;
-                                    break;
+                            $entryExists = false;
+                            $originalEntryFound = false;
+                            $originalEntryIndex = null;
+                            
+                            // First, look for an existing member entry without loan details
+                            foreach ($_SESSION['reportData'] as $index => $existingRow) {
+                                if ($existingRow['employeeID'] === $row['employeeID']) {
+                                    if ($existingRow['loanApplicationID'] === $existingRow['employeeID']) {
+                                        // This is an original member entry without loan details
+                                        $originalEntryIndex = $index;
+                                        $originalEntryFound = true;
+                                        break;
+                                    } else if ($existingRow['loanApplicationID'] === $row['loanApplicationID']) {
+                                        // This exact loan application already exists
+                                        $entryExists = true;
+                                        break;
+                                    }
                                 }
                             }
                             
-                            // Add new loan entry if it doesn't exist
-                            if (!$loanExists) {
+                            if ($originalEntryFound) {
+                                // Update the original member entry with the first loan details
+                                $_SESSION['reportData'][$originalEntryIndex]['loanApplicationID'] = $row['loanApplicationID'];
+                                $_SESSION['reportData'][$originalEntryIndex]['tarikh_pembiayaan'] = $row['tarikh_pembiayaan'];
+                                $_SESSION['reportData'][$originalEntryIndex]['reportType'] = 'pembiayaan';
+                                $_SESSION['reportData'][$originalEntryIndex]['amountRequested'] = $row['amountRequested'];
+                            } else if (!$entryExists) {
+                                // Add as new entry if it's not a duplicate loan application
                                 $row['reportType'] = 'pembiayaan';
                                 $_SESSION['reportData'][] = $row;
                             }
@@ -107,7 +144,17 @@ if (isset($_POST['selected_members']) && is_array($_POST['selected_members'])) {
                         $result = mysqli_stmt_get_result($stmt);
                         
                         while ($row = mysqli_fetch_assoc($result)) {
-                            $_SESSION['reportData'][] = $row;
+                            $memberExists = false;
+                            foreach ($_SESSION['reportData'] as $existingRow) {
+                                if ($existingRow['employeeID'] === $row['employeeID']) {
+                                    $memberExists = true;
+                                    break;
+                                }
+                            }
+                            
+                            if (!$memberExists) {
+                                $_SESSION['reportData'][] = $row;
+                            }
                         }
                     }
                 }
@@ -185,49 +232,128 @@ $reportData = $_SESSION['reportData'];
             </tr>
         </thead>
         <tbody>
-            <?php if (!empty($reportData)): ?>
-                <?php foreach ($reportData as $index => $data): ?>
-                    <tr>
-                        <td><?php echo $index + 1; ?></td>
-                        <td><?php echo htmlspecialchars($data['memberName']); ?></td>
-                        <td><?php echo htmlspecialchars($data['employeeID']); ?></td>
-                        <td><?php echo htmlspecialchars($data['tarikh_daftar']); ?></td>
-                        <td class="text-center">
-                            <div class="btn-group" role="group">
-                                <button class="btn btn-primary" onclick="viewMemberStatement('<?php echo $data['employeeID']; ?>')">
-                                    Lihat Penyata
-                                </button>
-                                <button class="btn btn-success" onclick="downloadMemberStatement('<?php echo $data['employeeID']; ?>')">
-                                    <i class="fas fa-download"></i>
-                                </button>
-                            </div>
-                        </td>
-                        <td><?php echo $data['reportType'] === 'member' ? '-' : htmlspecialchars($data['loanApplicationID']); ?></td>
-                        <td><?php echo $data['reportType'] === 'member' ? '-' : htmlspecialchars($data['tarikh_pembiayaan']); ?></td>
-                        <td class="text-center">
-                            <div class="btn-group" role="group">
+            <?php 
+            // Calculate pagination variables
+            $itemsPerPage = 10;
+            $totalItems = count($reportData);
+            $totalPages = ceil($totalItems / $itemsPerPage);
+            $currentPage = isset($_GET['page']) ? max(1, min($totalPages, intval($_GET['page']))) : 1;
+            $startIndex = ($currentPage - 1) * $itemsPerPage;
+            
+            // Get items for current page
+            $pageItems = array_slice($reportData, $startIndex, $itemsPerPage);
+            
+            if (!empty($pageItems)): 
+                foreach ($pageItems as $index => $data): 
+                    $displayIndex = $startIndex + $index + 1;
+            ?>
+                <tr>
+                    <td><?php echo $displayIndex; ?></td>
+                    <td><?php echo htmlspecialchars($data['memberName']); ?></td>
+                    <td><?php echo htmlspecialchars($data['employeeID']); ?></td>
+                    <td><?php echo htmlspecialchars($data['tarikh_daftar']); ?></td>
+                    <td class="text-center">
+                        <div class="btn-group" role="group">
+                            <button class="btn btn-primary" onclick="viewMemberStatement('<?php echo $data['employeeID']; ?>')">
+                                Lihat Penyata
+                            </button>
+                            <button class="btn btn-success" onclick="downloadMemberStatement('<?php echo $data['employeeID']; ?>')">
+                                <i class="fas fa-download"></i>
+                            </button>
+                        </div>
+                    </td>
+                    <td><?php echo $data['reportType'] === 'member' ? '-' : htmlspecialchars($data['loanApplicationID']); ?></td>
+                    <td><?php echo $data['reportType'] === 'member' ? '-' : htmlspecialchars($data['tarikh_pembiayaan']); ?></td>
+                    <td class="text-center">
+                        <div class="btn-group" role="group">
+                            <?php if ($data['reportType'] === 'pembiayaan'): ?>
                                 <button class="btn btn-primary" onclick="viewFinancialStatement('<?php echo $data['loanApplicationID']; ?>', '<?php echo isset($data['reportType']) ? $data['reportType'] : 'member'; ?>')">
                                     Lihat Penyata
                                 </button>
                                 <button class="btn btn-success" onclick="downloadFinancialStatement('<?php echo $data['loanApplicationID']; ?>', '<?php echo isset($data['reportType']) ? $data['reportType'] : 'member'; ?>')">
                                     <i class="fas fa-download"></i>
                                 </button>
-                            </div>
-                        </td>
-                        <td class="text-center">
-                            <button class="btn btn-danger btn-sm" onclick="deleteEntry(<?php echo $index; ?>)">
-                                Padam
-                            </button>
-                        </td>
-                    </tr>
-                <?php endforeach; ?>
-            <?php else: ?>
+                            <?php else: ?>
+                                -
+                            <?php endif; ?>
+                        </div>
+                    </td>
+                    <td class="text-center">
+                        <button class="btn btn-danger btn-sm" onclick="deleteEntry(<?php echo $startIndex + $index; ?>)">
+                            Padam
+                        </button>
+                    </td>
+                </tr>
+            <?php 
+                endforeach; 
+            else: 
+            ?>
                 <tr>
                     <td colspan="9" class="text-center">Tiada data</td>
                 </tr>
             <?php endif; ?>
         </tbody>
     </table>
+
+    <!-- Modified pagination to always show -->
+    <div class="d-flex justify-content-end mt-3">
+        <nav aria-label="Page navigation">
+            <ul class="pagination">
+                <!-- Previous button -->
+                <li class="page-item <?php echo ($currentPage <= 1) ? 'disabled' : ''; ?>">
+                    <a class="page-link" href="?page=<?php echo $currentPage - 1; ?>" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+
+                <!-- Page numbers -->
+                <?php for ($i = 1; $i <= max(1, $totalPages); $i++): ?>
+                    <?php if ($i == 1 || $i == $totalPages || abs($i - $currentPage) <= 2): ?>
+                        <li class="page-item <?php echo ($i == $currentPage) ? 'active' : ''; ?>">
+                            <a class="page-link" href="?page=<?php echo $i; ?>"><?php echo $i; ?></a>
+                        </li>
+                    <?php elseif (abs($i - $currentPage) == 3): ?>
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                    <?php endif; ?>
+                <?php endfor; ?>
+
+                <!-- Next button -->
+                <li class="page-item <?php echo ($currentPage >= $totalPages) ? 'disabled' : ''; ?>">
+                    <a class="page-link" href="?page=<?php echo $currentPage + 1; ?>" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</div>
+
+<!-- Add this button at the bottom of the table -->
+<div class="d-flex justify-content-start mt-4 mb-5" style="margin-left: 20px;">
+    <button type="button" class="btn btn-primary" onclick="showBackConfirmation()">
+        <i class="fas fa-arrow-left me-2"></i>Kembali
+    </button>
+</div>
+
+<!-- Add this new modal -->
+<div class="modal fade" id="backConfirmationModal" tabindex="-1" aria-labelledby="backConfirmationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="backConfirmationModalLabel">Pengesahan</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Adakah anda pasti untuk membuat laporan baru?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tidak</button>
+                <button type="button" class="btn btn-primary" onclick="confirmBack()">Ya</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Modal for viewing statements -->
@@ -350,7 +476,63 @@ function viewLoanReport(employeeID) {
     iframe.src = 'view_report_loan.php?id=' + employeeID;
     $('#loanReportModal').modal('show');
 }
+
+function showBackConfirmation() {
+    const backModal = new bootstrap.Modal(document.getElementById('backConfirmationModal'));
+    backModal.show();
+}
+
+function confirmBack() {
+    // Redirect to hasilreport.php
+    window.location.href = 'hasilreport.php';
+}
 </script>
 
-<?php include 'footer.php'; ?>
+<style>
+body .content-wrapper {
+    position: relative !important;
+    margin-top: 80px !important;
+    padding: 20px !important;
+}
 
+body .content-wrapper .title {
+    position: absolute !important;
+    left: 320px !important;
+    top: 20px !important;
+    font-size: 24px !important;
+    color: #0066cc !important;
+    font-weight: 500 !important;
+    z-index: 1 !important;  /* Added to ensure it's above other elements */
+}
+
+/* Adjust title position when sidebar is closed */
+body .sidebar-closed .content-wrapper .title {
+    left: 120px !important;
+}
+
+/* Adjust margin when sidebar is open */
+.sidebar-open .content-wrapper {
+    margin-left: 270px;  /* Increased from 250px to 270px */
+}
+
+/* Add these specific overrides */
+.title-container {
+    position: fixed !important;
+    top: 70px !important;
+    left: 350px !important;
+    z-index: 1000 !important;
+}
+
+.page-title {
+    font-size: 24px !important;
+    color: #0066cc !important;
+    font-weight: 500 !important;
+}
+
+/* When sidebar is closed */
+.sidebar-closed .title-container {
+    left: 100px !important;
+}
+</style>
+
+<?php include 'footer.php'; ?>

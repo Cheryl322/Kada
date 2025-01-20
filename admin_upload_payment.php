@@ -12,27 +12,116 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $transAmt = $_POST['transAmt'];
     $transDate = $_POST['transDate'];
     
-    // 插入交易记录
-    $sql = "INSERT INTO tb_transaction (employeeID, transType, transAmt, transDate) 
-            VALUES (?, ?, ?, ?)";
-            
-    $stmt = mysqli_prepare($conn, $sql);
-    mysqli_stmt_bind_param($stmt, "ssds", $employeeID, $transType, $transAmt, $transDate);
+    mysqli_begin_transaction($conn);
     
-    if (mysqli_stmt_execute($stmt)) {
-        $_SESSION['success'] = "Payment record uploaded successfully!";
+    try {
+        if ($transType == "Simpanan") {
+            // 检查是否已支付 entry fee 和 deposit
+            $sql_check = "SELECT COUNT(*) as count 
+                         FROM tb_transaction 
+                         WHERE employeeID = ? 
+                         AND transType IN ('Entry Fee', 'Deposit')";
+            
+            $stmt_check = mysqli_prepare($conn, $sql_check);
+            mysqli_stmt_bind_param($stmt_check, 's', $employeeID);
+            mysqli_stmt_execute($stmt_check);
+            $fees_paid = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_check))['count'] > 0;
+            
+            // 如果是首次付款，记录入会费和押金
+            if (!$fees_paid) {
+                // 获取入会费和押金金额
+                $sql_fees = "SELECT entryFee, deposit 
+                            FROM tb_memberregistration_feesandcontribution 
+                            WHERE employeeID = ?";
+                $stmt_fees = mysqli_prepare($conn, $sql_fees);
+                mysqli_stmt_bind_param($stmt_fees, 's', $employeeID);
+                mysqli_stmt_execute($stmt_fees);
+                $fees = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_fees));
+                
+                // 记录入会费和押金
+                $sql_insert = "INSERT INTO tb_transaction (employeeID, transType, transAmt, transDate) 
+                              VALUES (?, 'Entry Fee', ?, ?), (?, 'Deposit', ?, ?)";
+                $stmt_insert = mysqli_prepare($conn, $sql_insert);
+                mysqli_stmt_bind_param($stmt_insert, 'sdssds', 
+                    $employeeID, $fees['entryFee'], $transDate,
+                    $employeeID, $fees['deposit'], $transDate
+                );
+                mysqli_stmt_execute($stmt_insert);
+            }
+            
+            // 获取所有费用和分配信息
+            $sql_fees = "SELECT 
+                modalShare,
+                feeCapital,
+                fixedDeposit,
+                contribution,
+                entryFee,     
+                deposit       
+            FROM tb_memberregistration_feesandcontribution 
+            WHERE employeeID = ?";
+            
+            $stmt_fees = mysqli_prepare($conn, $sql_fees);
+            mysqli_stmt_bind_param($stmt_fees, "s", $employeeID);
+            mysqli_stmt_execute($stmt_fees);
+            $fees = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_fees));
+            
+            // 使用数据库中的入会费和押金
+            $entryFee = $fees['entryFee'];
+            $deposit = $fees['deposit'];
+            $remainingAmount = $transAmt - $entryFee - $deposit;
+            
+            // 插入各类型的交易记录
+            $transactions = [
+                ['Simpanan-M', $fees['modalShare']],
+                ['Simpanan-Y', $fees['feeCapital']],
+                ['Simpanan-S', $fees['fixedDeposit']],
+                ['Simpanan-T', $fees['contribution']]
+            ];
+            
+            // 记录其他储蓄
+            foreach ($transactions as $trans) {
+                $sql = "INSERT INTO tb_transaction (employeeID, transType, transAmt, transDate) 
+                        VALUES (?, ?, ?, ?)";
+                $stmt = mysqli_prepare($conn, $sql);
+                mysqli_stmt_bind_param($stmt, "ssds", $employeeID, $trans[0], $trans[1], $transDate);
+                mysqli_stmt_execute($stmt);
+            }
+            
+            mysqli_commit($conn);
+            $_SESSION['success'] = "Payment record uploaded and allocated successfully!";
+        } else {
+            // 处理其他类型的交易（如贷款还款）
+            $sql = "INSERT INTO tb_transaction (employeeID, transType, transAmt, transDate) 
+                    VALUES (?, ?, ?, ?)";
+            $stmt = mysqli_prepare($conn, $sql);
+            mysqli_stmt_bind_param($stmt, "ssds", $employeeID, $transType, $transAmt, $transDate);
+            
+            if (mysqli_stmt_execute($stmt)) {
+                mysqli_commit($conn);
+                $_SESSION['success'] = "Payment record uploaded successfully!";
+            } else {
+                throw new Exception("Error uploading payment record");
+            }
+        }
+        
         header("Location: admin_upload_payment.php");
         exit();
-    } else {
-        $_SESSION['error'] = "Error uploading payment record: " . mysqli_error($conn);
+        
+    } catch (Exception $e) {
+        mysqli_rollback($conn);
+        $_SESSION['error'] = "Error: " . $e->getMessage();
         header("Location: admin_upload_payment.php");
         exit();
     }
 }
 
-// 获取所有会员列表
+// 获取所有会员列表..
 $sql_members = "SELECT employeeID, memberName FROM tb_member ORDER BY employeeID ASC";
 $result_members = mysqli_query($conn, $sql_members);
+
+function formatNumber($number) {
+    return str_pad($number, 4, '0', STR_PAD_LEFT);
+}
 ?>
 
 <!DOCTYPE html>
@@ -51,6 +140,10 @@ $result_members = mysqli_query($conn, $sql_members);
             background: white;
             border-radius: 10px;
             box-shadow: 0 0 15px rgba(0,0,0,0.1);
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
         }
     </style>
 </head>
