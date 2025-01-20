@@ -16,6 +16,39 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     
     try {
         if ($transType == "Simpanan") {
+            // 检查是否已支付 entry fee 和 deposit
+            $sql_check = "SELECT COUNT(*) as count 
+                         FROM tb_transaction 
+                         WHERE employeeID = ? 
+                         AND transType IN ('Entry Fee', 'Deposit')";
+            
+            $stmt_check = mysqli_prepare($conn, $sql_check);
+            mysqli_stmt_bind_param($stmt_check, 's', $employeeID);
+            mysqli_stmt_execute($stmt_check);
+            $fees_paid = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_check))['count'] > 0;
+            
+            // 如果是首次付款，记录入会费和押金
+            if (!$fees_paid) {
+                // 获取入会费和押金金额
+                $sql_fees = "SELECT entryFee, deposit 
+                            FROM tb_memberregistration_feesandcontribution 
+                            WHERE employeeID = ?";
+                $stmt_fees = mysqli_prepare($conn, $sql_fees);
+                mysqli_stmt_bind_param($stmt_fees, 's', $employeeID);
+                mysqli_stmt_execute($stmt_fees);
+                $fees = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_fees));
+                
+                // 记录入会费和押金
+                $sql_insert = "INSERT INTO tb_transaction (employeeID, transType, transAmt, transDate) 
+                              VALUES (?, 'Entry Fee', ?, ?), (?, 'Deposit', ?, ?)";
+                $stmt_insert = mysqli_prepare($conn, $sql_insert);
+                mysqli_stmt_bind_param($stmt_insert, 'sdssds', 
+                    $employeeID, $fees['entryFee'], $transDate,
+                    $employeeID, $fees['deposit'], $transDate
+                );
+                mysqli_stmt_execute($stmt_insert);
+            }
+            
             // 获取所有费用和分配信息
             $sql_fees = "SELECT 
                 modalShare,
@@ -44,16 +77,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 ['Simpanan-S', $fees['fixedDeposit']],
                 ['Simpanan-T', $fees['contribution']]
             ];
-            
-            // 记录入会费和押金
-            $sql = "INSERT INTO tb_transaction (employeeID, transType, transAmt, transDate) 
-                    VALUES (?, 'Entry Fee', ?, ?), (?, 'Deposit', ?, ?)";
-            $stmt = mysqli_prepare($conn, $sql);
-            mysqli_stmt_bind_param($stmt, "sdssds", 
-                $employeeID, $entryFee, $transDate,
-                $employeeID, $deposit, $transDate
-            );
-            mysqli_stmt_execute($stmt);
             
             // 记录其他储蓄
             foreach ($transactions as $trans) {
