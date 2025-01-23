@@ -309,6 +309,20 @@ while ($loan = mysqli_fetch_assoc($loans_result)) {
     }
 }
 
+// 获取各类型储蓄的最新总额
+$sql_savings = "SELECT 
+    SUM(CASE WHEN transType = 'Simpanan-M' THEN transAmt ELSE 0 END) as modal_saham,
+    SUM(CASE WHEN transType = 'Simpanan-Y' THEN transAmt ELSE 0 END) as modal_yuran,
+    SUM(CASE WHEN transType = 'Simpanan-S' THEN transAmt ELSE 0 END) as simpanan_tetap,
+    SUM(CASE WHEN transType = 'Simpanan-T' THEN transAmt ELSE 0 END) as tabung_anggota
+FROM tb_transaction 
+WHERE employeeID = ?";
+
+$stmt_savings = mysqli_prepare($conn, $sql_savings);
+mysqli_stmt_bind_param($stmt_savings, 's', $employeeID);
+mysqli_stmt_execute($stmt_savings);
+$savings = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_savings));
+
 // 在页面中只显示一次贷款信息卡片
 ?>
 <div class="mt-4 mb-4 ms-3">
@@ -403,25 +417,25 @@ while ($loan = mysqli_fetch_assoc($loans_result)) {
                         <div class="col-6">
                             <div class="border rounded p-3">
                                 <h6>Modal Saham</h6>
-                                <h4 class="text-primary">RM <?php echo number_format($totals['modalShare'], 2); ?></h4>
+                                <h4 class="text-primary">RM <?php echo number_format($savings['modal_saham'] ?? 0, 2); ?></h4>
                             </div>
                         </div>
                         <div class="col-6">
                             <div class="border rounded p-3">
                                 <h6>Modal Yuran</h6>
-                                <h4 class="text-primary">RM <?php echo number_format($totals['feeCapital'], 2); ?></h4>
+                                <h4 class="text-primary">RM <?php echo number_format($savings['modal_yuran'] ?? 0, 2); ?></h4>
                             </div>
                         </div>
                         <div class="col-6">
                             <div class="border rounded p-3">
                                 <h6>Simpanan Tetap</h6>
-                                <h4 class="text-primary">RM <?php echo number_format($totals['fixedDeposit'], 2); ?></h4>
+                                <h4 class="text-primary">RM <?php echo number_format($savings['simpanan_tetap'] ?? 0, 2); ?></h4>
                             </div>
                         </div>
                         <div class="col-6">
                             <div class="border rounded p-3">
                                 <h6>Tabung Anggota</h6>
-                                <h4 class="text-primary">RM <?php echo number_format($totals['contribution'], 2); ?></h4>
+                                <h4 class="text-primary">RM <?php echo number_format($savings['tabung_anggota'] ?? 0, 2); ?></h4>
                             </div>
                         </div>
                     </div>
