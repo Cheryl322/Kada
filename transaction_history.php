@@ -10,7 +10,7 @@ if (!isset($_SESSION['employeeID'])) {
 
 $employeeID = $_SESSION['employeeID'];
 // 移除前导零
-$employeeID = ltrim($employeeID, '0');
+// $employeeID = ltrim($employeeID, '0');
 
 // 获取筛选参数
 $month = isset($_GET['month']) ? $_GET['month'] : date('m');

@@ -17,19 +17,25 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     require_once "dbconnect.php";
     
     $employeeID = $_POST['employeeID'];
+    $email = $_POST['email'];
     $password = $_POST['password'];
     $admin_key = $_POST['admin_key'];
 
-    // Check if employeeID already exists
-    $checkSql = "SELECT * FROM tb_employee WHERE employeeID = ?";
-    $stmt = mysqli_prepare($conn, $checkSql);
-    mysqli_stmt_bind_param($stmt, 's', $employeeID);
-    mysqli_stmt_execute($stmt);
-    $result = mysqli_stmt_get_result($stmt);
+    // Check if employeeID or email already exists
+    $checkQuery = "SELECT * FROM tb_employee WHERE employeeID = ? OR email = ?";
+    $checkStmt = mysqli_prepare($conn, $checkQuery);
+    mysqli_stmt_bind_param($checkStmt, "ss", $employeeID, $email);
+    mysqli_stmt_execute($checkStmt);
+    $result = mysqli_stmt_get_result($checkStmt);
 
     if (mysqli_num_rows($result) > 0) {
-        $_SESSION['error_message'] = "Employee ID already exists!";
-        header("Location: register.php");
+        $row = mysqli_fetch_assoc($result);
+        if ($row['employeeID'] === $employeeID) {
+            $_SESSION['error_message'] = 'ID Pekerja telah didaftarkan.';
+        } else {
+            $_SESSION['error_message'] = 'Email telah didaftarkan.';
+        }
+        header('Location: register.php');
         exit();
     }
 
@@ -45,18 +51,28 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $role = "user";
     }
 
-    // Insert new user
-    $sql = "INSERT INTO tb_employee (employeeID, password, role) VALUES (?, ?, ?)";
-    $stmt = mysqli_prepare($conn, $sql);
-    mysqli_stmt_bind_param($stmt, 'sss', $employeeID, $password, $role);
+    // Hash the password
+    $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
 
-    if (mysqli_stmt_execute($stmt)) {
-        $_SESSION['success_message'] = "Pendaftaran berjaya! Sila log masuk.";
-        header("Location: login.php");
+    // Insert new user
+    $insertQuery = "INSERT INTO tb_employee (employeeID, email, password, role) VALUES (?, ?, ?, ?)";
+    $insertStmt = mysqli_prepare($conn, $insertQuery);
+    
+    if (!$insertStmt) {
+        $_SESSION['error_message'] = 'Sistem ralat.';
+        header('Location: register.php');
+        exit();
+    }
+    
+    mysqli_stmt_bind_param($insertStmt, "ssss", $employeeID, $email, $hashedPassword, $role);
+    
+    if (mysqli_stmt_execute($insertStmt)) {
+        $_SESSION['success_message'] = 'Pendaftaran berjaya! Sila log masuk.';
+        header('Location: login.php');
         exit();
     } else {
-        $_SESSION['error_message'] = "Error during registration. Please try again.";
-        header("Location: register.php");
+        $_SESSION['error_message'] = 'Ralat semasa pendaftaran.';
+        header('Location: register.php');
         exit();
     }
 }
@@ -222,13 +238,26 @@ body::before {
                 <?php endif; ?>
 
                 <form action="" method="POST">
-                    <div class="mb-4">
-                        <label for="employeeID" class="form-label">
-                            <i class="fas fa-id-card"></i>
-                            Employee ID
-                        </label>
-                        <input type="text" class="form-control" id="employeeID" name="employeeID" 
-                               placeholder="Masukkan employee ID" required>
+                    <div class="mb-3">
+                        <label for="employeeID" class="form-label">ID Pekerja</label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="employeeID" 
+                               name="employeeID" 
+                               required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" 
+                               class="form-control" 
+                               id="email" 
+                               name="email" 
+                               placeholder="Masukkan email anda"
+                               required>
+                        <small class="form-text text-muted">
+                            Email ini akan digunakan untuk reset kata laluan jika diperlukan.
+                        </small>
                     </div>
                     
                     <div class="mb-4">

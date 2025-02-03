@@ -149,4 +149,18 @@ class EmailHelper {
             throw new Exception("Gagal menghantar email: " . $e->getMessage());
         }
     }
+
+    public function sendPasswordResetEmail($to, $body) {
+        try {
+            $this->mail->addAddress($to);
+            $this->mail->isHTML(true);
+            $this->mail->Subject = 'Reset Kata Laluan KADA Ahli';
+            $this->mail->Body = $body;
+            $this->mail->send();
+            return true;
+        } catch (Exception $e) {
+            error_log("Email Error: " . $e->getMessage());
+            throw $e;
+        }
+    }
 } 
