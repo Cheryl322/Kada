@@ -23,20 +23,40 @@ if ($stmt) {
     mysqli_stmt_close($stmt);
 }
 
-// 获取交易数据
-$sql_trans = "SELECT 
-    COUNT(DISTINCT transDate) as payment_count,
-    SUM(CASE WHEN transType = 'Simpanan-M' THEN transAmt ELSE 0 END) as modal_saham,
-    SUM(CASE WHEN transType = 'Simpanan-S' THEN transAmt ELSE 0 END) as simpanan_tetap,
-    SUM(CASE WHEN transType = 'Simpanan-T' THEN transAmt ELSE 0 END) as tabung_anggota,
-    SUM(CASE WHEN transType = 'Simpanan-Y' THEN transAmt ELSE 0 END) as model_yuran
-FROM tb_transaction 
-WHERE employeeID = ?";
+// 获取实际交易总额
+$sql_trans = "SELECT transType, transAmt 
+              FROM tb_transaction 
+              WHERE employeeID = ?";
 
 $stmt_trans = mysqli_prepare($conn, $sql_trans);
 mysqli_stmt_bind_param($stmt_trans, 'i', $employeeID);
 mysqli_stmt_execute($stmt_trans);
-$trans_data = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_trans));
+$result_trans = mysqli_stmt_get_result($stmt_trans);
+
+// 添加调试信息
+echo "<!-- Transaction Records:";
+while ($row = mysqli_fetch_assoc($result_trans)) {
+    echo "\nType: " . $row['transType'] . ", Amount: " . $row['transAmt'];
+}
+echo " -->";
+
+// 重置结果集指针
+mysqli_data_seek($result_trans, 0);
+
+// 计算总额
+$totalSavings = 0;
+while ($row = mysqli_fetch_assoc($result_trans)) {
+    switch($row['transType']) {
+        case 'Simpanan-M':
+        case 'Simpanan-S':
+        case 'Simpanan-T':
+        case 'Simpanan-Y':
+        case 'BAYARAN':
+        case 'DEPOSIT':
+            $totalSavings += $row['transAmt'];
+            break;
+    }
+}
 
 // 获取费用分配信息
 $sql_fees = "SELECT 
@@ -137,95 +157,154 @@ Simpanan Tetap: $simpananTetap
 Tabung Anggota: $tabungAnggota
 -->";
 
-// 计算总存款
-$totalSavings = $trans_data['total_all'] ?? 0;
-
-// 获取会员的存款总额
-$sqlSavings = "SELECT 
-    m.employeeID,
-    m.memberName,
-    b.accountNo,
-    COALESCE(SUM(t.transAmt), 0) as total_savings,
-    MAX(t.transDate) as last_update
-FROM tb_member m
-LEFT JOIN tb_bank b ON m.employeeID = b.employeeID
-LEFT JOIN tb_transaction t ON m.employeeID = t.employeeID
-WHERE m.employeeID = ?
-GROUP BY m.employeeID, m.memberName, b.accountNo";
-
-$stmt = mysqli_prepare($conn, $sqlSavings);
+// 获取账号信息
+$sqlBank = "SELECT accountNo FROM tb_bank WHERE employeeID = ? ORDER BY bankID DESC LIMIT 1";
+$stmt = mysqli_prepare($conn, $sqlBank);
 mysqli_stmt_bind_param($stmt, "s", $employeeID);
 mysqli_stmt_execute($stmt);
 $result = mysqli_stmt_get_result($stmt);
+$accountNo = ($row = mysqli_fetch_assoc($result)) ? $row['accountNo'] : '-';
+$lastUpdate = date('d M Y, h:i A');
 
-if ($row = mysqli_fetch_assoc($result)) {
-    $totalSavings = $row['total_savings'];
-    $accountNo = $row['accountNo'];
-    $memberName = $row['memberName'];
-    $lastUpdate = $row['last_update'] ? date('d M Y, h:i A', strtotime($row['last_update'])) : date('d M Y, h:i A');
-} else {
-    $totalSavings = 0;
-    $accountNo = '-';
-    $memberName = '-';
-    $lastUpdate = date('d M Y, h:i A');
-}
+// 首先更新贷款余额
+$sql_update_balance = "UPDATE tb_loan l
+JOIN tb_loanapplication la ON l.employeeID = la.employeeID 
+SET l.balance = CASE 
+    WHEN l.balance IS NULL THEN la.amountRequested 
+    ELSE l.balance 
+END
+WHERE l.employeeID = ?
+AND la.loanStatus = 'Diluluskan'";
 
-// 获取贷款信息
+$stmt_update = mysqli_prepare($conn, $sql_update_balance);
+mysqli_stmt_bind_param($stmt_update, 's', $employeeID);
+mysqli_stmt_execute($stmt_update);
+
+// 获取已支付的贷款金额
+$sql_payments = "SELECT SUM(transAmt) as total_paid
+FROM tb_transaction 
+WHERE employeeID = ? 
+AND transType = 'Bayaran Ba'";  
+
+$stmt_payments = mysqli_prepare($conn, $sql_payments);
+mysqli_stmt_bind_param($stmt_payments, 's', $employeeID);
+mysqli_stmt_execute($stmt_payments);
+$payments = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_payments));
+$total_paid = $payments['total_paid'] ?? 0;
+
+// 然后获取贷款信息
 $sql_loan = "SELECT 
-    la.*,
-    l.loanID,
-    COALESCE(l.balance, la.amountRequested) as balance,  
-    COALESCE(l.loanType, 'Unknown') as loanType,
+    l.loanType,
+    l.balance,
     la.amountRequested,
     la.monthlyInstallments
-FROM tb_loanapplication la
-LEFT JOIN tb_loan l ON l.loanApplicationID = la.loanApplicationID
-WHERE la.employeeID = ? 
-    AND la.loanStatus = 'Diluluskan'
-ORDER BY la.loanApplicationID DESC 
-LIMIT 1";
+FROM tb_loan l
+JOIN tb_loanapplication la ON l.employeeID = la.employeeID 
+WHERE l.employeeID = ?
+AND la.loanStatus = 'Diluluskan'";
 
 $stmt_loan = mysqli_prepare($conn, $sql_loan);
 mysqli_stmt_bind_param($stmt_loan, 's', $employeeID);
 mysqli_stmt_execute($stmt_loan);
-$result_loan = mysqli_stmt_get_result($stmt_loan);
-$loan_data = mysqli_fetch_assoc($result_loan);
+$result = mysqli_stmt_get_result($stmt_loan);
 
-// 设置贷款变量
-$loanAmount = $loan_data['amountRequested'] ?? 0;
-$balance = $loan_data['balance'] ?? $loanAmount;  // 如果 balance 为空，使用 amountRequested
-$monthlyPayment = $loan_data['monthlyInstallments'] ?? 0;
-$loanType = $loan_data['loanType'] ?? '';
+// 初始化变量
+$totalLoanAmount = 0;
+$totalBalance = 0;
+$loanInfo = '';
+
+if ($loan = mysqli_fetch_assoc($result)) {
+    $totalLoanAmount = $loan['amountRequested'];
+    $totalBalance = $totalLoanAmount - $total_paid;  // 计算实际余额
+    $loanInfo = "Jenis Pinjaman: {$loan['loanType']}\nBayaran Bulanan: RM " . number_format($loan['monthlyInstallments'], 2);
+    
+    // 更新 tb_loan 的 balance
+    $sql_update = "UPDATE tb_loan 
+                   SET balance = ? 
+                   WHERE employeeID = ? 
+                   AND loanType = ?";
+    $stmt_update = mysqli_prepare($conn, $sql_update);
+    mysqli_stmt_bind_param($stmt_update, 'dss', $totalBalance, $employeeID, $loan['loanType']);
+    mysqli_stmt_execute($stmt_update);
+} 
+
+// 获取 tb_financialstatus 中的最新总额
+$sql_totals = "SELECT 
+    modalShare,   
+    feeCapital,    
+    fixedDeposit,  
+    contribution   
+FROM tb_financialstatus 
+WHERE employeeID = ?";
+
+$stmt_totals = mysqli_prepare($conn, $sql_totals);
+mysqli_stmt_bind_param($stmt_totals, 's', $employeeID);
+mysqli_stmt_execute($stmt_totals);
+$totals = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_totals));
+
+// 更新 tb_financialstatus 表
+$sql_update = "INSERT INTO tb_financialstatus 
+               (employeeID, modalShare, feeCapital, contribution, fixedDeposit, dateUpdated)
+               VALUES (?, ?, ?, ?, ?, UNIX_TIMESTAMP())
+               ON DUPLICATE KEY UPDATE 
+               modalShare = VALUES(modalShare),
+               feeCapital = VALUES(feeCapital),
+               contribution = VALUES(contribution),
+               fixedDeposit = VALUES(fixedDeposit),
+               dateUpdated = UNIX_TIMESTAMP()";
+
+$stmt_update = mysqli_prepare($conn, $sql_update);
+mysqli_stmt_bind_param($stmt_update, 'sdddd', 
+    $employeeID,
+    $totals['modalShare'],  // Simpanan-M
+    $totals['feeCapital'],  // Simpanan-Y
+    $totals['fixedDeposit'],  // Simpanan-S
+    $totals['contribution']   // Simpanan-T
+);
+mysqli_stmt_execute($stmt_update);
 
 // 添加调试信息
-echo "<!-- LOAN DEBUG
-SQL: $sql_loan
-EmployeeID: $employeeID
-Loan Data: " . print_r($loan_data, true) . "
-Balance: $balance
-LoanAmount: $loanAmount
+echo "<!-- Financial Status Update:
+Modal Share (Simpanan-M): {$totals['modalShare']}
+Fee Capital (Simpanan-Y): {$totals['feeCapital']}
+Fixed Deposit (Simpanan-S): {$totals['fixedDeposit']}
+Contribution (Simpanan-T): {$totals['contribution']}
 -->";
 
-// 初始化贷款类型金额
+// 获取各类型贷款的金额
+$sql_loans = "SELECT 
+    l.loanType,
+    l.balance
+FROM tb_loan l
+JOIN tb_loanapplication la ON l.employeeID = la.employeeID 
+WHERE l.employeeID = ?
+AND la.loanStatus = 'Diluluskan'";
+
+$stmt_loans = mysqli_prepare($conn, $sql_loans);
+mysqli_stmt_bind_param($stmt_loans, 's', $employeeID);
+mysqli_stmt_execute($stmt_loans);
+$loans_result = mysqli_stmt_get_result($stmt_loans);
+
+// 初始化贷款金额变量
 $albai_amount = 0;
 $alinnah_amount = 0;
 $bpulih_amount = 0;
 $roadtax_amount = 0;
 
-// 根据当前贷款类型设置对应金额
-if ($loan_data) {
-    switch (strtoupper($loanType)) {
+// 设置实际贷款金额
+while ($loan = mysqli_fetch_assoc($loans_result)) {
+    switch($loan['loanType']) {
         case 'AL-BAI':
-            $albai_amount = $balance;
+            $albai_amount = $loan['balance'];
             break;
-        case 'AL-INAH':
-            $alinnah_amount = $balance;
+        case 'AL-INNAH':
+            $alinnah_amount = $loan['balance'];
             break;
         case 'B/PULIH KENDERAAN':
-            $bpulih_amount = $balance;
+            $bpulih_amount = $loan['balance'];
             break;
         case 'ROAD TAX & INSURAN':
-            $roadtax_amount = $balance;
+            $roadtax_amount = $loan['balance'];
             break;
     }
 }
@@ -268,16 +347,16 @@ if ($loan_data) {
                         <i class="fas fa-money-bill-wave me-2"></i>
                         <h5 class="card-title mb-0">Jumlah Pinjaman</h5>
                     </div>
-                    <?php if ($loan_data): ?>
-                        <h2 class="card-text mb-2">RM <?php echo number_format($balance, 2); ?> / <?php echo number_format($loanAmount, 2); ?></h2>
-                        <div class="small">
-                            Jenis Pinjaman: <?php echo $loanType; ?><br>
-                            Bayaran Bulanan: RM <?php echo number_format($monthlyPayment, 2); ?>
-                        </div>
-                    <?php else: ?>
-                        <h2 class="card-text mb-2">RM 0.00 / 0.00</h2>
-                        <div class="small">Tiada pinjaman aktif</div>
-                    <?php endif; ?>
+                    <h2 class="card-text mb-2">RM <?php echo number_format($totalBalance, 2); ?> / <?php echo number_format($totalLoanAmount, 2); ?></h2>
+                    <div class="small">
+                        <?php 
+                        if ($totalLoanAmount > 0) {
+                            echo nl2br($loanInfo);
+                        } else {
+                            echo "Tiada pinjaman aktif";
+                        }
+                        ?>
+                    </div>
                 </div>
             </div>
         </div>
@@ -324,25 +403,25 @@ if ($loan_data) {
                         <div class="col-6">
                             <div class="border rounded p-3">
                                 <h6>Modal Saham</h6>
-                                <h4 class="text-primary">RM <?php echo number_format($modalSaham, 2); ?></h4>
+                                <h4 class="text-primary">RM <?php echo number_format($totals['modalShare'], 2); ?></h4>
                             </div>
                         </div>
                         <div class="col-6">
                             <div class="border rounded p-3">
                                 <h6>Modal Yuran</h6>
-                                <h4 class="text-primary">RM <?php echo number_format($modalYuran, 2); ?></h4>
+                                <h4 class="text-primary">RM <?php echo number_format($totals['feeCapital'], 2); ?></h4>
                             </div>
                         </div>
                         <div class="col-6">
                             <div class="border rounded p-3">
                                 <h6>Simpanan Tetap</h6>
-                                <h4 class="text-primary">RM <?php echo number_format($simpananTetap, 2); ?></h4>
+                                <h4 class="text-primary">RM <?php echo number_format($totals['fixedDeposit'], 2); ?></h4>
                             </div>
                         </div>
                         <div class="col-6">
                             <div class="border rounded p-3">
                                 <h6>Tabung Anggota</h6>
-                                <h4 class="text-primary">RM <?php echo number_format($tabungAnggota, 2); ?></h4>
+                                <h4 class="text-primary">RM <?php echo number_format($totals['contribution'], 2); ?></h4>
                             </div>
                         </div>
                     </div>
@@ -454,7 +533,7 @@ h6 {
     background-color: #FF9999;
     color: white;
     padding: 8px 20px;
-    /* border-radius: 20px; */
+    
     border: none;
     font-size: 14px;
     transition: all 0.3s ease;

@@ -40,7 +40,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $personal_info['position'],        // position
             $personal_info['phoneNumber'],     // phoneNumber
             $personal_info['phoneHome'],       // phoneHome
-            $monthlySalary                     // monthlySalary]]
+            $monthlySalary                     // monthlySalary
         );
 
         if (!mysqli_stmt_execute($stmt)) {

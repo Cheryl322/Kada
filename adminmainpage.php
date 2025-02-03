@@ -39,7 +39,7 @@ if (!isset($_SESSION['employeeID']) || $_SESSION['role'] !== 'admin') {
     justify-content: center;
     align-items: center;
     gap: 30px;
-    padding: 100px 40px 40px 40px;
+    padding: 100px 40px 80px 40px;
     flex-wrap: nowrap;
     width: 100%;
     max-width: 1600px;
@@ -49,10 +49,10 @@ if (!isset($_SESSION['employeeID']) || $_SESSION['role'] !== 'admin') {
 }
 
 .circle {
-    flex: 0 0 200px;
-    width: 200px;
-    height: 200px;
-    min-width: 200px;
+    flex: 0 0 250px;
+    width: 250px;
+    height: 250px;
+    min-width: 250px;
     position: relative;
     z-index: 2;
     background: MediumAquamarine;
@@ -87,44 +87,53 @@ if (!isset($_SESSION['employeeID']) || $_SESSION['role'] !== 'admin') {
     }
     
     .circle {
-        flex: 0 0 180px;
-        width: 180px;
-        height: 180px;
-        min-width: 180px;
+        flex: 0 0 220px;
+        width: 220px;
+        height: 220px;
+        min-width: 220px;
+    }
+    
+    .circle i {
+        font-size: 20.2rem;
+    }
+    
+    .circle span {
+        font-size: 1.3rem;
     }
 }
 
 @media screen and (max-width: 1200px) {
     .circle {
-        flex: 0 0 160px;
-        width: 160px;
-        height: 160px;
-        min-width: 160px;
+        flex: 0 0 200px;
+        width: 200px;
+        height: 200px;
+        min-width: 200px;
     }
     
     .circle i {
-        font-size: 2rem;
+        font-size: 3rem;
     }
     
     .circle span {
-        font-size: 1rem;
+        font-size: 1.3rem;
     }
 }
 
 @media screen and (max-width: 992px) {
     .circle-container {
+        gap: 15px;
         padding-top: 60px;
     }
     
     .circle {
-        flex: 0 0 140px;
-        width: 140px;
-        height: 140px;
-        min-width: 140px;
+        flex: 0 0 180px;
+        width: 180px;
+        height: 180px;
+        min-width: 180px;
     }
     
     .circle i {
-        font-size: 1.8rem;
+        font-size: 2.5rem;
     }
     
     .circle span {
@@ -142,14 +151,16 @@ if (!isset($_SESSION['employeeID']) || $_SESSION['role'] !== 'admin') {
 /* Add these table styles */
 .tables-container {
     display: flex;
-    gap: 30px;
+    gap: 15px;
     padding: 20px 40px;
-    width: calc(100% - 80px);
+    width: 100%;
+    max-width: 1400px;
     margin: 0 auto;
-    justify-content: flex-start;
+    justify-content: center;
     flex-wrap: nowrap;
     transition: transform 0.3s ease-in-out;
     position: relative;
+    margin-top: 40px;
 }
 
 .table-wrapper {
@@ -158,45 +169,44 @@ if (!isset($_SESSION['employeeID']) || $_SESSION['role'] !== 'admin') {
     max-width: calc(50% - 15px);
     min-width: 0;
     background: white;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
 .table-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
+    margin-bottom: 25px;
 }
 
 .table-header h3 {
-    color: rgb(34, 119, 210);
+    font-size: 1.4rem;
+    color: #2277d2;
     margin: 0;
+    font-weight: 600;
 }
 
 .custom-table {
     width: 100%;
-    border-collapse: collapse;
-    table-layout: fixed;
-}
-
-.custom-table th, 
-.custom-table td {
-    padding: 12px;
-    text-align: left;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    border-collapse: separate;
+    border-spacing: 0 8px;
 }
 
 .custom-table th {
     background-color: MediumAquamarine;
     color: white;
+    padding: 15px;
+    font-size: 1.1rem;
 }
 
 .custom-table td {
-    border-bottom: 1px solid #ddd;
+    padding: 12px 15px;
+    background-color: #f8f9fa;
+    border: none;
+    border-top: 1px solid #eee;
+}
+
+.custom-table tr:hover td {
+    background-color: #f0f0f0;
 }
 
 /* Ensure consistent column widths across both tables */
@@ -221,29 +231,30 @@ if (!isset($_SESSION['employeeID']) || $_SESSION['role'] !== 'admin') {
 }
 
 .see-more-link {
-    color: rgb(34, 119, 210);
-    text-decoration: none;
-    font-size: 0.9rem;
-    display: flex;
-    align-items: center;
-    gap: 5px;
+    color: MediumAquamarine;
+    font-weight: 500;
+    padding: 8px 15px;
+    border-radius: 20px;
+    transition: all 0.3s ease;
+    background-color: #e8f5f1;
 }
 
 .see-more-link:hover {
-    color: MediumAquamarine;
+    background-color: MediumAquamarine;
+    color: white;
 }
 
 /* Add responsive styles */
 @media screen and (max-width: 1400px) {
     .circle-container {
         min-height: auto;
-        padding: 20px 10px;
+        padding: 80px 10px 40px 10px;
         margin-bottom: 40px;
     }
 
     .tables-container {
         flex-direction: row;
-        margin-top: 0;
+        margin-top: 20px;
         flex-wrap: nowrap;
         padding-top: 20px;
     }
@@ -283,14 +294,14 @@ if (!isset($_SESSION['employeeID']) || $_SESSION['role'] !== 'admin') {
 }
 
 .circle i {
-    font-size: 2.2rem;
-    margin-bottom: 5px;
+    font-size: 3.5rem;
+    margin-bottom: 12px;
 }
 
 .circle span {
     display: block;
     line-height: 1.3;
-    font-size: 1.1rem;
+    font-size: 1.3rem;
     word-wrap: break-word;
     max-width: 100%;
 }
@@ -532,7 +543,7 @@ if (!isset($_SESSION['employeeID']) || $_SESSION['role'] !== 'admin') {
                     <?php
                     include 'dbconnect.php';
                     
-                    $sql = "SELECT employeeID,memberName, created_at FROM tb_member ORDER BY created_at DESC LIMIT 3";
+                    $sql = "SELECT employeeID,memberName, created_at FROM tb_member ORDER BY created_at DESC LIMIT 5";
                     $result = $conn->query($sql);
                     
                     if ($result->num_rows > 0) {
@@ -578,7 +589,7 @@ if (!isset($_SESSION['employeeID']) || $_SESSION['role'] !== 'admin') {
                     $sql = "SELECT l.loanApplicationID, m.memberName, l.created_at 
                            FROM tb_loan l
                            JOIN tb_member m ON l.employeeID = m.employeeID
-                           ORDER BY l.loanApplicationID DESC LIMIT 3";
+                           ORDER BY l.loanApplicationID DESC LIMIT 5";
                     $result = $conn->query($sql);
                     
                     if ($result->num_rows > 0) {

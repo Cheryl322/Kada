@@ -96,8 +96,23 @@ include "headermember.php";
         
         <!-- Success Message -->
         <p class="success-message">
-            <?php echo isset($_SESSION['success_message']) ? $_SESSION['success_message'] : 'Pendaftaran anda telah berjaya disimpan.'; ?>
+            <?php 
+            if (isset($_SESSION['success_message'])) {
+                echo $_SESSION['success_message'];
+                unset($_SESSION['success_message']);
+            } else {
+                echo 'Pendaftaran anda telah berjaya disimpan.';
+            }
+            ?>
         </p>
+        
+        <?php if (isset($_SESSION['email_sent']) && $_SESSION['email_sent']): ?>
+            <div class="alert alert-success mt-3">
+                <i class="fas fa-envelope me-2"></i>
+                Email pengesahan telah dihantar.
+            </div>
+            <?php unset($_SESSION['email_sent']); ?>
+        <?php endif; ?>
         
         <!-- Action Button -->
         <a href="mainpage.php" class="btn btn-home">

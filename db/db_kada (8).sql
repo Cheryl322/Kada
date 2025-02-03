@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jan 17, 2025 at 08:10 PM
+-- Generation Time: Jan 20, 2025 at 07:40 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -91,7 +91,8 @@ INSERT INTO `tb_bank` (`bankID`, `loanApplicationID`, `employeeID`, `bankName`, 
 (30, 38, 5522, 'UOB Bank', '34'),
 (31, 39, 5522, 'Bank Rakyat', '54'),
 (33, 41, 5522, 'Public Bank', '22'),
-(34, 42, 120, 'Maybank', '5464345353345');
+(34, 42, 4567, 'Public Bank', '1234567891'),
+(35, 43, 9876, 'RHB Bank', '1234567891');
 
 -- --------------------------------------------------------
 
@@ -110,11 +111,12 @@ CREATE TABLE `tb_employee` (
 --
 
 INSERT INTO `tb_employee` (`employeeID`, `password`, `role`) VALUES
-(120, 'neolixin', 'user'),
-(322, 'cheryl', 'user'),
+(322, 'Cheryl@0322', 'user'),
 (1214, '$2y$10$O4h7W84R0fRb2YsErDZSZ.Lm5bBvj2oY9ZB2mOVVtj9L635O3FYcu', 'user'),
 (1234, 'kada2024', 'admin'),
-(5522, 'chau', 'user');
+(4567, 'Cheryl@0322', 'user'),
+(5522, 'chau', 'user'),
+(9876, 'Cheryl@0322', 'user');
 
 -- --------------------------------------------------------
 
@@ -147,17 +149,23 @@ CREATE TABLE `tb_familymemberinfo` (
 --
 
 CREATE TABLE `tb_financialstatus` (
-  `accountID` int(10) NOT NULL,
-  `statementID` int(10) NOT NULL,
-  `memberSaving` int(10) NOT NULL,
-  `alBai` int(10) NOT NULL,
-  `alnnah` int(10) NOT NULL,
-  `bPulihKenderaan` int(10) NOT NULL,
-  `roadTaxInsurance` int(10) NOT NULL,
-  `specialScheme` int(10) NOT NULL,
-  `alQadrul Hassan` int(10) NOT NULL,
+  `employeeID` int(4) NOT NULL,
+  `modalShare` int(11) NOT NULL,
+  `feeCapital` int(11) NOT NULL,
+  `contribution` int(11) NOT NULL,
+  `fixedDeposit` int(11) NOT NULL,
   `dateUpdated` int(10) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `tb_financialstatus`
+--
+
+INSERT INTO `tb_financialstatus` (`employeeID`, `modalShare`, `feeCapital`, `contribution`, `fixedDeposit`, `dateUpdated`) VALUES
+(322, 0, 0, 0, 0, 2147483647),
+(1234, 0, 0, 0, 0, 2147483647),
+(5522, 0, 0, 0, 0, 2147483647),
+(9876, 900, 60, 60, 60, 1737350531);
 
 -- --------------------------------------------------------
 
@@ -191,8 +199,10 @@ INSERT INTO `tb_guarantor` (`guarantorID`, `loanApplicationID`, `employeeID`, `g
 (12, 39, 5522, 'baba', '45', '54', '54', '54'),
 (13, 41, 5522, 'ff', '22', '222', '22', '22'),
 (14, 41, 5522, 'gg', '22', '22', '22', '22'),
-(15, 42, 120, 'neo', '111111223333', '01164559129', '4321', '12231'),
-(16, 42, 120, 'xin', '111111223333', '01164559129', '4321', '2836');
+(15, 42, 4567, 'Ha Ha Ha', '123456789', '22222222', '1235', '1235'),
+(16, 42, 4567, 'dfshjakfgdshajkfgdshaj', '21234656', '45678945', '1214', '1214'),
+(17, 43, 9876, 'Ha Ha Ha', '12345678910', '22222222', '1234', '1235'),
+(18, 43, 9876, 'Liy,LIyLi', '21234656', '45678945', '1214', '1214');
 
 -- --------------------------------------------------------
 
@@ -205,15 +215,15 @@ CREATE TABLE `tb_loan` (
   `loanID` int(11) NOT NULL,
   `loanApplicationID` int(11) NOT NULL,
   `employeeID` int(4) NOT NULL,
-  `amountRequested` decimal(10,2) NOT NULL,
+  `amountRequested` decimal(10,2) NOT NULL COMMENT 'amount that want to pinjam',
   `financingPeriod` int(11) NOT NULL,
   `monthlyInstallments` decimal(10,2) NOT NULL,
   `employerName` varchar(100) NOT NULL,
   `employerIC` varchar(14) NOT NULL,
   `basicSalary` decimal(10,2) NOT NULL,
   `netSalary` decimal(10,2) NOT NULL,
-  `basicSalaryFile` varchar(255) NOT NULL,
   `netSalaryFile` varchar(255) NOT NULL,
+  `balance` decimal(10,2) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -222,13 +232,14 @@ CREATE TABLE `tb_loan` (
 -- Dumping data for table `tb_loan`
 --
 
-INSERT INTO `tb_loan` (`loanType`, `loanID`, `loanApplicationID`, `employeeID`, `amountRequested`, `financingPeriod`, `monthlyInstallments`, `employerName`, `employerIC`, `basicSalary`, `netSalary`, `basicSalaryFile`, `netSalaryFile`, `created_at`, `updated_at`) VALUES
-('', 20, 36, 322, 3000.00, 12, 250.00, 'NAMA MAJIKAN', '222222222222', 2000.00, 1500.00, 'uploads/6786a2674a8b4_MAFEST \'25 UNIT HADIAH (2).pdf', 'uploads/6786a2674aa3b_OPERA \'25 UNIT HADIAH (2).pdf', '2025-01-17 13:27:42', '2025-01-17 13:28:55'),
-('', 21, 37, 322, 3000.00, 12, 250.00, 'NAMA MAJIKAN2', '222222222222', 2000.00, 1500.00, 'uploads/6786a881ba680_M2U_20250113_1518.pdf', 'uploads/6786a881ba7b5_OPERA \'25 UNIT HADIAH (2).pdf', '2025-01-17 13:27:42', '2025-01-17 13:28:55'),
-('', 22, 38, 5522, 4455.00, 4, 1113.75, 'gt', '34', 34.00, 34.00, 'uploads/67872c3b57dd6_Quiz3.pdf', 'uploads/67872c3b58058_Quiz3.pdf', '2025-01-17 13:27:42', '2025-01-17 13:28:55'),
-('', 23, 39, 5522, 5555.00, 4, 1388.75, 'miao', '99', 2000.00, 2000.00, 'uploads/678739c3e166e_Quiz3.pdf', 'uploads/678739c3e18c2_Quiz3.pdf', '2025-01-17 13:27:42', '2025-01-17 13:28:55'),
-('AL-BAI', 24, 41, 5522, 22222.00, 222, 100.10, 'rr', '22', 2222.00, 2222.00, 'uploads/67877e31ccad5_Quiz3.pdf', 'uploads/67877e31ccd61_Quiz3.pdf', '2025-01-17 13:27:42', '2025-01-17 13:28:55'),
-('AL-INAH', 25, 42, 120, 888.00, 3, 296.00, 'Ghazali', '123456789123', 4532.00, 6543.00, 'uploads/678a9846ebe84_Lab 3 Netcom.pdf', 'uploads/678a9846ebf87_Lab 3 Netcom.pdf', '2025-01-17 17:49:58', '2025-01-17 17:49:58');
+INSERT INTO `tb_loan` (`loanType`, `loanID`, `loanApplicationID`, `employeeID`, `amountRequested`, `financingPeriod`, `monthlyInstallments`, `employerName`, `employerIC`, `basicSalary`, `netSalary`, `netSalaryFile`, `balance`, `created_at`, `updated_at`) VALUES
+('AL-BAI', 20, 36, 322, 3000.00, 12, 250.00, 'NAMA MAJIKAN', '222222222222', 2000.00, 1500.00, 'uploads/6786a2674a8b4_MAFEST \'25 UNIT HADIAH (2).pdf', 'uploads/6786a2674aa3b_OPERA \'25 UNIT HADIAH (2).pdf', NULL, '2025-01-18 16:46:10', '2025-01-18 16:47:01'),
+('AL-BAI', 21, 37, 322, 3000.00, 12, 250.00, 'NAMA MAJIKAN2', '222222222222', 2000.00, 1500.00, 'uploads/6786a881ba680_M2U_20250113_1518.pdf', 'uploads/6786a881ba7b5_OPERA \'25 UNIT HADIAH (2).pdf', 2250.00, '2025-01-18 16:46:10', '2025-01-19 01:47:15'),
+('', 22, 38, 5522, 4455.00, 4, 1113.75, 'gt', '34', 34.00, 34.00, 'uploads/67872c3b57dd6_Quiz3.pdf', 'uploads/67872c3b58058_Quiz3.pdf', NULL, '2025-01-18 16:46:10', '2025-01-18 16:47:01'),
+('', 23, 39, 5522, 5555.00, 4, 1388.75, 'miao', '99', 2000.00, 2000.00, 'uploads/678739c3e166e_Quiz3.pdf', 'uploads/678739c3e18c2_Quiz3.pdf', NULL, '2025-01-18 16:46:10', '2025-01-18 16:47:01'),
+('AL-BAI', 24, 41, 5522, 22222.00, 222, 100.10, 'rr', '22', 2222.00, 2222.00, 'uploads/67877e31ccad5_Quiz3.pdf', 'uploads/67877e31ccd61_Quiz3.pdf', 22222.00, '2025-01-18 16:46:10', '2025-01-18 17:10:34'),
+('AL-INAH', 25, 42, 4567, 3000.00, 4, 750.00, 'fdsfaghJKLDGSHAJKLGFD', '12123445645', 5000.00, 5000.00, 'uploads/678be359da59e_Tentative CESCO 4.0.pdf', 'uploads/678be359daa55_SDT_2024_Test (1).pdf', 2250.00, '2025-01-18 17:22:33', '2025-01-18 20:15:29'),
+('AL-BAI', 26, 43, 9876, 3000.00, 12, 250.00, 'fdsfaghJKLDGSHAJKLGFD', '12123445645', 5000.00, 5000.00, 'uploads/678c6e1fe1e1c_UTM - Course Registration Slip.pdf', 'uploads/678c6e1fe238a_UTM - Course Registration Slip.pdf', 2250.00, '2025-01-19 03:14:39', '2025-01-20 04:58:29');
 
 -- --------------------------------------------------------
 
@@ -251,12 +262,13 @@ CREATE TABLE `tb_loanapplication` (
 --
 
 INSERT INTO `tb_loanapplication` (`loanApplicationID`, `employeeID`, `loanApplicationDate`, `loanStatus`, `amountRequested`, `financingPeriod`, `monthlyInstallments`) VALUES
-(36, 322, '2025-01-15', 'Pending', 3000.00, 12, 250.00),
-(37, 322, '2025-01-15', 'Pending', 3000.00, 12, 250.00),
+(36, 322, '2025-01-15', 'Diluluskan', 3000.00, 12, 250.00),
+(37, 322, '2025-01-15', 'Diluluskan', 3000.00, 12, 250.00),
 (38, 5522, '2025-01-15', 'Pending', 4455.00, 4, 1113.75),
 (39, 5522, '2025-01-15', 'Pending', 5555.00, 4, 1388.75),
-(41, 5522, '2025-01-15', 'Pending', 22222.00, 222, 100.10),
-(42, 120, '2025-01-18', 'Pending', 888.00, 3, 296.00);
+(41, 5522, '2025-01-15', 'Diluluskan', 22222.00, 222, 100.10),
+(42, 4567, '2025-01-19', 'Diluluskan', 3000.00, 4, 750.00),
+(43, 9876, '2025-01-19', 'Diluluskan', 3000.00, 12, 250.00);
 
 -- --------------------------------------------------------
 
@@ -300,10 +312,11 @@ CREATE TABLE `tb_member` (
 --
 
 INSERT INTO `tb_member` (`employeeID`, `memberName`, `email`, `ic`, `maritalStatus`, `sex`, `religion`, `nation`, `no_pf`, `position`, `phoneNumber`, `phoneHome`, `monthlySalary`, `created_at`, `updated_at`) VALUES
-(120, 'NEO LI XIN', 'neolixin@gmail.com', '111111223333', 'Bujang', 'Lelaki', 'Buddha', 'Cina', '4321', 'Pelajar', '01164559129', '041111111', 888.00, '2025-01-17 06:28:49', '2025-01-17 06:28:49'),
-(322, 'Cheryl Cheong Kah Voon', 'cheryl@gmail.com', '040322040352', 'Bujang', 'Perempuan', 'Buddha', 'Cina', '322', '322', '1121192282', '035331234', 2000.00, '2025-01-14 11:18:24', '2025-01-14 11:19:10'),
+(322, 'Cheryl Cheong Kah Voon', 'cherylcheong88@gmail.com', '040322040352', 'Bujang', 'Perempuan', 'Buddha', 'Cina', '322', '322', '01121192282', '035331234', 2000.00, '2025-01-14 11:18:24', '2025-01-19 14:18:55'),
 (1214, 'LAU YEE WEN', 'yeewen1214@gmail.com', '041214040018', 'Bujang', 'Perempuan', 'Buddha', 'Cina', '1214', '1214', '123650018', '065293845', 3000.00, '2025-01-13 14:28:42', '2025-01-13 14:28:42'),
-(5522, 'Chau Ying Jia', 'chauyingjia04@gmail.com', '040502080634', 'Bujang', 'Perempuan', 'Buddha', 'Cina', '32', 'student', '0175678907', '055417899', 3000.00, '2025-01-15 03:25:16', '2025-01-15 03:25:16');
+(4567, 'LIM MEI MEI', 'meimei@gmail.com', '123445678912', 'Bujang', 'Perempuan', 'Buddha', 'Cina', '4567', 'Gred 40', '0123456789', '0123456789', 5000.00, '2025-01-18 17:14:58', '2025-01-18 17:14:58'),
+(5522, 'Chau Ying Jia', 'chauyingjia04@gmail.com', '040502080634', 'Bujang', 'Perempuan', 'Buddha', 'Cina', '32', 'student', '0175678907', '055417899', 3000.00, '2025-01-15 03:25:16', '2025-01-15 03:25:16'),
+(9876, 'GUI KAH SIN', 'guigui@gmail.com', '123445678912', 'Bujang', 'Perempuan', 'Buddha', 'Cina', '9876', 'Gred 40', '01121192282', '0123456789', 6000.00, '2025-01-19 03:06:59', '2025-01-19 03:09:22');
 
 -- --------------------------------------------------------
 
@@ -347,11 +360,11 @@ CREATE TABLE `tb_memberregistration_familymemberinfo` (
 --
 
 INSERT INTO `tb_memberregistration_familymemberinfo` (`employeeID`, `relationship`, `name`, `icFamilyMember`) VALUES
-(120, 'Bapa', 'Ahming', '122131-23-2131'),
-(120, 'Ibu', 'Ahseng', '324322-13-1223'),
 (322, 'Anak', 'mini cheryl', '252222-22-2222'),
 (1214, 'Adik-beradik', 'LAU YEE THENG', '980222-04-1111'),
-(5522, 'Ibu', 'Lau Yee Wen', '719999-08-5555');
+(4567, 'Suami', 'Lau Lau Lau', '040600-99-63'),
+(5522, 'Ibu', 'Lau Yee Wen', '719999-08-5555'),
+(9876, 'Suami', 'Lau Lau Lau', '040600-99-63');
 
 -- --------------------------------------------------------
 
@@ -375,10 +388,11 @@ CREATE TABLE `tb_memberregistration_feesandcontribution` (
 --
 
 INSERT INTO `tb_memberregistration_feesandcontribution` (`employeeID`, `entryFee`, `modalShare`, `feeCapital`, `deposit`, `contribution`, `fixedDeposit`, `others`) VALUES
-(120, 0, 300, 20, 0, 0, 0, 0),
-(322, 0, 1000, 0, 0, 0, 1000, 0),
+(322, 100, 1000, 0, 0, 600, 1200, 0),
 (1214, 0, 300, 0, 0, 0, 0, 0),
-(5522, 300, 300, 300, 300, 300, 300, 0);
+(4567, 60, 300, 40, 40, 40, 40, 0),
+(5522, 300, 300, 300, 300, 300, 300, 0),
+(9876, 20, 300, 20, 20, 20, 20, 0);
 
 -- --------------------------------------------------------
 
@@ -398,8 +412,10 @@ CREATE TABLE `tb_memberregistration_memberapplicationdetails` (
 
 INSERT INTO `tb_memberregistration_memberapplicationdetails` (`memberRegistrationID`, `regisDate`, `regisStatus`) VALUES
 (5522, '2025-01-15', 'Diluluskan'),
-(322, '2025-01-17', 'Belum Selesai'),
-(120, '2025-01-17', 'Diluluskan');
+(322, '2025-01-18', 'Diluluskan'),
+(4567, '2025-01-18', 'Diluluskan'),
+(9876, '2025-01-19', 'Diluluskan'),
+(9876, '2025-01-19', 'Diluluskan');
 
 -- --------------------------------------------------------
 
@@ -421,7 +437,7 @@ CREATE TABLE `tb_member_financialstatus` (
 CREATE TABLE `tb_member_homeaddress` (
   `employeeID` int(4) NOT NULL,
   `homeAddress` varchar(255) NOT NULL,
-  `homePostcode` varchar(10) NOT NULL,
+  `homePostcode` int(10) NOT NULL,
   `homeState` varchar(20) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -430,9 +446,10 @@ CREATE TABLE `tb_member_homeaddress` (
 --
 
 INSERT INTO `tb_member_homeaddress` (`employeeID`, `homeAddress`, `homePostcode`, `homeState`) VALUES
-(120, 'Jalan Iman\r\nLebuh', '81310', 'Johor'),
-(322, 'M19', '82000', 'Melaka'),
-(5522, 'IPOH', '31400', 'Perak');
+(322, 'M19', 82000, 'Melaka'),
+(4567, 'KTDI', 81600, 'Johor'),
+(5522, 'IPOH', 31400, 'Perak'),
+(9876, 'KTDI', 81810, 'Johor');
 
 -- --------------------------------------------------------
 
@@ -443,7 +460,7 @@ INSERT INTO `tb_member_homeaddress` (`employeeID`, `homeAddress`, `homePostcode`
 CREATE TABLE `tb_member_officeaddress` (
   `employeeID` int(4) NOT NULL,
   `officeAddress` varchar(255) NOT NULL,
-  `officePostcode` varchar(10) NOT NULL,
+  `officePostcode` int(10) NOT NULL,
   `officeState` varchar(20) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -452,9 +469,10 @@ CREATE TABLE `tb_member_officeaddress` (
 --
 
 INSERT INTO `tb_member_officeaddress` (`employeeID`, `officeAddress`, `officePostcode`, `officeState`) VALUES
-(120, 'Jalan Iman\r\nLebuh', '81310', 'Johor'),
-(322, 'KTDI', '81310', 'Melaka'),
-(5522, 'UTM', '31400', 'Perak');
+(322, 'KTDI', 81316, 'Melaka'),
+(4567, 'UTM', 81810, 'Johor'),
+(5522, 'UTM', 31400, 'Perak'),
+(9876, 'UTM', 81800, 'Johor');
 
 -- --------------------------------------------------------
 
@@ -475,11 +493,52 @@ CREATE TABLE `tb_member_transaction` (
 
 CREATE TABLE `tb_transaction` (
   `employeeID` int(4) NOT NULL,
-  `transID` int(10) NOT NULL,
   `transType` varchar(10) NOT NULL,
   `transAmt` int(6) NOT NULL,
-  `transDate` date NOT NULL
+  `transDate` date NOT NULL,
+  `transID` int(10) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `tb_transaction`
+--
+
+INSERT INTO `tb_transaction` (`employeeID`, `transType`, `transAmt`, `transDate`, `transID`) VALUES
+(4567, 'Simpanan-M', 300, '2025-01-19', 53),
+(4567, 'Simpanan-Y', 40, '2025-01-19', 54),
+(4567, 'Simpanan-S', 40, '2025-01-19', 55),
+(4567, 'Simpanan-T', 40, '2025-01-19', 56),
+(4567, 'Bayaran Ba', 750, '2025-01-19', 57),
+(322, 'Simpanan-M', 1000, '2025-01-03', 58),
+(322, 'Simpanan-S', 1200, '2025-01-03', 59),
+(322, 'Simpanan-T', 600, '2025-01-03', 60),
+(322, 'Simpanan-M', 1000, '2025-01-03', 61),
+(322, 'Simpanan-S', 1200, '2025-01-03', 62),
+(322, 'Simpanan-T', 600, '2025-01-03', 63),
+(322, 'Bayaran Ba', 250, '2025-01-11', 64),
+(322, 'Bayaran Ba', 250, '2025-01-11', 65),
+(322, 'Bayaran Ba', 250, '2025-01-10', 66),
+(9876, 'Entry Fee', 20, '2025-01-19', 80),
+(9876, 'Deposit', 20, '2025-01-19', 81),
+(9876, 'Simpanan-M', 300, '2025-01-19', 82),
+(9876, 'Simpanan-Y', 20, '2025-01-19', 83),
+(9876, 'Simpanan-S', 20, '2025-01-19', 84),
+(9876, 'Simpanan-T', 20, '2025-01-19', 85),
+(9876, 'Entry Fee', 20, '2025-02-19', 86),
+(9876, 'Deposit', 20, '2025-02-19', 87),
+(9876, 'Simpanan-M', 300, '2025-02-19', 88),
+(9876, 'Simpanan-Y', 20, '2025-02-19', 89),
+(9876, 'Simpanan-S', 20, '2025-02-19', 90),
+(9876, 'Simpanan-T', 20, '2025-02-19', 91),
+(9876, 'Entry Fee', 20, '2025-03-19', 92),
+(9876, 'Deposit', 20, '2025-03-19', 93),
+(9876, 'Simpanan-M', 300, '2025-03-19', 94),
+(9876, 'Simpanan-Y', 20, '2025-03-19', 95),
+(9876, 'Simpanan-S', 20, '2025-03-19', 96),
+(9876, 'Simpanan-T', 20, '2025-03-19', 97),
+(9876, 'Bayaran Ba', 250, '2025-01-11', 98),
+(9876, 'Bayaran Ba', 250, '2025-02-11', 99),
+(9876, 'Bayaran Ba', 250, '2025-03-11', 101);
 
 -- --------------------------------------------------------
 
@@ -553,7 +612,7 @@ ALTER TABLE `tb_familymemberinfo`
 -- Indexes for table `tb_financialstatus`
 --
 ALTER TABLE `tb_financialstatus`
-  ADD PRIMARY KEY (`accountID`);
+  ADD PRIMARY KEY (`employeeID`);
 
 --
 -- Indexes for table `tb_guarantor`
@@ -645,7 +704,7 @@ ALTER TABLE `tb_member_transaction`
 -- Indexes for table `tb_transaction`
 --
 ALTER TABLE `tb_transaction`
-  ADD PRIMARY KEY (`employeeID`,`transID`),
+  ADD PRIMARY KEY (`transID`,`employeeID`) USING BTREE,
   ADD KEY `employeeID` (`employeeID`);
 
 --
@@ -664,25 +723,31 @@ ALTER TABLE `tb_transaction_financialstatus`
 -- AUTO_INCREMENT for table `tb_bank`
 --
 ALTER TABLE `tb_bank`
-  MODIFY `bankID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=35;
+  MODIFY `bankID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=36;
 
 --
 -- AUTO_INCREMENT for table `tb_guarantor`
 --
 ALTER TABLE `tb_guarantor`
-  MODIFY `guarantorID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+  MODIFY `guarantorID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 
 --
 -- AUTO_INCREMENT for table `tb_loan`
 --
 ALTER TABLE `tb_loan`
-  MODIFY `loanID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
+  MODIFY `loanID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
 
 --
 -- AUTO_INCREMENT for table `tb_loanapplication`
 --
 ALTER TABLE `tb_loanapplication`
-  MODIFY `loanApplicationID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=43;
+  MODIFY `loanApplicationID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=44;
+
+--
+-- AUTO_INCREMENT for table `tb_transaction`
+--
+ALTER TABLE `tb_transaction`
+  MODIFY `transID` int(10) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=102;
 
 --
 -- Constraints for dumped tables

@@ -27,15 +27,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         
         // 1. Save Fees and Contribution
         $insertFees = "INSERT INTO tb_memberregistration_feesandcontribution 
-                      (employeeID, entryFee, modalShare, feeCapital, deposit, contribution, fixedDeposit) 
-                      VALUES (?, ?, ?, ?, ?, ?, ?)
+                      (employeeID, entryFee, modalShare, feeCapital, deposit, contribution, fixedDeposit, others) 
+                      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                       ON DUPLICATE KEY UPDATE 
                       entryFee = VALUES(entryFee),
                       modalShare = VALUES(modalShare),
                       feeCapital = VALUES(feeCapital),
                       deposit = VALUES(deposit),
                       contribution = VALUES(contribution),
-                      fixedDeposit = VALUES(fixedDeposit)";
+                      fixedDeposit = VALUES(fixedDeposit),
+                      others = VALUES(others)";
 
         $stmt = $conn->prepare($insertFees);
         
@@ -46,15 +47,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $deposit = empty($_POST['wang_deposit']) ? 0 : (int)$_POST['wang_deposit'];
         $contribution = empty($_POST['sumbangan_tabung']) ? 0 : (int)$_POST['sumbangan_tabung'];
         $fixedDeposit = empty($_POST['simpanan_tetap']) ? 0 : (int)$_POST['simpanan_tetap'];
+        $others = empty($_POST['lain_lain']) ? 0 : (int)$_POST['lain_lain'];
 
-        $stmt->bind_param("iiiiiii", 
+        $stmt->bind_param("iiiiiiii", 
             $employeeID,
             $entryFee,
             $modalShare,
             $feeCapital,
             $deposit,
             $contribution,
-            $fixedDeposit
+            $fixedDeposit,
+            $others
         );
 
         if (!$stmt->execute()) {
@@ -97,21 +100,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         // If everything is successful, commit the transaction
         $conn->commit();
-        
-        // Update member registration status to 'Belum Selesai'
-        $updateStatusSql = "INSERT INTO tb_memberregistration_memberapplicationdetails 
-                           (memberRegistrationID, regisDate, regisStatus) 
-                           VALUES (?, NOW(), 'Belum Selesai')
-                           ON DUPLICATE KEY UPDATE 
-                           regisDate = NOW(),
-                           regisStatus = 'Belum Selesai'";
-        
-        $statusStmt = $conn->prepare($updateStatusSql);
-        $statusStmt->bind_param("i", $employeeID);
-        
-        if (!$statusStmt->execute()) {
-            throw new Exception("Error updating registration status: " . $statusStmt->error);
-        }
         
         // Redirect to success page
         $_SESSION['success_message'] = "Maklumat berjaya disimpan!";
@@ -348,6 +336,11 @@ if (isset($conn->error) && $conn->error) {
                             <td>SIMPANAN TETAP</td>
                             <td><input type="number" name="simpanan_tetap" class="form-control" min="0" step="1"></td>
                         </tr>
+                        <tr>
+                            <td>7</td>
+                            <td>LAIN-LAIN</td>
+                            <td><input type="number" name="lain_lain" class="form-control" min="0" step="1"></td>
+                        </tr>
                     </tbody>
                 </table>
                 <div class="text-muted mt-2">
@@ -479,7 +472,8 @@ function validateForm() {
         modal_yuran: document.querySelector('input[name="modal_yuran"]').value,
         wang_deposit: document.querySelector('input[name="wang_deposit"]').value,
         sumbangan_tabung: document.querySelector('input[name="sumbangan_tabung"]').value,
-        simpanan_tetap: document.querySelector('input[name="simpanan_tetap"]').value
+        simpanan_tetap: document.querySelector('input[name="simpanan_tetap"]').value,
+        lain_lain: document.querySelector('input[name="lain_lain"]').value
     };
 
     // Debug: Log fees data

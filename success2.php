@@ -16,7 +16,7 @@ if (!isset($_SESSION['status'])) {
 </head>
 <body>
     <script>
-    $(document).ready(function() {
+    document.addEventListener('DOMContentLoaded', function() {
         <?php if($_SESSION['status'] == "success"){ ?>
             Swal.fire({
                 icon: 'success',
@@ -26,9 +26,7 @@ if (!isset($_SESSION['status'])) {
                 confirmButtonColor: '#75B798',
                 allowOutsideClick: false
             }).then((result) => {
-                if (result.isConfirmed) {
-                    window.location.href = 'statuspermohonanloan.php';
-                }
+                window.location.href = 'mainpage.php';
             });
         <?php } else { ?>
             Swal.fire({
@@ -39,9 +37,7 @@ if (!isset($_SESSION['status'])) {
                 confirmButtonColor: '#75B798',
                 allowOutsideClick: false
             }).then((result) => {
-                if (result.isConfirmed) {
-                    window.location.href = 'statuspermohonanloan.php';
-                }
+                window.location.href = 'mainpage.php';
             });
         <?php } ?>
     });
@@ -54,4 +50,4 @@ if (!isset($_SESSION['status'])) {
     unset($_SESSION['error']);
     ?>
 </body>
-</html>
+</html> 

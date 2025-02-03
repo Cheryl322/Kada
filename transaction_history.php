@@ -16,15 +16,41 @@ $employeeID = ltrim($employeeID, '0');
 $month = isset($_GET['month']) ? $_GET['month'] : date('m');
 $year = isset($_GET['year']) ? $_GET['year'] : date('Y');
 
-// SQL 查询
-$sql = "SELECT transDate, transType, transAmt 
-        FROM tb_transaction 
-        WHERE employeeID = '$employeeID' 
-        AND MONTH(transDate) = $month 
-        AND YEAR(transDate) = $year
-        ORDER BY transDate DESC";
+// 获取会员的第一次付款日期
+$sql_first_payment = "SELECT MIN(transDate) as first_payment 
+                     FROM tb_transaction 
+                     WHERE employeeID = ?";
+$stmt_first = mysqli_prepare($conn, $sql_first_payment);
+mysqli_stmt_bind_param($stmt_first, 's', $employeeID);
+mysqli_stmt_execute($stmt_first);
+$first_payment = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_first))['first_payment'];
 
-$result = mysqli_query($conn, $sql);
+// 检查当前选择的月份是否是第一次付款的月份
+$is_first_month = false;
+if ($first_payment) {
+    $first_payment_month = date('m', strtotime($first_payment));
+    $first_payment_year = date('Y', strtotime($first_payment));
+    $is_first_month = ($month == $first_payment_month && $year == $first_payment_year);
+}
+
+// 修改主查询
+$sql = "SELECT t.transDate, t.transType, t.transAmt 
+        FROM tb_transaction t
+        WHERE t.employeeID = ? 
+        AND MONTH(t.transDate) = ? 
+        AND YEAR(t.transDate) = ?";
+
+// 如果不是第一个月，排除 entry fee 和 deposit
+if (!$is_first_month) {
+    $sql .= " AND t.transType NOT IN ('Entry Fee', 'Deposit')";
+}
+
+$sql .= " ORDER BY t.transDate DESC";
+
+$stmt = mysqli_prepare($conn, $sql);
+mysqli_stmt_bind_param($stmt, 'sii', $employeeID, $month, $year);
+mysqli_stmt_execute($stmt);
+$result = mysqli_stmt_get_result($stmt);
 
 if (!$result) {
     die("Query failed: " . mysqli_error($conn));

@@ -2,13 +2,13 @@
 session_start();
 require_once 'dbconnect.php';
 
-// Check if employeeID is provided
-if (!isset($_GET['employeeID'])) {
+// Check if loanApplicationID is provided
+if (!isset($_GET['loanApplicationID'])) {
     header('HTTP/1.1 400 Bad Request');
-    exit('Employee ID is required');
+    exit('Loan Application ID is required');
 }
 
-$employeeID = $_GET['employeeID'];
+$loanApplicationID = $_GET['loanApplicationID'];
 
 try {
     require_once('tcpdf/tcpdf.php');
@@ -37,13 +37,25 @@ try {
     $pdf->SetMargins(15, 15, 15);
     $pdf->AddPage();
     
-    // Query loan data and employee data
-    $query = "SELECT l.*, m.memberName, m.employeeID, m.ic, m.no_pf 
-              FROM tb_loan l 
-              JOIN tb_member m ON l.employeeID = m.employeeID 
-              WHERE l.employeeID = ?";
+    // Query loan data and employee data - updated to use loanApplicationID
+    $query = "SELECT 
+                m.memberName,
+                m.employeeID,
+                m.ic,
+                m.no_pf,
+                l.loanApplicationID,
+                l.loanID,
+                l.loanType,
+                l.amountRequested,
+                l.financingPeriod,
+                l.monthlyInstallments,
+                DATE_FORMAT(l.created_at, '%d/%m/%Y') as tarikh_pembiayaan
+              FROM tb_member m
+              INNER JOIN tb_loan l ON m.employeeID = l.employeeID
+              WHERE l.loanApplicationID = ?";
+              
     $stmt = mysqli_prepare($conn, $query);
-    mysqli_stmt_bind_param($stmt, 's', $employeeID);
+    mysqli_stmt_bind_param($stmt, "s", $loanApplicationID);
 
     // Add debugging before query execution
     if (!$stmt) {
@@ -55,7 +67,7 @@ try {
     
     // Verify data was retrieved
     if (!$data = mysqli_fetch_assoc($result)) {
-        throw new Exception("No data found for employee ID: " . $employeeID);
+        throw new Exception("No data found for Loan Application ID: " . $loanApplicationID);
     }
 
     // Add content to PDF
@@ -88,6 +100,9 @@ try {
     $pdf->Cell(0, 10, 'Maklumat Pembiayaan', 0, 1, 'L');
     $pdf->SetFont('helvetica', '', 11);
     
+    $pdf->Cell(40, 8, 'No. Pembiayaan', 1, 0);
+    $pdf->Cell(150, 8, htmlspecialchars($data['loanID']), 1, 1);
+    
     $pdf->Cell(40, 8, 'Jenis Pembiayaan', 1, 0);
     $pdf->Cell(150, 8, $data['loanType'], 1, 1);
     
@@ -99,6 +114,10 @@ try {
     
     $pdf->Cell(40, 8, 'Ansuran Bulanan', 1, 0);
     $pdf->Cell(150, 8, 'RM ' . number_format($data['monthlyInstallments'], 2), 1, 1);
+
+    // Add tarikh_pembiayaan to PDF
+    $pdf->Cell(40, 8, 'Tarikh Pembiayaan', 1, 0);
+    $pdf->Cell(150, 8, $data['tarikh_pembiayaan'], 1, 1);
 
     // Add timestamp
     $pdf->Ln(10);
@@ -114,9 +133,9 @@ try {
     header('Pragma: public');
     header('Expires: Sat, 26 Jul 1997 05:00:00 GMT');
     header('Last-Modified: '.gmdate('D, d M Y H:i:s').' GMT');
-    header('Content-Disposition: attachment; filename="financial_statement_' . $employeeID . '.pdf"');
+    header('Content-Disposition: attachment; filename="financial_statement_' . $loanApplicationID . '.pdf"');
     
-    $pdf->Output('financial_statement_' . $employeeID . '.pdf', 'D');
+    $pdf->Output('financial_statement_' . $loanApplicationID . '.pdf', 'D');
     exit();
 
 } catch (Exception $e) {

@@ -1,15 +1,10 @@
 <?php
-ini_set('upload_max_filesize', '10M');
-ini_set('post_max_size', '10M');
-ini_set('memory_limit', '256M');
-
 session_start();
 include "dbconnect.php";
 
 // Debug: Print all received data
-error_log("Loan application process started");
-error_log("POST data received: " . print_r($_POST, true));
-error_log("FILES data received: " . print_r($_FILES, true));
+error_log("POST Data: " . print_r($_POST, true));
+error_log("FILES Data: " . print_r($_FILES, true));
 
 // Check if guarantor data exists
 if (empty($_POST['guarantorName1']) || empty($_POST['guarantorName2'])) {
@@ -109,13 +104,22 @@ try {
     }
 
     // 3. Insert into tb_loan
-    $loanType = $_POST['loanType'];
+    $loanSql = "INSERT INTO tb_loan (
+        loanApplicationID,
+        employeeID,
+        amountRequested,
+        financingPeriod,
+        monthlyInstallments,
+        employerName,
+        employerIC,
+        basicSalary,
+        netSalary,
+        basicSalaryFile,
+        netSalaryFile
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-    $sql = "INSERT INTO tb_loan (loanApplicationID, employeeID, amountRequested, financingPeriod, monthlyInstallments, employerName, employerIC, basicSalary, netSalary, basicSalaryFile, netSalaryFile, loanType) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("ssdddssddsss",
+    $stmt = mysqli_prepare($conn, $loanSql);
+    mysqli_stmt_bind_param($stmt, "iidddssddss", 
         $loanApplicationID,
         $_POST['employeeID'],
         $_POST['amountRequested'],
@@ -126,8 +130,7 @@ try {
         $_POST['basicSalary'],
         $_POST['netSalary'],
         $basicSalaryFile,
-        $netSalaryFile,
-        $loanType
+        $netSalaryFile
     );
 
     if (!mysqli_stmt_execute($stmt)) {
@@ -179,10 +182,6 @@ try {
     // Commit transaction
     mysqli_commit($conn);
 
-    // Set session variables before sending response
-    $_SESSION['status'] = "success";
-    $_SESSION['message'] = "Permohonan berjaya dihantar";
-
     echo json_encode([
         "status" => "success",
         "message" => "Permohonan berjaya dihantar"
@@ -201,10 +200,6 @@ try {
     if (isset($netSalaryFile) && file_exists($netSalaryFile)) {
         unlink($netSalaryFile);
     }
-
-    // Set session variables for error
-    $_SESSION['status'] = "error";
-    $_SESSION['error'] = $e->getMessage();
 
     echo json_encode([
         "status" => "error",

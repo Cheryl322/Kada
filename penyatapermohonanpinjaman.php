@@ -39,7 +39,7 @@ $sql = "SELECT
     moa.officeState,
     b.bankName,
     b.accountNo,
-    l.basicSalaryFile,
+    -- l.basicSalaryFile,
     l.netSalaryFile
     FROM tb_loanapplication la
     LEFT JOIN tb_loan l ON l.loanApplicationID = la.loanApplicationID
@@ -71,10 +71,10 @@ if ($loanApplicationID) {
     $salaryData = $result->fetch_assoc();
 
     // Set default values if no data found
-    $basicSalary = $salaryData ? number_format($salaryData['basicSalary'], 2, '.', '') : '0.00';
+    // $basicSalary = $salaryData ? number_format($salaryData['basicSalary'], 2, '.', '') : '0.00';
     $netSalary = $salaryData ? number_format($salaryData['netSalary'], 2, '.', '') : '0.00';
 } else {
-    $basicSalary = '0.00';
+    // $basicSalary = '0.00';
     $netSalary = '0.00';
 }
 
@@ -326,7 +326,7 @@ if ($loanApplicationID) {
                 </div>
 
                 <div class="row mb-3">
-                    <div class="col-md-6">
+                    <!-- <div class="col-md-6">
                         <label for="basicSalarySlip" class="form-label">Slip Gaji Pokok Kakitangan</label>
                         <?php if (!empty($memberData['basicSalaryFile'])): ?>
                             <div class="mb-2">
@@ -336,14 +336,14 @@ if ($loanApplicationID) {
                                 </a>
                             </div>
                         <?php endif; ?>
-                    </div>
+                    </div> -->
                     <div class="col-md-6">
-                        <label for="netSalarySlip" class="form-label">Slip Gaji Bersih Kakitangan</label>
+                        <label for="netSalarySlip" class="form-label">Slip Gaji Kakitangan</label>
                         <?php if (!empty($memberData['netSalaryFile'])): ?>
                             <div class="mb-2">
                                 <a href="<?php echo htmlspecialchars($memberData['netSalaryFile']); ?>" 
                                    class="btn btn-primary btn-sm" target="_blank">
-                                    <i class="fas fa-file-pdf"></i> Lihat Slip Gaji Bersih
+                                    <i class="fas fa-file-pdf"></i> Lihat Slip Gaji
                                 </a>
                             </div>
                         <?php endif; ?>

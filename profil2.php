@@ -60,13 +60,16 @@ $userData = mysqli_fetch_assoc($result);
                             Profil
                         </a>
                         <?php if ($isMember): ?>
-                        <a href="statuspermohonanloan.php" class="btn w-75 mx-auto" style="background-color: #75B798; color: white;">
-                            Status Permohonan
-                        </a>
+                            <a href="statuspermohonanloan.php" class="btn w-75 mx-auto" style="background-color: #75B798; color: white;">
+                                Status Permohonan
+                            </a>
+                            <a href="penyatakewangan.php" class="btn w-75 mx-auto" style="background-color: #75B798; color: white;">
+                                Penyata Kewangan
+                            </a>
                         <?php else: ?>
-                        <a href="daftar_ahli.php" class="btn w-75 mx-auto" style="background-color: #75B798; color: white;">
-                            Mohon Keahlian
-                        </a>
+                            <a href="daftar_ahli.php" class="btn w-75 mx-auto" style="background-color: #75B798; color: white;">
+                                Mohon Keahlian
+                            </a>
                         <?php endif; ?>
                         <a href="logout.php" class="btn w-75 mx-auto" style="background-color: #75B798; color: white;">
                             Log Keluar
@@ -79,6 +82,7 @@ $userData = mysqli_fetch_assoc($result);
             <div class="col-md-9">
                 <div class="card">
                     <form id="profileForm" method="POST" action="update_profil.php">
+                        <input type="hidden" name="source_page" value="profil2.php">
                         <div class="card-header bg-primary text-white">
                             <h4 class="mb-0">MAKLUMAT PERIBADI</h4>
                         </div>

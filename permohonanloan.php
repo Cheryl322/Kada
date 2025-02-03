@@ -440,7 +440,6 @@ mysqli_stmt_close($stmt);
                                id="basicSalarySlip" 
                                name="basicSalarySlip" 
                                accept=".pdf"
-                               max-size="5120"
                                required>
                         <div class="invalid-feedback">
                             Sila muat naik slip gaji pokok
@@ -453,7 +452,6 @@ mysqli_stmt_close($stmt);
                                id="netSalarySlip" 
                                name="netSalarySlip" 
                                accept=".pdf"
-                               max-size="5120"
                                required>
                         <div class="invalid-feedback">
                             Sila muat naik slip gaji bersih
@@ -492,8 +490,8 @@ mysqli_stmt_close($stmt);
 
                     <!-- Navigation Buttons -->
                     <div class="button-group">
-                        <button type="button" class="btn btn-secondary prev-step">Kembali</button>
-                        <button type="submit" class="btn btn-success" id="submitBtn">Hantar Permohonan</button>
+                        <button type="button" class="btn btn-secondary" onclick="showStep(3)">Kembali</button>
+                        <button type="submit" class="btn btn-success">Hantar Permohonan</button>
                     </div>
                 </div>
             </div>
@@ -1247,87 +1245,65 @@ $(document).ready(function() {
 
 <script>
 $(document).ready(function() {
-    // Add file size validation
-    const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB in bytes
-    
-    function validateFileSize(file) {
-        if (file && file.size > MAX_FILE_SIZE) {
-            return false;
-        }
-        return true;
-    }
-
     $('#loanForm').on('submit', function(e) {
         e.preventDefault();
         
-        // Validate file sizes before submission
-        const basicSalarySlip = $('#basicSalarySlip')[0].files[0];
-        const netSalarySlip = $('#netSalarySlip')[0].files[0];
-        
-        if (!validateFileSize(basicSalarySlip) || !validateFileSize(netSalarySlip)) {
+        // Check if files are selected
+        if (!$('#basicSalarySlip')[0].files[0]) {
             Swal.fire({
                 title: 'Ralat!',
-                text: 'Saiz fail tidak boleh melebihi 5MB',
+                text: 'Sila muat naik slip gaji pokok',
                 icon: 'error',
                 confirmButtonText: 'OK'
             });
             return;
         }
 
-        // Show loading state
-        Swal.fire({
-            title: 'Sila Tunggu',
-            text: 'Sedang memproses permohonan anda...',
-            allowOutsideClick: false,
-            didOpen: () => {
-                Swal.showLoading();
-            }
-        });
+        if (!$('#netSalarySlip')[0].files[0]) {
+            Swal.fire({
+                title: 'Ralat!',
+                text: 'Sila muat naik slip gaji bersih',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
+            return;
+        }
 
-        // Create new FormData object
         let formData = new FormData(this);
-
-        // Submit form via AJAX with timeout
+        
         $.ajax({
             url: 'loanApplicationProcess.php',
             type: 'POST',
             data: formData,
             processData: false,
             contentType: false,
-            timeout: 60000, // 60 second timeout
             success: function(response) {
-                console.log('Response:', response);
                 try {
                     const data = JSON.parse(response);
                     if (data.status === 'success') {
-                        window.location.href = 'success2.php';
+                        window.location.href = 'success2.php'; // Direct redirect to success2.php
                     } else {
                         Swal.fire({
                             title: 'Tidak Berjaya!',
-                            text: data.message || 'Terdapat masalah semasa menghantar permohonan.',
+                            text: data.message,
                             icon: 'error',
                             confirmButtonText: 'OK'
                         });
                     }
                 } catch (e) {
-                    console.error('Parse error:', e);
+                    console.error('Error:', e);
                     Swal.fire({
                         title: 'Ralat!',
-                        text: 'Terdapat masalah semasa memproses respons pelayan.',
+                        text: 'Terdapat masalah semasa menghantar permohonan.',
                         icon: 'error',
                         confirmButtonText: 'OK'
                     });
                 }
             },
-            error: function(xhr, status, error) {
-                console.error('AJAX Error:', error);
-                let errorMessage = 'Terdapat masalah semasa menghantar permohonan.';
-                if (status === 'timeout') {
-                    errorMessage = 'Masa tamat. Sila cuba lagi.';
-                }
+            error: function() {
                 Swal.fire({
                     title: 'Ralat!',
-                    text: errorMessage,
+                    text: 'Terdapat masalah semasa menghantar permohonan.',
                     icon: 'error',
                     confirmButtonText: 'OK'
                 });

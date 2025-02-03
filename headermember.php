@@ -1,35 +1,3 @@
-<?php
-// 确保session已经启动
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-
-// 检查用户是否登录
-if (isset($_SESSION['employeeID'])) {
-    include "dbconnect.php";
-    
-    // 检查用户是否有已批准的贷款
-    $employeeID = $_SESSION['employeeID'];
-    $sqlCheckLoan = "SELECT loanStatus 
-                     FROM tb_loanapplication 
-                     WHERE employeeID = ? 
-                     AND loanStatus = 'Diluluskan'
-                     LIMIT 1";
-                     
-    $stmt = mysqli_prepare($conn, $sqlCheckLoan);
-    mysqli_stmt_bind_param($stmt, "s", $employeeID);
-    mysqli_stmt_execute($stmt);
-    $result = mysqli_stmt_get_result($stmt);
-    
-    // 根据查询结果设置个人资料页面的链接
-    $profileLink = (mysqli_num_rows($result) > 0) ? "profil.php" : "profil2.php";
-    
-    // mysqli_close($conn);
-} else {
-    $profileLink = "login.php"; // 如果未登录，导向登录页面
-}
-?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -37,7 +5,6 @@ if (isset($_SESSION['employeeID'])) {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="css/bootstrap.min (1).css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 <style>
@@ -82,71 +49,6 @@ body::before {
     margin: 40px auto;
 }
 
-/* Dropdown styling */
-.dropdown-menu {
-    background-color: #ffffff;
-    border: none;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    border-radius: 8px;
-    padding: 8px 0;
-}
-
-.dropdown-item {
-    color: #5CBA9B;
-    padding: 8px 20px;
-    transition: all 0.3s ease;
-}
-
-.dropdown-item:hover {
-    background-color: #e8f5f1;
-    color: #3d8b6f;
-}
-
-/* Submenu styling */
-.dropdown-submenu {
-    position: relative;
-}
-
-.dropdown-submenu .dropdown-menu {
-    top: 0;
-    left: 100%;
-    margin-top: -8px;
-    display: none;
-}
-
-.dropdown-submenu:hover > .dropdown-menu {
-    display: block;
-}
-
-.dropdown-submenu .fa-chevron-right {
-    float: right;
-    margin-top: 4px;
-    font-size: 12px;
-}
-
-/* Animation */
-.dropdown-menu {
-    animation: fadeIn 0.2s ease-in;
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* Active state */
-.dropdown-item.active, 
-.dropdown-item:active {
-    background-color: #5CBA9B;
-    color: white;
-}
-
 </style>
 
 </head>
@@ -162,7 +64,7 @@ body::before {
     <div class="collapse navbar-collapse" id="navbarColor03">
       <ul class="navbar-nav me-auto">
         <li class="nav-item">
-          <a class="nav-link active" href="mainpage.php">Laman Utama
+          <a class="nav-link active" href="index.php">Laman Utama
             <span class="visually-hidden">(current)</span>
           </a>
         </li>
@@ -170,13 +72,15 @@ body::before {
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Perkhidmatan</a>
           <div class="dropdown-menu">
-            <div class="dropdown-submenu">
-              <a class="dropdown-item" href="#">Permohonan Anggota <i class="fas fa-chevron-right"></i></a>
-              <ul class="dropdown-menu submenu">
-                <li><a class="dropdown-item" href="daftar_ahli.php">Borang Permohonan</a></li>
-                <li><a class="dropdown-item" href="statusanggota.php">Status Permohonan</a></li>
+            <a class="dropdown dropend" href="#">
+              Permohonan Anggota
+              <ul class="dropdown dropend">
+                <li><a class="dropdown-item" href="daftar_ahli.php">Borang Permohonan</a>
+                </li>
+                <li><a class="dropdown-item" href="statusanggota.php">Status Permohonan</a>
+                </li>
               </ul>
-            </div>
+            </a>
             <a class="dropdown-item" href="permohonanloan.php">Permohonan Pembiayaan</a>
           </div>
         </li>
@@ -189,7 +93,7 @@ body::before {
         </li>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="hubungikami.php">Hubungi Kami</a>
+          <a class="nav-link" href="#">Hubungi Kami</a>
         </li>
         
         </ul>
@@ -203,11 +107,12 @@ body::before {
             </svg>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="<?php echo $profileLink; ?>">Profil</a>
+          <a class="nav-link" href="profil.php">Profil</a>
           </li>
     
         </ul>
       </ul>
-      <br><br
+      <br><br>
   </div>
 </nav>
+
