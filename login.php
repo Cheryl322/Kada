@@ -34,12 +34,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         error_log("Stored hash: " . $user['password']);
         error_log("Input password: " . $password);
         
-        // 检查密码是否为明文存储（临时调试）
+       
         if ($password === $user['password'] || password_verify($password, $user['password'])) {
             $_SESSION['employeeID'] = $employeeID;
             $_SESSION['role'] = $user['role'];
 
-            // 重定向基于角色
+          
             if ($user['role'] === 'admin') {
                 header("Location: adminmainpage.php");
             } else {
@@ -138,12 +138,12 @@ body::before {
 .input-group .btn-outline-secondary {
     border-color: #ced4da;
     z-index: 10;
-    padding: 0.375rem 0.75rem;  /* 添加内边距 */
+    padding: 0.375rem 0.75rem;  
 }
 
 .input-group .btn-outline-secondary i {
-    font-size: 16px;  /* 设置图标大小 */
-    line-height: 1;   /* 确保图标垂直居中 */
+    font-size: 16px;  
+    line-height: 1;  
 }
 </style>
 
@@ -219,14 +219,14 @@ document.getElementById('togglePassword').addEventListener('click', function(e) 
     const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
     passwordInput.setAttribute('type', type);
     
-    // 切换图标
+   
     const icon = this.querySelector('i');
     if (type === 'text') {
-        icon.classList.remove('fa-eye-slash');  // 移除闭眼
-        icon.classList.add('fa-eye');          // 添加睁眼
+        icon.classList.remove('fa-eye-slash'); 
+        icon.classList.add('fa-eye');          
     } else {
-        icon.classList.remove('fa-eye');       // 移除睁眼
-        icon.classList.add('fa-eye-slash');    // 添加闭眼
+        icon.classList.remove('fa-eye');       
+        icon.classList.add('fa-eye-slash');    
     }
 });
 </script>
