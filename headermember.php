@@ -86,7 +86,7 @@ body::before {
         </li>
 
         <li class="nav-item">
-          <a class="nav-link" href="#">Info Kada</a>
+          <a class="nav-link" href="mainpage.php">Info Kada</a>
         </li>
         <li class="nav-item">
           <a class="nav-link" href="#">Media</a>

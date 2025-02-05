@@ -56,7 +56,7 @@
         </li> -->
         
         <li class="nav-item">
-          <a class="nav-link" href="#">Info KADA</a>
+          <a class="nav-link" href="mainpage.php">Info KADA</a>
         </li>
         <li class="nav-item">
           <a class="nav-link" href="#">Media</a>

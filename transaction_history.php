@@ -17,8 +17,8 @@ $month = isset($_GET['month']) ? $_GET['month'] : date('m');
 $year = isset($_GET['year']) ? $_GET['year'] : date('Y');
 
 // 获取会员的第一次付款日期
-$sql_first_payment = "SELECT MIN(transDate) as first_payment 
-                     FROM tb_transaction 
+$sql_first_payment = "SELECT MIN(Deduct_date) as first_payment 
+                     FROM tb_deduction 
                      WHERE employeeID = ?";
 $stmt_first = mysqli_prepare($conn, $sql_first_payment);
 mysqli_stmt_bind_param($stmt_first, 's', $employeeID);
@@ -34,18 +34,21 @@ if ($first_payment) {
 }
 
 // 修改主查询
-$sql = "SELECT t.transDate, t.transType, t.transAmt 
-        FROM tb_transaction t
-        WHERE t.employeeID = ? 
-        AND MONTH(t.transDate) = ? 
-        AND YEAR(t.transDate) = ?";
+$sql = "SELECT d.Deduct_date as transDate, 
+               dt.typeName as transType, 
+               d.Deduct_Amt as transAmt
+        FROM tb_deduction d
+        JOIN tb_deduction_type dt ON d.DeducType_ID = dt.DeducType_ID
+        WHERE d.employeeID = ? 
+        AND MONTH(d.Deduct_date) = ? 
+        AND YEAR(d.Deduct_date) = ?";
 
 // 如果不是第一个月，排除 entry fee 和 deposit
 if (!$is_first_month) {
-    $sql .= " AND t.transType NOT IN ('Entry Fee', 'Deposit')";
+    $sql .= " AND dt.typeName NOT IN ('Entry Fee', 'Deposit')";
 }
 
-$sql .= " ORDER BY t.transDate DESC";
+$sql .= " ORDER BY d.Deduct_date DESC";
 
 $stmt = mysqli_prepare($conn, $sql);
 mysqli_stmt_bind_param($stmt, 'sii', $employeeID, $month, $year);
@@ -156,4 +159,4 @@ function formatNumber($number) {
             </table>
         </div>
     </div>
-</div> 
+</div>

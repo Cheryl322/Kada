@@ -23,9 +23,9 @@ if ($stmt) {
     mysqli_stmt_close($stmt);
 }
 
-// 获取实际交易总额
-$sql_trans = "SELECT transType, transAmt 
-              FROM tb_transaction 
+// 获取实际交易总额 - 修改查询使用 tb_deduction
+$sql_trans = "SELECT DeducType_ID, Deduct_Amt 
+              FROM tb_deduction 
               WHERE employeeID = ?";
 
 $stmt_trans = mysqli_prepare($conn, $sql_trans);
@@ -36,27 +36,28 @@ $result_trans = mysqli_stmt_get_result($stmt_trans);
 // 添加调试信息
 echo "<!-- Transaction Records:";
 while ($row = mysqli_fetch_assoc($result_trans)) {
-    echo "\nType: " . $row['transType'] . ", Amount: " . $row['transAmt'];
+    echo "\nType: " . $row['DeducType_ID'] . ", Amount: " . $row['Deduct_Amt'];
 }
 echo " -->";
 
 // 重置结果集指针
 mysqli_data_seek($result_trans, 0);
 
-// 计算总额
-$totalSavings = 0;
-while ($row = mysqli_fetch_assoc($result_trans)) {
-    switch($row['transType']) {
-        case 'Simpanan-M':
-        case 'Simpanan-S':
-        case 'Simpanan-T':
-        case 'Simpanan-Y':
-        case 'BAYARAN':
-        case 'DEPOSIT':
-            $totalSavings += $row['transAmt'];
-            break;
-    }
-}
+// 计算总额 - 修改为包含 deposit
+$sql_total = "SELECT 
+    SUM(CASE 
+        WHEN DeducType_ID IN (1,2,3,4,5) THEN Deduct_Amt 
+        ELSE 0 
+    END) as total_amount
+FROM tb_deduction 
+WHERE employeeID = ?";
+
+$stmt_total = mysqli_prepare($conn, $sql_total);
+mysqli_stmt_bind_param($stmt_total, 'i', $employeeID);
+mysqli_stmt_execute($stmt_total);
+$total_result = mysqli_stmt_get_result($stmt_total);
+$total_row = mysqli_fetch_assoc($total_result);
+$totalSavings = $total_row['total_amount'] ?? 0;
 
 // 获取费用分配信息
 $sql_fees = "SELECT 
@@ -180,11 +181,11 @@ $stmt_update = mysqli_prepare($conn, $sql_update_balance);
 mysqli_stmt_bind_param($stmt_update, 's', $employeeID);
 mysqli_stmt_execute($stmt_update);
 
-// 获取已支付的贷款金额
-$sql_payments = "SELECT SUM(transAmt) as total_paid
-FROM tb_transaction 
-WHERE employeeID = ? 
-AND transType = 'Bayaran Ba'";  
+// 获取已支付的贷款金额 - 修改查询
+$sql_payments = "SELECT SUM(Deduct_Amt) as total_paid
+                FROM tb_deduction 
+                WHERE employeeID = ? 
+                AND DeducType_ID = 6";  // 6 是贷款还款类型
 
 $stmt_payments = mysqli_prepare($conn, $sql_payments);
 mysqli_stmt_bind_param($stmt_payments, 's', $employeeID);
@@ -271,10 +272,11 @@ Fixed Deposit (Simpanan-S): {$totals['fixedDeposit']}
 Contribution (Simpanan-T): {$totals['contribution']}
 -->";
 
-// 获取各类型贷款的金额
+// 获取各类型贷款的金额和总额
 $sql_loans = "SELECT 
     l.loanType,
-    l.balance
+    l.balance,
+    la.amountRequested
 FROM tb_loan l
 JOIN tb_loanapplication la ON l.employeeID = la.employeeID 
 WHERE l.employeeID = ?
@@ -285,37 +287,62 @@ mysqli_stmt_bind_param($stmt_loans, 's', $employeeID);
 mysqli_stmt_execute($stmt_loans);
 $loans_result = mysqli_stmt_get_result($stmt_loans);
 
-// 初始化贷款金额变量
+// 初始化贷款金额变量，添加总额变量
 $albai_amount = 0;
+$albai_total = 0;
 $alinnah_amount = 0;
+$alinnah_total = 0;
 $bpulih_amount = 0;
+$bpulih_total = 0;
 $roadtax_amount = 0;
+$roadtax_total = 0;
+$skimkhas_amount = 0;
+$skimkhas_total = 0;
+$karnival_amount = 0;
+$karnival_total = 0;
 
 // 设置实际贷款金额
 while ($loan = mysqli_fetch_assoc($loans_result)) {
     switch($loan['loanType']) {
         case 'AL-BAI':
             $albai_amount = $loan['balance'];
+            $albai_total = $loan['amountRequested'];
             break;
         case 'AL-INNAH':
             $alinnah_amount = $loan['balance'];
+            $alinnah_total = $loan['amountRequested'];
             break;
         case 'B/PULIH KENDERAAN':
             $bpulih_amount = $loan['balance'];
+            $bpulih_total = $loan['amountRequested'];
             break;
         case 'ROAD TAX & INSURAN':
             $roadtax_amount = $loan['balance'];
+            $roadtax_total = $loan['amountRequested'];
+            break;
+        case 'SKIM KHAS':
+            $skimkhas_amount = $loan['balance'];
+            $skimkhas_total = $loan['amountRequested'];
+            break;
+        case 'KARNIVAL MUSIM ISTIMEWA':
+            $karnival_amount = $loan['balance'];
+            $karnival_total = $loan['amountRequested'];
             break;
     }
 }
 
-// 获取各类型储蓄的最新总额
+// 计算所有贷款的总额
+$totalAllLoans = $albai_total + $alinnah_total + $bpulih_total + 
+                 $roadtax_total + $skimkhas_total + $karnival_total;
+
+// 获取各类型储蓄的最新总额 - 修改查询，添加 deposit
 $sql_savings = "SELECT 
-    SUM(CASE WHEN transType = 'Simpanan-M' THEN transAmt ELSE 0 END) as modal_saham,
-    SUM(CASE WHEN transType = 'Simpanan-Y' THEN transAmt ELSE 0 END) as modal_yuran,
-    SUM(CASE WHEN transType = 'Simpanan-S' THEN transAmt ELSE 0 END) as simpanan_tetap,
-    SUM(CASE WHEN transType = 'Simpanan-T' THEN transAmt ELSE 0 END) as tabung_anggota
-FROM tb_transaction 
+    SUM(CASE WHEN DeducType_ID = 1 THEN Deduct_Amt ELSE 0 END) as modal_saham,
+    SUM(CASE WHEN DeducType_ID = 2 THEN Deduct_Amt ELSE 0 END) as modal_yuran,
+    SUM(CASE WHEN DeducType_ID = 3 THEN Deduct_Amt ELSE 0 END) as simpanan_tetap,
+    SUM(CASE WHEN DeducType_ID = 4 THEN Deduct_Amt ELSE 0 END) as tabung_anggota,
+    SUM(CASE WHEN DeducType_ID = 5 THEN Deduct_Amt ELSE 0 END) as wang_deposit
+FROM tb_deduction 
 WHERE employeeID = ?";
 
 $stmt_savings = mysqli_prepare($conn, $sql_savings);
@@ -334,8 +361,8 @@ $savings = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_savings));
 <div class="container mt-4">
     <h2 class="mb-4">Penyata Kewangan</h2>
 
-    <!-- Summary Cards -->
-    <div class="row mb-4">
+        <!-- Summary Cards -->
+        <div class="row mb-4">
         <!-- Total Savings Card -->
         <div class="col-md-6 mb-3">
             <div class="card bg-success text-white h-100">
@@ -361,11 +388,19 @@ $savings = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_savings));
                         <i class="fas fa-money-bill-wave me-2"></i>
                         <h5 class="card-title mb-0">Jumlah Pinjaman</h5>
                     </div>
-                    <h2 class="card-text mb-2">RM <?php echo number_format($totalBalance, 2); ?> / <?php echo number_format($totalLoanAmount, 2); ?></h2>
+                    <h2 class="card-text mb-2">RM <?php echo number_format($totalAllLoans, 2); ?></h2>
                     <div class="small">
                         <?php 
-                        if ($totalLoanAmount > 0) {
-                            echo nl2br($loanInfo);
+                        $loanTypes = array();
+                        if ($albai_total > 0) $loanTypes[] = "AL-BAI";
+                        if ($alinnah_total > 0) $loanTypes[] = "AL-INNAH";
+                        if ($bpulih_total > 0) $loanTypes[] = "B/PULIH KENDERAAN";
+                        if ($roadtax_total > 0) $loanTypes[] = "ROAD TAX & INSURAN";
+                        if ($skimkhas_total > 0) $loanTypes[] = "SKIM KHAS";
+                        if ($karnival_total > 0) $loanTypes[] = "KARNIVAL MUSIM ISTIMEWA";
+                        
+                        if (!empty($loanTypes)) {
+                            echo implode(", ", $loanTypes);
                         } else {
                             echo "Tiada pinjaman aktif";
                         }
@@ -412,30 +447,51 @@ $savings = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_savings));
                 <div class="card-header bg-primary text-white">
                     <h5 class="mb-0">Saham & Simpanan</h5>
                 </div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-6">
-                            <div class="border rounded p-3">
-                                <h6>Modal Saham</h6>
-                                <h4 class="text-primary">RM <?php echo number_format($savings['modal_saham'] ?? 0, 2); ?></h4>
+                <div class="card-body py-4">
+                    <div class="row g-4">
+                        <!-- Modal Saham -->
+                        <div class="col-12">  <!-- 改为全宽 -->
+                            <div class="border rounded p-3 savings-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h6 class="fw-bold mb-0">Modal Syer</h6>
+                                    <h4 class="text-primary mb-0">RM <?php echo number_format($savings['modal_saham'] ?? 0, 2); ?></h4>
+                                </div>
                             </div>
                         </div>
-                        <div class="col-6">
-                            <div class="border rounded p-3">
-                                <h6>Modal Yuran</h6>
-                                <h4 class="text-primary">RM <?php echo number_format($savings['modal_yuran'] ?? 0, 2); ?></h4>
+                        <!-- Modal Yuran -->
+                        <div class="col-12">
+                            <div class="border rounded p-3 savings-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h6 class="fw-bold mb-0">Modal Yuran</h6>
+                                    <h4 class="text-primary mb-0">RM <?php echo number_format($savings['modal_yuran'] ?? 0, 2); ?></h4>
+                                </div>
                             </div>
                         </div>
-                        <div class="col-6">
-                            <div class="border rounded p-3">
-                                <h6>Simpanan Tetap</h6>
-                                <h4 class="text-primary">RM <?php echo number_format($savings['simpanan_tetap'] ?? 0, 2); ?></h4>
+                        <!-- Simpanan Tetap -->
+                        <div class="col-12">
+                            <div class="border rounded p-3 savings-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h6 class="fw-bold mb-0">Simpanan Tetap</h6>
+                                    <h4 class="text-primary mb-0">RM <?php echo number_format($savings['simpanan_tetap'] ?? 0, 2); ?></h4>
+                                </div>
                             </div>
                         </div>
-                        <div class="col-6">
-                            <div class="border rounded p-3">
-                                <h6>Tabung Anggota</h6>
-                                <h4 class="text-primary">RM <?php echo number_format($savings['tabung_anggota'] ?? 0, 2); ?></h4>
+                        <!-- Tabung Anggota -->
+                        <div class="col-12">
+                            <div class="border rounded p-3 savings-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h6 class="fw-bold mb-0">Sumbangan Tabung Kebajikan (AL-ABRAR)</h6>
+                                    <h4 class="text-primary mb-0">RM <?php echo number_format($savings['tabung_anggota'] ?? 0, 2); ?></h4>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Wang Deposit -->
+                        <div class="col-12">
+                            <div class="border rounded p-3 savings-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h6 class="fw-bold mb-0">Wang Deposit Anggota</h6>
+                                    <h4 class="text-primary mb-0">RM <?php echo number_format($savings['wang_deposit'] ?? 0, 2); ?></h4>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -449,31 +505,130 @@ $savings = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_savings));
                 <div class="card-header bg-success text-white">
                     <h5 class="mb-0">Maklumat Pinjaman</h5>
                 </div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-6">
-                            <div class="border rounded p-3">
-                                <h6>Al-Bai</h6>
-                                <h4 class="text-success">RM <?php echo number_format($albai_amount, 2); ?></h4>
+                <div class="card-body py-4">
+                    <!-- Summary Row -->
+                    <div class="loan-summary mb-4">
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <div class="summary-item border rounded p-3">
+                                    <h6 class="text-muted mb-1">Jumlah Pinjaman</h6>
+                                    <h4 class="text-success">RM <?php 
+                                        $totalLoanSum = $albai_amount + $alinnah_amount + $bpulih_amount + 
+                                                      $roadtax_amount + $skimkhas_amount + $karnival_amount;
+                                        echo number_format($totalLoanSum, 2); 
+                                    ?></h4>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="summary-item border rounded p-3">
+                                    <h6 class="text-muted mb-1">Bilangan Pinjaman</h6>
+                                    <h4 class="text-success"><?php 
+                                        $activeLoanCount = 0;
+                                        if ($albai_amount > 0) $activeLoanCount++;
+                                        if ($alinnah_amount > 0) $activeLoanCount++;
+                                        if ($bpulih_amount > 0) $activeLoanCount++;
+                                        if ($roadtax_amount > 0) $activeLoanCount++;
+                                        if ($skimkhas_amount > 0) $activeLoanCount++;
+                                        if ($karnival_amount > 0) $activeLoanCount++;
+                                        echo $activeLoanCount;
+                                    ?></h4>
+                                </div>
                             </div>
                         </div>
-                        <div class="col-6">
-                            <div class="border rounded p-3">
-                                <h6>Al-Innah</h6>
-                                <h4 class="text-success">RM <?php echo number_format($alinnah_amount, 2); ?></h4>
+                    </div>
+                    
+                    <!-- Divider -->
+                    <hr class="my-4">
+
+                    <!-- Loan Details -->
+                    <div class="loan-details">
+                        <h6 class="text-muted mb-3">Butiran Pinjaman</h6>
+                        <div class="row g-4">
+                            <!-- Al-Bai -->
+                            <?php if ($albai_amount > 0): ?>
+                            <div class="col-12">
+                                <div class="border rounded p-3 savings-item loan-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h6 class="fw-bold mb-0">Al-Bai</h6>
+                                        <h4 class="text-success mb-0">
+                                            RM <?php echo number_format($albai_amount, 2); ?> / 
+                                            RM <?php echo number_format($albai_total, 2); ?>
+                                        </h4>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                        <div class="col-6">
-                            <div class="border rounded p-3">
-                                <h6>B/Pulih Kenderaan</h6>
-                                <h4 class="text-success">RM <?php echo number_format($bpulih_amount, 2); ?></h4>
+                            <?php endif; ?>
+                            
+                            <!-- 其他贷款项目使用相同的模式 -->
+                            <?php if ($alinnah_amount > 0): ?>
+                            <div class="col-12">
+                                <div class="border rounded p-3 savings-item loan-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h6 class="fw-bold mb-0">Al-Innah</h6>
+                                        <h4 class="text-success mb-0">
+                                            RM <?php echo number_format($alinnah_amount, 2); ?> / 
+                                            RM <?php echo number_format($alinnah_total, 2); ?>
+                                        </h4>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                        <div class="col-6">
-                            <div class="border rounded p-3">
-                                <h6>Road Tax & Insuran</h6>
-                                <h4 class="text-success">RM <?php echo number_format($roadtax_amount, 2); ?></h4>
+                            <?php endif; ?>
+                            
+                            <?php if ($bpulih_amount > 0): ?>
+                            <div class="col-12">
+                                <div class="border rounded p-3 savings-item loan-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h6 class="fw-bold mb-0">B/Pulih Kenderaan</h6>
+                                        <h4 class="text-success mb-0">
+                                            RM <?php echo number_format($bpulih_amount, 2); ?> / 
+                                            RM <?php echo number_format($bpulih_total, 2); ?>
+                                        </h4>
+                                    </div>
+                                </div>
                             </div>
+                            <?php endif; ?>
+                            
+                            <?php if ($roadtax_amount > 0): ?>
+                            <div class="col-12">
+                                <div class="border rounded p-3 savings-item loan-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h6 class="fw-bold mb-0">Road Tax & Insuran</h6>
+                                        <h4 class="text-success mb-0">
+                                            RM <?php echo number_format($roadtax_amount, 2); ?> / 
+                                            RM <?php echo number_format($roadtax_total, 2); ?>
+                                        </h4>
+                                    </div>
+                                </div>
+                            </div>
+                            <?php endif; ?>
+                            
+                            <?php if ($skimkhas_amount > 0): ?>
+                            <div class="col-12">
+                                <div class="border rounded p-3 savings-item loan-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h6 class="fw-bold mb-0">Skim Khas</h6>
+                                        <h4 class="text-success mb-0">
+                                            RM <?php echo number_format($skimkhas_amount, 2); ?> / 
+                                            RM <?php echo number_format($skimkhas_total, 2); ?>
+                                        </h4>
+                                    </div>
+                                </div>
+                            </div>
+                            <?php endif; ?>
+                            
+                            <?php if ($karnival_amount > 0): ?>
+                            <div class="col-12">
+                                <div class="border rounded p-3 savings-item loan-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h6 class="fw-bold mb-0">Karnival Musim Istimewa</h6>
+                                        <h4 class="text-success mb-0">
+                                            RM <?php echo number_format($karnival_amount, 2); ?> / 
+                                            RM <?php echo number_format($karnival_total, 2); ?>
+                                        </h4>
+                                    </div>
+                                </div>
+                            </div>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
@@ -484,6 +639,193 @@ $savings = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_savings));
 
 <!-- Add Font Awesome for icons -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+<!-- <style>
+.card {
+    transition: transform 0.2s;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.border.rounded {
+    transition: all 0.3s;
+}
+
+.border.rounded:hover {
+    background-color: #f8f9fa;
+}
+
+h4 {
+    margin-bottom: 0;
+}
+
+h6 {
+    color: #6c757d;
+    margin-bottom: 0.5rem;
+}
+
+.savings-card {
+    background: linear-gradient(135deg,rgb(105, 212, 164) 0%,rgb(129, 195, 180) 100%);
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.savings-card .btn-light {
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    border-radius: 8px;
+    font-weight: 500;
+    padding: 8px 16px;
+    transition: all 0.3s ease;
+}
+
+.savings-card .btn-light:hover {
+    background: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.savings-card .card-title {
+    font-size: 2.5rem;
+    font-weight: 600;
+}
+
+.savings-card small {
+    opacity: 0.8;
+}
+
+.btn-kembali {
+    background-color: #FF9999;
+    color: white;
+    padding: 8px 20px;
+    
+    border: none;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.btn-kembali:hover {
+    background-color: #FF8080;
+    color: white;
+}
+
+.savings-item {
+    background-color: #fff;
+    transition: all 0.3s ease;
+    border: 1px solid #e0e0e0 !important;
+}
+
+.savings-item:hover {
+    background-color: #f8f9fa;
+    transform: translateX(5px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.savings-item h6 {
+    color: #2c3e50;
+    font-size: 0.95rem;
+}
+
+.savings-item h4 {
+    font-weight: 600;
+}
+
+/* 修复背景色继承问题 */
+.savings-bg .card-body, 
+.loan-bg .card-body {
+    background-color: inherit !important; /* 修正语法错误，删除中文注释 */
+    background: inherit !重要;
+}
+
+/* 移除可能造成冲突的样式 */
+.card-body {
+    background-color: transparent;
+}
+
+/* 确保渐变色正确显示 */
+.savings-bg {
+    background: linear-gradient(135deg, var(--mint-light) 0%, var(--mint-lighter) 100%) !important;
+}
+
+.loan-bg {
+    background: linear-gradient(135deg, var(--mint-lighter) 0%, var(--mint-light) 100%) !important;
+}
+
+.loan-item:hover {
+    transform: translateX(5px);
+    background-color: #f0fff0;
+}
+
+.loan-item h4 {
+    font-weight: 600;
+}
+
+.summary-item {
+    background: #fff;
+    transition: all 0.3s ease;
+}
+
+.summary-item:hover {
+    background-color: #f0fff0;
+    transform: translateY(-3px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.loan-details {
+    opacity: 0.9;
+}
+
+.loan-details:hover {
+    opacity: 1;
+}
+
+hr {
+    border-color: #e0e0e0;
+    opacity: 0.5;
+}
+
+.summary-card {
+    border: none;
+}
+
+/* 定义新的薄荷绿色变量 - 稍微加深的色调 */
+:root {
+    --mint-light: #7CCDB5;     /* 原来是 #98D8C6，调深一点 */
+    --mint-lighter: #96D6C4;   /* 原来是 #B5E4D7，调深一点 */
+}
+
+.savings-bg {
+    background: linear-gradient(135deg, var(--mint-light) 0%, var(--mint-lighter) 100%) !重要;
+    color: white !重要;
+}
+
+.loan-bg {
+    background: linear-gradient(135deg, var(--mint-lighter) 0%, var(--mint-light) 100%) !重要;
+    color: white !重要;
+} 
+
+.bg-primary {
+    background-color: var(--mint-light) !重要;
+}
+
+.bg-success {
+    background-color: var(--mint-lighter) !重要;
+}
+
+.savings-bg .card-body, .loan-bg .card-body {
+    background-color: inherit !重要; /* 继承父元素的背景色 */
+}
+
+.summary-card .card-title, 
+.summary-card .card-text, 
+.summary-card .small {
+    color: white !重要;
+}
+</style> -->
 
 <style>
 .card {

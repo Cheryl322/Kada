@@ -16,8 +16,8 @@ if (!isset($conn)) {
 }
 
 // 获取所有可用的月份
-$sql = "SELECT DISTINCT YEAR(transDate) as year, MONTH(transDate) as month 
-        FROM tb_transaction 
+$sql = "SELECT DISTINCT YEAR(Deduct_date) as year, MONTH(Deduct_date) as month 
+        FROM tb_deduction 
         WHERE employeeID = ? 
         ORDER BY year DESC, month DESC";
 
@@ -87,4 +87,4 @@ try {
             </table>
         </div>
     </div>
-</div> 
+</div>

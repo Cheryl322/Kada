@@ -35,12 +35,13 @@ while ($row = mysqli_fetch_assoc($result)) {
 
 // 定义付款类型映射
 $payment_type_mapping = [
-    'modalShare' => 1,
-    'feeCapital' => 2,
-    'fixedDeposit' => 3,
-    'contribution' => 4,
-    'deposit' => 5,
-    'loanRepayment' => 6
+    'modalShare' => 1,    // Modal Share
+    'feeCapital' => 2,    // Fee Capital
+    'fixedDeposit' => 3,  // Fixed Deposit
+    'contribution' => 4,  // Contribution
+    'deposit' => 5,       // Deposit
+    'loanRepayment' => 6, // Loan Payment
+    'entryFee' => 7      // Entry Fee
 ];
 
 // 1. 会员基本信息和费用查询
@@ -114,7 +115,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         mysqli_begin_transaction($conn);
         try {
             foreach ($payments as $type => $amount) {
-                if ($amount > 0) {
+                if ($type !== 'upfront_type' && $type !== 'upfront_amount' && $type !== 'entry_fee_type' && $type !== 'entry_fee_amount' && $amount > 0) {
                     if ($type === 'loanRepayment' && is_array($amount)) {
                         foreach ($amount as $loanType => $loanAmount) {
                             if ($loanAmount > 0) {
@@ -136,6 +137,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         }
                     }
                 }
+            }
+            
+            // 处理预付款（现在包括 Entry Fee）
+            if (!empty($payments['upfront_type']) && $payments['upfront_amount'] > 0) {
+                $upfront_type = $payments['upfront_type'];
+                $upfront_amount = $payments['upfront_amount'];
+                
+                $sql = "INSERT INTO tb_deduction (employeeID, DeducType_ID, Deduct_Amt, Deduct_date) 
+                        VALUES (?, ?, ?, ?)";
+                $stmt = mysqli_prepare($conn, $sql);
+                mysqli_stmt_bind_param($stmt, "sids", $employeeID, $upfront_type, $upfront_amount, $transDate);
+                mysqli_stmt_execute($stmt);
             }
             
             mysqli_commit($conn);
@@ -523,7 +536,7 @@ if (isset($_SESSION['error_message'])) {
                             <!-- Modal Share -->
                             <div class="payment-item">
                                 <div class="payment-label">
-                                    Modal Share
+                                    Modal Syer
                                     <span class="minimum-amount">(Min: RM <?php echo number_format($member['modalShare'], 2); ?>)</span>
                                 </div>
                                 <div class="payment-amount">
@@ -545,7 +558,7 @@ if (isset($_SESSION['error_message'])) {
                             <!-- Fee Capital -->
                             <div class="payment-item">
                                 <div class="payment-label">
-                                    Fee Capital
+                                    Modal Yuran
                                     <span class="minimum-amount">(Min: RM <?php echo number_format($member['feeCapital'], 2); ?>)</span>
                                 </div>
                                 <div class="payment-amount">
@@ -567,7 +580,7 @@ if (isset($_SESSION['error_message'])) {
                             <!-- Fixed Deposit -->
                             <div class="payment-item">
                                 <div class="payment-label">
-                                    Fixed Deposit
+                                    Simpanan Tetap
                                     <span class="minimum-amount">(Min: RM <?php echo number_format($member['fixedDeposit'], 2); ?>)</span>
                                 </div>
                                 <div class="payment-amount">
@@ -589,7 +602,7 @@ if (isset($_SESSION['error_message'])) {
                             <!-- Contribution -->
                             <div class="payment-item">
                                 <div class="payment-label">
-                                    Contribution
+                                    Sumbangan Tabung Kebajikan (AL-ABRAR)
                                     <span class="minimum-amount">(Min: RM <?php echo number_format($member['contribution'], 2); ?>)</span>
                                 </div>
                                 <div class="payment-amount">
@@ -611,7 +624,7 @@ if (isset($_SESSION['error_message'])) {
                             <!-- Deposit -->
                             <div class="payment-item">
                                 <div class="payment-label">
-                                    Deposit
+                                    Wang Deposit Anggota
                                     <span class="minimum-amount">(Min: RM <?php echo number_format($member['deposit'], 2); ?>)</span>
                                 </div>
                                 <div class="payment-amount">
@@ -640,7 +653,7 @@ if (isset($_SESSION['error_message'])) {
                             ?>
                                 <div class="payment-item">
                                     <div class="payment-label">
-                                        Loan Repayment (<?php echo htmlspecialchars($loan['loanType']); ?>)
+                                        Bayaran Balik (<?php echo htmlspecialchars($loan['loanType']); ?>)
                                         <span class="minimum-amount">(Min: RM <?php echo number_format($loan['monthlyInstallments'], 2); ?>)</span>
                                     </div>
                                     <div class="payment-amount">
@@ -660,23 +673,64 @@ if (isset($_SESSION['error_message'])) {
                                 </div>
                             <?php endforeach; endif; ?>
 
+                            <!-- 修改 Upfront Payment section -->
+                            <div class="payment-item">
+                                <div class="payment-label">
+                                    Bayaran Tambahan
+                                    <span class="minimum-amount">(Optional)</span>
+                                </div>
+                                <div class="payment-amount">
+                                    <select class="form-select" 
+                                            name="payments[<?php echo $member['employeeID']; ?>][upfront_type]"
+                                            onchange="updateTotalAmount(this)">
+                                        <option value="">Select payment type...</option>
+                                        <?php
+                                        $types_sql = "SELECT DeducType_ID, typeName FROM tb_deduction_type 
+                                                      WHERE DeducType_ID IN (7)";  
+                                        $types_result = mysqli_query($conn, $types_sql);
+                                        while ($type = mysqli_fetch_assoc($types_result)) {
+                                            // 替换显示文本，但保持原始值不变
+                                            $displayName = ($type['typeName'] == 'Entry Fee') ? 'Fee Masuk' : $type['typeName'];
+                                            echo "<option value='" . $type['DeducType_ID'] . "'>" . $displayName . "</option>";
+                                        }
+                                        ?>
+                                    </select>
+                                </div>
+                                <div class="payment-input">
+                                    <input type="number" 
+                                           name="payments[<?php echo $member['employeeID']; ?>][upfront_amount]" 
+                                           value="0"
+                                           min="0"
+                                           step="0.01"
+                                           class="form-control payment-input-field"
+                                           data-original-amount="0"
+                                           oninput="updateTotalAmount(this)">
+                                </div>
+                            </div>
+
                             <!-- Total Section -->
                             <div class="total-section">
                                 <span class="total-label">Total Amount</span>
-                                <span class="total-amount">
+                                <span class="total-amount" id="total_<?php echo $member['employeeID']; ?>">
                                     RM <?php 
-                                    $total = $member['modalShare'] + 
-                                            $member['feeCapital'] + 
-                                            $member['fixedDeposit'] + 
-                                            $member['contribution'] + 
-                                            $member['deposit'];
+                                    $total = floatval($member['modalShare']) + 
+                                            floatval($member['feeCapital']) + 
+                                            floatval($member['fixedDeposit']) + 
+                                            floatval($member['contribution']) + 
+                                            floatval($member['deposit']);
                                     
                                     // 添加贷款还款到总额
                                     if (!empty($member['loanRepayments'])) {
                                         foreach ($member['loanRepayments'] as $loan) {
-                                            $total += $loan['monthlyInstallments'];
+                                            $total += floatval($loan['monthlyInstallments']);
                                         }
                                     }
+                                    
+                                    // 添加预付款初始值（如果有）
+                                    $upfront_value = isset($_POST['payments'][$member['employeeID']]['upfront_amount']) 
+                                        ? floatval($_POST['payments'][$member['employeeID']]['upfront_amount']) 
+                                        : 0;
+                                    $total += $upfront_value;
                                     
                                     echo number_format($total, 2);
                                     ?>
@@ -720,15 +774,70 @@ if (isset($_SESSION['error_message'])) {
             const memberCard = input.closest('.member-card');
             let total = 0;
             
-            memberCard.querySelectorAll('input[type="number"]').forEach(inputField => {
-                total += parseFloat(inputField.value) || 0;
+            // 计算所有常规付款（Modal Share, Fee Capital 等）
+            memberCard.querySelectorAll('.payment-input-field').forEach(inputField => {
+                // 检查是否是 Additional Payment
+                const isAdditionalPayment = inputField.name.includes('upfront_amount');
+                const paymentItem = inputField.closest('.payment-item');
+                
+                if (isAdditionalPayment) {
+                    // 如果是 Additional Payment，检查是否选择了类型
+                    const typeSelect = paymentItem.querySelector('select');
+                    if (typeSelect && typeSelect.value) {
+                        total += parseFloat(inputField.value) || 0;
+                    }
+                } else {
+                    // 其他所有常规付款
+                    total += parseFloat(inputField.value) || 0;
+                }
             });
 
+            // 更新显示
             const totalAmountElement = memberCard.querySelector('.total-amount');
             if (totalAmountElement) {
                 totalAmountElement.textContent = 'RM ' + total.toFixed(2);
             }
         }
+
+        // 自动更新总额的事件监听器
+        document.querySelectorAll('.payment-input-field').forEach(input => {
+            input.addEventListener('input', function() {
+                updateTotalAmount(this);
+            });
+        });
+
+        // Additional Payment 下拉菜单变化时更新总额
+        document.querySelectorAll('select[name$="[upfront_type]"]').forEach(select => {
+            select.addEventListener('change', function() {
+                // 获取相应的金额输入框
+                const inputField = this.closest('.payment-item').querySelector('input[type="number"]');
+                updateTotalAmount(inputField);
+            });
+            
+            // 当选择类型时，如果金额为0，自动设置为100
+            select.addEventListener('change', function() {
+                const inputField = this.closest('.payment-item').querySelector('input[type="number"]');
+                if (this.value && (!inputField.value || inputField.value === '0')) {
+                    inputField.value = '50.00';
+                    updateTotalAmount(inputField);
+                }
+            });
+        });
+
+        // Additional Payment 输入框值变化时立即更新总额
+        document.querySelectorAll('input[name$="[upfront_amount]"]').forEach(input => {
+            input.addEventListener('input', function() {
+                updateTotalAmount(this);
+            });
+        });
+
+        // 页面加载时计算每个会员的初始总额
+        document.querySelectorAll('.member-card').forEach(card => {
+            const anyInput = card.querySelector('.payment-input-field');
+            if (anyInput) {
+                updateTotalAmount(anyInput);
+            }
+        });
 
         // 表单提交验证
         function validateForm() {
@@ -836,4 +945,4 @@ if (isset($_SESSION['error_message'])) {
     });
     </script>
 </body>
-</html> 
+</html>

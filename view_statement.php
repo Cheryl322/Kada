@@ -23,8 +23,8 @@ mysqli_stmt_execute($stmt_member);
 $member = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_member));
 
 // 获取会员的第一次付款日期
-$sql_first_payment = "SELECT MIN(transDate) as first_payment 
-                     FROM tb_transaction 
+$sql_first_payment = "SELECT MIN(Deduct_date) as first_payment 
+                     FROM tb_deduction 
                      WHERE employeeID = ?";
 $stmt_first = mysqli_prepare($conn, $sql_first_payment);
 mysqli_stmt_bind_param($stmt_first, 's', $employeeID);
@@ -39,19 +39,22 @@ if ($first_payment) {
     $is_first_month = ($month == $first_payment_month && $year == $first_payment_year);
 }
 
-// 修改主查询
-$sql = "SELECT t.transDate, t.transType, t.transAmt 
-        FROM tb_transaction t
-        WHERE t.employeeID = ? 
-        AND MONTH(t.transDate) = ? 
-        AND YEAR(t.transDate) = ?";
+// 修改主查询，包括关联 deduction_type 表以获取付款类型名称
+$sql = "SELECT d.Deduct_date as transDate, 
+               dt.typeName as transType, 
+               d.Deduct_Amt as transAmt 
+        FROM tb_deduction d
+        JOIN tb_deduction_type dt ON d.DeducType_ID = dt.DeducType_ID
+        WHERE d.employeeID = ? 
+        AND MONTH(d.Deduct_date) = ? 
+        AND YEAR(d.Deduct_date) = ?";
 
-// 如果不是第一个月，排除 entry fee 和 deposit
+// 如果不是第一个月，排除某些付款类型
 if (!$is_first_month) {
-    $sql .= " AND t.transType NOT IN ('Entry Fee', 'Deposit')";
+    $sql .= " AND dt.typeName NOT IN ('Entry Fee', 'Deposit')";
 }
 
-$sql .= " ORDER BY t.transDate DESC";
+$sql .= " ORDER BY d.Deduct_date DESC";
 
 $stmt = mysqli_prepare($conn, $sql);
 mysqli_stmt_bind_param($stmt, 'sii', $employeeID, $month, $year);
@@ -92,13 +95,14 @@ if ($loan_data) {
     $totalLoanAmount = $loan_data['amountRequested'];
     
     // 获取到指定月份为止的所有还款记录
-    $sql_payments = "SELECT SUM(transAmt) as total_paid
-                    FROM tb_transaction 
-                    WHERE employeeID = ? 
-                    AND transType = 'Bayaran Ba'
+    $sql_payments = "SELECT SUM(d.Deduct_Amt) as total_paid
+                    FROM tb_deduction d
+                    JOIN tb_deduction_type dt ON d.DeducType_ID = dt.DeducType_ID
+                    WHERE d.employeeID = ? 
+                    AND dt.typeName = 'Loan Payment'
                     AND (
-                        YEAR(transDate) < ? 
-                        OR (YEAR(transDate) = ? AND MONTH(transDate) <= ?)
+                        YEAR(d.Deduct_date) < ? 
+                        OR (YEAR(d.Deduct_date) = ? AND MONTH(d.Deduct_date) <= ?)
                     )";
 
     $stmt_payments = mysqli_prepare($conn, $sql_payments);
@@ -114,17 +118,18 @@ if ($loan_data) {
 
 // 获取到选定月份为止的累计储蓄金额
 $sql_savings = "SELECT 
-    SUM(CASE WHEN transType = 'Simpanan-M' THEN transAmt ELSE 0 END) as modalShare,
-    SUM(CASE WHEN transType = 'Simpanan-Y' THEN transAmt ELSE 0 END) as feeCapital,
-    SUM(CASE WHEN transType = 'Simpanan-T' THEN transAmt ELSE 0 END) as contribution,
-    SUM(CASE WHEN transType = 'Simpanan-S' THEN transAmt ELSE 0 END) as fixedDeposit
-FROM tb_transaction 
-WHERE employeeID = ? 
+    SUM(CASE WHEN dt.typeName = 'Modal Share' THEN d.Deduct_Amt ELSE 0 END) as modalShare,
+    SUM(CASE WHEN dt.typeName = 'Fee Capital' THEN d.Deduct_Amt ELSE 0 END) as feeCapital,
+    SUM(CASE WHEN dt.typeName = 'Contribution' THEN d.Deduct_Amt ELSE 0 END) as contribution,
+    SUM(CASE WHEN dt.typeName = 'Fixed Deposit' THEN d.Deduct_Amt ELSE 0 END) as fixedDeposit,
+    SUM(CASE WHEN dt.typeName = 'Deposit' THEN d.Deduct_Amt ELSE 0 END) as deposit
+FROM tb_deduction d
+JOIN tb_deduction_type dt ON d.DeducType_ID = dt.DeducType_ID
+WHERE d.employeeID = ? 
 AND (
-    YEAR(transDate) < ? 
-    OR (YEAR(transDate) = ? AND MONTH(transDate) <= ?)
-)
-AND transType IN ('Simpanan-M', 'Simpanan-Y', 'Simpanan-T', 'Simpanan-S')";
+    YEAR(d.Deduct_date) < ? 
+    OR (YEAR(d.Deduct_date) = ? AND MONTH(d.Deduct_date) <= ?)
+)";
 
 $stmt_savings = mysqli_prepare($conn, $sql_savings);
 mysqli_stmt_bind_param($stmt_savings, 'siii', $employeeID, $year, $year, $month);
@@ -190,7 +195,7 @@ $savings = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_savings));
                                 <td>: RM <?php echo number_format($savings['feeCapital'], 2); ?></td>
                             </tr>
                             <tr>
-                                <td>Tabung Anggota</td>
+                                <td>Sumbangan Tabung Kebajikan (AL-ABRAR)</td>
                                 <td>: RM <?php echo number_format($savings['contribution'], 2); ?></td>
                             </tr>
                             <tr>
@@ -198,12 +203,17 @@ $savings = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_savings));
                                 <td>: RM <?php echo number_format($savings['fixedDeposit'], 2); ?></td>
                             </tr>
                             <tr>
+                                <td>Wang Deposit Anggota</td>
+                                <td>: RM <?php echo number_format($savings['deposit'], 2); ?></td>
+                            </tr>
+                            <tr>
                                 <td><strong>Jumlah</strong></td>
                                 <td><strong>: RM <?php echo number_format(
                                     $savings['modalShare'] + 
                                     $savings['feeCapital'] + 
                                     $savings['contribution'] + 
-                                    $savings['fixedDeposit'], 
+                                    $savings['fixedDeposit'] + 
+                                    $savings['deposit'], 
                                     2); ?></strong></td>
                             </tr>
                         </table>
@@ -357,4 +367,4 @@ echo "Total Loan: $totalLoanAmount\n";
 echo "Total Paid: $total_paid\n";
 echo "Current Balance: $currentBalance\n";
 echo "-->";
-?> 
+?>
