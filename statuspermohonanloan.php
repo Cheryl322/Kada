@@ -88,7 +88,7 @@ $result = mysqli_stmt_get_result($stmt);
                                         <th>Tempoh (Bulan)</th>
                                         <th>Ansuran (RM)</th>
                                         <th>Status</th>
-                                        <th>Tindakan</th>
+                                        <th>Details</th>
                                     </tr>
                                 </thead>
                                 <tbody>
