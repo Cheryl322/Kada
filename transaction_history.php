@@ -16,39 +16,25 @@ $employeeID = $_SESSION['employeeID'];
 $month = isset($_GET['month']) ? $_GET['month'] : date('m');
 $year = isset($_GET['year']) ? $_GET['year'] : date('Y');
 
-// 获取会员的第一次付款日期
-$sql_first_payment = "SELECT MIN(Deduct_date) as first_payment 
-                     FROM tb_deduction 
-                     WHERE employeeID = ?";
-$stmt_first = mysqli_prepare($conn, $sql_first_payment);
-mysqli_stmt_bind_param($stmt_first, 's', $employeeID);
-mysqli_stmt_execute($stmt_first);
-$first_payment = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_first))['first_payment'];
-
-// 检查当前选择的月份是否是第一次付款的月份
-$is_first_month = false;
-if ($first_payment) {
-    $first_payment_month = date('m', strtotime($first_payment));
-    $first_payment_year = date('Y', strtotime($first_payment));
-    $is_first_month = ($month == $first_payment_month && $year == $first_payment_year);
-}
-
-// 修改主查询
+// 修改主查询中的 CASE 语句
 $sql = "SELECT d.Deduct_date as transDate, 
                dt.typeName as transType, 
-               d.Deduct_Amt as transAmt
+               d.Deduct_Amt as transAmt,
+               CASE 
+                   WHEN dt.DeducType_ID = 7 THEN 'Fee Masuk'
+                   WHEN dt.DeducType_ID = 1 THEN 'Modal Syer'
+                   WHEN dt.DeducType_ID = 2 THEN 'Modal Yuran'
+                   WHEN dt.DeducType_ID = 3 THEN 'Simpanan Tetap'
+                   WHEN dt.DeducType_ID = 4 THEN 'Sumbangan Tabung Kebajikan (AL-ABRAR)'
+                   WHEN dt.DeducType_ID = 5 THEN 'Wang Deposit Anggota'
+                   ELSE dt.typeName 
+               END as displayType
         FROM tb_deduction d
         JOIN tb_deduction_type dt ON d.DeducType_ID = dt.DeducType_ID
         WHERE d.employeeID = ? 
         AND MONTH(d.Deduct_date) = ? 
-        AND YEAR(d.Deduct_date) = ?";
-
-// 如果不是第一个月，排除 entry fee 和 deposit
-if (!$is_first_month) {
-    $sql .= " AND dt.typeName NOT IN ('Entry Fee', 'Deposit')";
-}
-
-$sql .= " ORDER BY d.Deduct_date DESC";
+        AND YEAR(d.Deduct_date) = ?
+        ORDER BY d.Deduct_date DESC";
 
 $stmt = mysqli_prepare($conn, $sql);
 mysqli_stmt_bind_param($stmt, 'sii', $employeeID, $month, $year);
@@ -142,7 +128,7 @@ function formatNumber($number) {
                         ?>
                             <tr>
                                 <td><?php echo date('d/m/Y', strtotime($row['transDate'])); ?></td>
-                                <td><?php echo $row['transType']; ?></td>
+                                <td><?php echo $row['displayType']; ?></td>
                                 <td><?php echo number_format($row['transAmt'], 2); ?></td>
                             </tr>
                         <?php endwhile; ?>

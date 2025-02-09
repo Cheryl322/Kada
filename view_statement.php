@@ -22,61 +22,54 @@ mysqli_stmt_bind_param($stmt_member, 's', $employeeID);
 mysqli_stmt_execute($stmt_member);
 $member = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_member));
 
-// 获取会员的第一次付款日期
-$sql_first_payment = "SELECT MIN(Deduct_date) as first_payment 
-                     FROM tb_deduction 
-                     WHERE employeeID = ?";
-$stmt_first = mysqli_prepare($conn, $sql_first_payment);
-mysqli_stmt_bind_param($stmt_first, 's', $employeeID);
-mysqli_stmt_execute($stmt_first);
-$first_payment = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_first))['first_payment'];
 
-// 检查当前选择的月份是否是第一次付款的月份
-$is_first_month = false;
-if ($first_payment) {
-    $first_payment_month = date('m', strtotime($first_payment));
-    $first_payment_year = date('Y', strtotime($first_payment));
-    $is_first_month = ($month == $first_payment_month && $year == $first_payment_year);
-}
-
-// 修改主查询，包括关联 deduction_type 表以获取付款类型名称
+// 修改主查询，添加 CASE 语句来显示正确的名称
 $sql = "SELECT d.Deduct_date as transDate, 
-               dt.typeName as transType, 
-               d.Deduct_Amt as transAmt 
+        CASE 
+            WHEN dt.DeducType_ID = 7 THEN 'Fee Masuk'
+            WHEN dt.DeducType_ID = 1 THEN 'Modal Syer'
+            WHEN dt.DeducType_ID = 2 THEN 'Modal Yuran'
+            WHEN dt.DeducType_ID = 3 THEN 'Simpanan Tetap'
+            WHEN dt.DeducType_ID = 4 THEN 'Sumbangan Tabung Kebajikan (AL-ABRAR)'
+            WHEN dt.DeducType_ID = 5 THEN 'Wang Deposit Anggota'
+            ELSE dt.typeName 
+        END as transType,
+        d.Deduct_Amt as transAmt 
         FROM tb_deduction d
         JOIN tb_deduction_type dt ON d.DeducType_ID = dt.DeducType_ID
         WHERE d.employeeID = ? 
         AND MONTH(d.Deduct_date) = ? 
-        AND YEAR(d.Deduct_date) = ?";
+        AND YEAR(d.Deduct_date) = ?
+        ORDER BY d.Deduct_date DESC";
 
-// 如果不是第一个月，排除某些付款类型
-if (!$is_first_month) {
-    $sql .= " AND dt.typeName NOT IN ('Entry Fee', 'Deposit')";
+if ($stmt = mysqli_prepare($conn, $sql)) {
+    mysqli_stmt_bind_param($stmt, 'sii', $employeeID, $month, $year);
+    if (!mysqli_stmt_execute($stmt)) {
+        echo "<!-- Execute failed: " . mysqli_stmt_error($stmt) . " -->";
+    }
+    $result = mysqli_stmt_get_result($stmt);
+    if (!$result) {
+        echo "<!-- Get result failed: " . mysqli_error($conn) . " -->";
+    }
+} else {
+    echo "<!-- Prepare failed: " . mysqli_error($conn) . " -->";
 }
 
-$sql .= " ORDER BY d.Deduct_date DESC";
-
-$stmt = mysqli_prepare($conn, $sql);
-mysqli_stmt_bind_param($stmt, 'sii', $employeeID, $month, $year);
-mysqli_stmt_execute($stmt);
-$result = mysqli_stmt_get_result($stmt);
-
-// 计算总额
 $totalAmount = 0;
 if (mysqli_num_rows($result) > 0) {
     while ($row = mysqli_fetch_assoc($result)) {
         $totalAmount += $row['transAmt'];
     }
-    // 重置结果集指针
+
     mysqli_data_seek($result, 0);
 }
 
-// 辅助函数：格式化数字为4位
+
 function formatNumber($number) {
     return str_pad($number, 4, '0', STR_PAD_LEFT);
 }
 
-// 获取贷款信息
+
 $sql_loan = "SELECT 
     l.loanType,
     la.amountRequested,
@@ -116,25 +109,78 @@ if ($loan_data) {
    
 }
 
-// 获取到选定月份为止的累计储蓄金额
+// 添加调试日志
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+// 修改储蓄金额查询，修复参数绑定的类型和数量
 $sql_savings = "SELECT 
-    SUM(CASE WHEN dt.typeName = 'Modal Share' THEN d.Deduct_Amt ELSE 0 END) as modalShare,
-    SUM(CASE WHEN dt.typeName = 'Fee Capital' THEN d.Deduct_Amt ELSE 0 END) as feeCapital,
-    SUM(CASE WHEN dt.typeName = 'Contribution' THEN d.Deduct_Amt ELSE 0 END) as contribution,
-    SUM(CASE WHEN dt.typeName = 'Fixed Deposit' THEN d.Deduct_Amt ELSE 0 END) as fixedDeposit,
-    SUM(CASE WHEN dt.typeName = 'Deposit' THEN d.Deduct_Amt ELSE 0 END) as deposit
-FROM tb_deduction d
-JOIN tb_deduction_type dt ON d.DeducType_ID = dt.DeducType_ID
-WHERE d.employeeID = ? 
-AND (
-    YEAR(d.Deduct_date) < ? 
-    OR (YEAR(d.Deduct_date) = ? AND MONTH(d.Deduct_date) <= ?)
-)";
+    (SELECT SUM(Deduct_Amt) FROM tb_deduction 
+     WHERE employeeID = ? 
+     AND DeducType_ID = 1
+     AND (YEAR(Deduct_date) < ? OR (YEAR(Deduct_date) = ? AND MONTH(Deduct_date) <= ?))
+    ) as modalShare,
+    (SELECT SUM(Deduct_Amt) FROM tb_deduction 
+     WHERE employeeID = ? 
+     AND DeducType_ID = 2
+     AND (YEAR(Deduct_date) < ? OR (YEAR(Deduct_date) = ? AND MONTH(Deduct_date) <= ?))
+    ) as feeCapital,
+    (SELECT SUM(Deduct_Amt) FROM tb_deduction 
+     WHERE employeeID = ? 
+     AND DeducType_ID = 4
+     AND (YEAR(Deduct_date) < ? OR (YEAR(Deduct_date) = ? AND MONTH(Deduct_date) <= ?))
+    ) as contribution,
+    (SELECT SUM(Deduct_Amt) FROM tb_deduction 
+     WHERE employeeID = ? 
+     AND DeducType_ID = 3
+     AND (YEAR(Deduct_date) < ? OR (YEAR(Deduct_date) = ? AND MONTH(Deduct_date) <= ?))
+    ) as fixedDeposit,
+    (SELECT SUM(Deduct_Amt) FROM tb_deduction 
+     WHERE employeeID = ? 
+     AND DeducType_ID = 5
+     AND (YEAR(Deduct_date) < ? OR (YEAR(Deduct_date) = ? AND MONTH(Deduct_date) <= ?))
+    ) as deposit
+FROM dual";
 
 $stmt_savings = mysqli_prepare($conn, $sql_savings);
-mysqli_stmt_bind_param($stmt_savings, 'siii', $employeeID, $year, $year, $month);
+
+// 绑定参数，每组4个参数：employeeID, year, year, month
+$bind_params = array();
+$types = str_repeat('siis', 5); // 5个查询，每个查询4个参数
+for ($i = 0; $i < 5; $i++) {
+    $bind_params[] = $employeeID;
+    $bind_params[] = $year;
+    $bind_params[] = $year;
+    $bind_params[] = $month;
+}
+
+// 使用 call_user_func_array 来绑定参数
+$bind_names[] = $types;
+for ($i = 0; $i < count($bind_params); $i++) {
+    $bind_name = 'bind' . $i;
+    $$bind_name = $bind_params[$i];
+    $bind_names[] = &$$bind_name;
+}
+
+call_user_func_array(array($stmt_savings, 'bind_param'), $bind_names);
 mysqli_stmt_execute($stmt_savings);
 $savings = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_savings));
+
+// 添加调试输出
+echo "<!-- Debug Info:\n";
+echo "Employee ID: " . $employeeID . "\n";
+echo "Month: " . $month . "\n";
+echo "Year: " . $year . "\n";
+echo "Savings Data: " . print_r($savings, true) . "\n";
+echo "-->";
+
+// 使用 null 合并运算符，但不设置默认值
+$savings['modalShare'] = $savings['modalShare'] ?? 0;    
+$savings['feeCapital'] = $savings['feeCapital'] ?? 0;     
+$savings['contribution'] = $savings['contribution'] ?? 0;  
+$savings['fixedDeposit'] = $savings['fixedDeposit'] ?? 0; 
+$savings['deposit'] = $savings['deposit'] ?? 0;           
+
 ?>
 
 <div class="container mt-5">
@@ -157,7 +203,7 @@ $savings = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_savings));
                 <h5><?php echo strtoupper(date('F Y', mktime(0, 0, 0, $month, 1, $year))); ?></h5>
             </div>
             
-            <!-- 会员信息 -->
+            
             <div class="row mb-4">
                 <div class="col-md-6">
                     <table class="table table-borderless">
@@ -184,36 +230,42 @@ $savings = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_savings));
             <div class="mb-4">
                 <h5 class="border-bottom pb-2">MAKLUMAT SIMPANAN</h5>
                 <div class="row">
-                    <div class="col-md-6">
-                        <table class="table table-borderless">
+                    <div class="col-md-8"> 
+                        <table class="table table-borderless financial-table">
                             <tr>
-                                <td width="150">Modal Saham</td>
-                                <td>: RM <?php echo number_format($savings['modalShare'], 2); ?></td>
+                                <td style="width: 300px;">Modal Syer</td>
+                                <td style="width: 30px;">:</td>
+                                <td style="width: 150px;">RM <?php echo number_format($savings['modalShare'], 2); ?></td>
                             </tr>
                             <tr>
-                                <td>ModalYuran</td>
-                                <td>: RM <?php echo number_format($savings['feeCapital'], 2); ?></td>
+                                <td>Modal Yuran</td>
+                                <td>:</td>
+                                <td>RM <?php echo number_format($savings['feeCapital'], 2); ?></td>
                             </tr>
                             <tr>
                                 <td>Sumbangan Tabung Kebajikan (AL-ABRAR)</td>
-                                <td>: RM <?php echo number_format($savings['contribution'], 2); ?></td>
+                                <td>:</td>
+                                <td>RM <?php echo number_format($savings['contribution'], 2); ?></td>
                             </tr>
                             <tr>
                                 <td>Simpanan Tetap</td>
-                                <td>: RM <?php echo number_format($savings['fixedDeposit'], 2); ?></td>
+                                <td>:</td>
+                                <td>RM <?php echo number_format($savings['fixedDeposit'], 2); ?></td>
                             </tr>
                             <tr>
                                 <td>Wang Deposit Anggota</td>
-                                <td>: RM <?php echo number_format($savings['deposit'], 2); ?></td>
+                                <td>:</td>
+                                <td>RM <?php echo number_format($savings['deposit'], 2); ?></td>
                             </tr>
                             <tr>
                                 <td><strong>Jumlah</strong></td>
-                                <td><strong>: RM <?php echo number_format(
+                                <td><strong>:</strong></td>
+                                <td><strong>RM <?php echo number_format(
                                     $savings['modalShare'] + 
                                     $savings['feeCapital'] + 
                                     $savings['contribution'] + 
-                                    $savings['fixedDeposit'] + 
-                                    $savings['deposit'], 
+                                    $savings['deposit'] +
+                                    $savings['fixedDeposit'], 
                                     2); ?></strong></td>
                             </tr>
                         </table>
@@ -221,27 +273,31 @@ $savings = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_savings));
                 </div>
             </div>
 
-            <!-- 贷款信息 -->
+            <!-- 贷款信息部分 -->
             <div class="mb-4">
                 <h5 class="border-bottom pb-2">MAKLUMAT PINJAMAN</h5>
                 <div class="row">
-                    <div class="col-md-6">
-                        <table class="table table-borderless">
+                    <div class="col-md-8"> 
+                        <table class="table table-borderless financial-table">
                             <tr>
-                                <td width="150">Jenis Pinjaman</td>
-                                <td>: <?php echo $loan_data['loanType'] ?? '-'; ?></td>
+                                <td style="width: 300px;">Jenis Pinjaman</td>
+                                <td style="width: 30px;">:</td>
+                                <td style="width: 150px;"><?php echo $loan_data['loanType'] ?? '-'; ?></td>
                             </tr>
                             <tr>
                                 <td>Jumlah Pinjaman</td>
-                                <td>: RM <?php echo number_format($totalLoanAmount ?? 0, 2); ?></td>
+                                <td>:</td>
+                                <td>RM <?php echo number_format($totalLoanAmount ?? 0, 2); ?></td>
                             </tr>
                             <tr>
                                 <td>Baki Pinjaman</td>
-                                <td>: RM <?php echo number_format($currentBalance ?? 0, 2); ?></td>
+                                <td>:</td>
+                                <td>RM <?php echo number_format($currentBalance ?? 0, 2); ?></td>
                             </tr>
                             <tr>
                                 <td>Bayaran Bulanan</td>
-                                <td>: RM <?php echo number_format($loan_data['monthlyInstallments'] ?? 0, 2); ?></td>
+                                <td>:</td>
+                                <td>RM <?php echo number_format($loan_data['monthlyInstallments'] ?? 0, 2); ?></td>
                             </tr>
                         </table>
                     </div>
@@ -304,59 +360,106 @@ $savings = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_savings));
 
 <style>
     @media print {
-        /* 隐藏顶部导航和标题 */
-        nav,
-        header,
+        /* 基本设置 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        /* 移除所有边框和背景 */
+        .card, 
+        .table,
+        .container,
+        .card-body {
+            border: none !important;
+            box-shadow: none !important;
+            background: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+
+        /* 页面设置 */
+        @page {
+            size: A4;
+            margin: 2cm;
+        }
+
+        /* 容器和内容设置 */
+        .container {
+            width: 100% !重要;
+            max-width: none !important;
+        }
+
+        /* 表格设置 */
+        .table {
+            width: 100% !important;
+            border-collapse: collapse !重要;
+        }
+
+        /* 只保留必要的边框 */
+        .table-bordered,
+        .table-bordered th,
+        .table-bordered td {
+            border: 1px solid #000 !important;
+        }
+
+        .table-borderless,
+        .table-borderless td,
+        .table-borderless th {
+            border: none !important;
+        }
+
+        /* 文字大小设置 */
+        body { font-size: 12pt; }
+        h2 { font-size: 16pt; }
+        h4 { font-size: 14pt; }
+        h5 { font-size: 12pt; }
+        td, th, p { font-size: 11pt; }
+
+        /* Logo 大小控制 */
+        img {
+            height: 60px !重要;
+            width: auto !important;
+        }
+
+        /* 隐藏不需要的元素 */
+        .no-print,
         .navbar,
-        .nav,
-        .header,
-        #header,
-        .kada-header,
-        .header-section {
+        .header-section,
+        .btn,
+        header {
             display: none !important;
         }
 
-        /* 移除页面顶部空白 */
-        body {
-            margin: 0 !important;
-            padding: 0 !important;
-        }
-
-        .container {
-            margin-top: 0 !important;
-            padding-top: 0 !important;
-        }
-
-        /* 确保内容从页面顶部开始 */
+        /* 确保打印时显示完整内容 */
         .card {
-            margin-top: 0 !important;
-            border: none !important;
-            box-shadow: none !important;
+            position: static !important;
+            transform: none !重要;
         }
 
-        /* 其他打印样式保持不变... */
-        .no-print { 
-            display: none !important; 
+        /* 文本对齐 */
+        .text-end { text-align: right !重要; }
+        .text-center { text-align: center !重要; }
+
+        /* 表格间距 */
+        .table td,
+        .table th {
+            padding: 4px 8px !重要;
         }
-        
-        /* 确保内容区域占满整个页面宽度 */
-        .container { 
-            width: 100% !important;
-            max-width: none !important;
-            padding: 20px 40px !important;
+
+        /* 移除 Bootstrap 的背景色 */
+        .table-light,
+        .table-light td,
+        .table-light th {
+            background-color: transparent !重要;
         }
     }
-    .card-title {
-        color: inherit;
-        font-weight: bold;
-    }
-    .text-end {
-        text-align: right;
-    }
-    .table-borderless td {
-        padding: 4px 0;
-    }
-</style> 
+
+    /* 屏幕显示样式保持不变
+    // ...existing code... */
+</style>
 
 <!-- 添加调试信息 -->
 <?php
