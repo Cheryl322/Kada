@@ -354,9 +354,6 @@ $savings = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_savings));
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Penyata Kewangan</h2>
-        <a href="javascript:history.back()" class="btn btn-kembali">
-            <i class="fas fa-arrow-left me-2"></i>Kembali
-        </a>
     </div>
 
     <!-- Main Summary Cards -->
