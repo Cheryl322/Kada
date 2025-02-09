@@ -68,7 +68,7 @@ $memberData = mysqli_fetch_assoc($resultMember);
                         </a>
                     
                         <a href="statuspermohonanloan.php" class="btn w-75 mx-auto" style="background-color: #8CD9B5; color: white;">
-                            Permohonan
+                            Status Permohonan
                         </a>
                         <a href="logout.php" class="btn w-75 mx-auto" style="background-color: #75B798; color: white;">
                             Daftar Keluar
