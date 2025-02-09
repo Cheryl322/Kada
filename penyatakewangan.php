@@ -425,7 +425,6 @@ $savings = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_savings));
                     </div>
                     <div class="nav-card-details">
                         <h3 class="nav-card-title">Rekod Transaksi</h3>
-                        <p class="nav-card-desc">Semak rekod transaksi anda</p>
                     </div>
                 </a>
             </div>
@@ -438,20 +437,18 @@ $savings = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_savings));
                     </div>
                     <div class="nav-card-details">
                         <h3 class="nav-card-title">Penyata Bulanan</h3>
-                        <p class="nav-card-desc">Laporan transaksi bulanan</p>
                     </div>
                 </a>
             </div>
         </div>
         <div class="col-md-4 mb-3">
             <div class="nav-card">
-                <a href="view_yearly_statement.php" class="nav-card-content">
+                <a href="financial_statement.php" class="nav-card-content">
                     <div class="nav-card-icon yearly">
                         <i class="fas fa-file-invoice"></i>
                     </div>
                     <div class="nav-card-details">
-                        <h3 class="nav-card-title">Penyata Tahunan</h3>
-                        <p class="nav-card-desc">Ringkasan tahunan anda</p>
+                        <h3 class="nav-card-title">Penyata Kewangan</h3>
                     </div>
                 </a>
             </div>
