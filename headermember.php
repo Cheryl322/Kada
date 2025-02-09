@@ -57,15 +57,15 @@ body::before {
 
 <nav class="navbar navbar-expand-lg bg-primary" data-bs-theme="dark">
   <div class="container-fluid">
-    <a class="navbar-brand" href="index.php"><img src="img/kadalogo.jpg" alt="logo" height="40"></a>
-    <a class="navbar-brand" href="index.php">KADA Ahli</a>
+    <a class="navbar-brand" href="mainpage.php"><img src="img/kadalogo.jpg" alt="logo" height="40"></a>
+    <a class="navbar-brand" href="mainpage.php">KADA Ahli</a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarColor03" aria-controls="navbarColor03" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarColor03">
       <ul class="navbar-nav me-auto">
         <li class="nav-item">
-          <a class="nav-link active" href="index.php">Laman Utama
+          <a class="nav-link active" href="mainpage.php">Laman Utama
             <span class="visually-hidden">(current)</span>
           </a>
         </li>
