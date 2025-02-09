@@ -152,9 +152,25 @@ class EmailHelper {
 
     public function sendPasswordResetEmail($to, $body) {
         try {
+            // Use the exact path to the image
+            $logoPath = 'C:/xampp/htdocs/Kada/img/kadalogo.jpg';
+            // For debugging
+            error_log("Using logo path: " . $logoPath);
+            
+            $this->mail->clearAddresses();
+            $this->mail->clearAttachments();
             $this->mail->addAddress($to);
             $this->mail->isHTML(true);
             $this->mail->Subject = 'Reset Kata Laluan KADA Ahli';
+            
+            // Add the logo
+            if (file_exists($logoPath)) {
+                $this->addEmbeddedImage($logoPath, 'kadalogo', 'KADA Logo');
+                error_log("Logo successfully embedded");
+            } else {
+                error_log("Logo file not found at: " . $logoPath);
+            }
+            
             $this->mail->Body = $body;
             $this->mail->send();
             return true;
@@ -162,5 +178,30 @@ class EmailHelper {
             error_log("Email Error: " . $e->getMessage());
             throw $e;
         }
+    }
+
+    /**
+     * Add an embedded image to the email
+     * 
+     * @param string $path Path to the image file
+     * @param string $cid Content ID for the image
+     * @param string $name Name of the image
+     * @return bool True if image was added successfully
+     * @throws Exception If image cannot be added
+     */
+    public function addEmbeddedImage($path, $cid, $name = '') {
+        try {
+            return $this->mail->addEmbeddedImage($path, $cid, $name);
+        } catch (Exception $e) {
+            error_log("Failed to add embedded image: " . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    /**
+     * Clear all attachments and embedded images
+     */
+    public function clearAttachments() {
+        $this->mail->clearAttachments();
     }
 } 

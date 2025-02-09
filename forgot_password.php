@@ -83,7 +83,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Generate reset link
         $resetLink = "http://localhost/KADA/reset_password.php?token=" . $token;
         
-        // Create email body with improved styling
+        // First, get the KADA logo and convert it to Base64
+        $logoPath = 'img/kadalogo.jpg'; // Make sure this path is correct
+        if (!file_exists($logoPath)) {
+            error_log("Logo file not found at: " . $logoPath);
+            // Fallback to absolute path
+            $logoPath = $_SERVER['DOCUMENT_ROOT'] . '/KADA/img/kadalogo.jpg';
+        }
+
+        try {
+            $logoType = pathinfo($logoPath, PATHINFO_EXTENSION);
+            $logoData = file_get_contents($logoPath);
+            if ($logoData === false) {
+                error_log("Failed to read logo file: " . $logoPath);
+                // Use a fallback image or continue without logo
+                $logoBase64 = '';
+            } else {
+                $logoBase64 = base64_encode($logoData);
+            }
+        } catch (Exception $e) {
+            error_log("Error processing logo: " . $e->getMessage());
+            $logoBase64 = '';
+        }
+
+        // Create email body with inline Base64 image and error checking
         $emailBody = "
 <!DOCTYPE html>
 <html>
@@ -150,10 +173,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body>
     <div class='container'>
         <div class='header'>
-            <img src='https://kada.gov.my/images/logo.png' alt='KADA Logo'>
-            <h2 style='color: #4CAF50;'>Reset Kata Laluan KADA</h2>
+    
+            <h2 style='color: #4CAF50;'>Reset Kata Laluan Koperasi Kakitangan KADA</h2>
         </div>
         
+
         <div class='content'>
             <p>Assalamualaikum dan Salam Sejahtera,</p>
             

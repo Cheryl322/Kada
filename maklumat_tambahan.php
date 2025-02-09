@@ -1,5 +1,9 @@
 <?php
+ob_start();
 session_start();
+
+require_once 'email_helper.php';
+
 include "headermember.php";
 include "dbconnect.php";
 
@@ -13,32 +17,25 @@ function debug_to_console($data) {
 }
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    echo "<pre>";
-    print_r($_POST);
-    print_r($_SESSION);
-    echo "</pre>";
-
     try {
-        // Start transaction
-        $conn->begin_transaction();
+        mysqli_begin_transaction($conn);
 
         // Get employeeID from session
-        $employeeID = $_SESSION['employeeID']; // Make sure this matches your session variable name
+        $employeeID = $_SESSION['employeeID'];
         
         // 1. Save Fees and Contribution
         $insertFees = "INSERT INTO tb_memberregistration_feesandcontribution 
-                      (employeeID, entryFee, modalShare, feeCapital, deposit, contribution, fixedDeposit, others) 
-                      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                      (employeeID, entryFee, modalShare, feeCapital, deposit, contribution, fixedDeposit) 
+                      VALUES (?, ?, ?, ?, ?, ?, ?)
                       ON DUPLICATE KEY UPDATE 
                       entryFee = VALUES(entryFee),
                       modalShare = VALUES(modalShare),
                       feeCapital = VALUES(feeCapital),
                       deposit = VALUES(deposit),
                       contribution = VALUES(contribution),
-                      fixedDeposit = VALUES(fixedDeposit),
-                      others = VALUES(others)";
+                      fixedDeposit = VALUES(fixedDeposit)";
 
-        $stmt = $conn->prepare($insertFees);
+        $stmt = mysqli_prepare($conn, $insertFees);
         
         // Convert form values to integers and handle empty values
         $entryFee = empty($_POST['fee_masuk']) ? 0 : (int)$_POST['fee_masuk'];
@@ -47,29 +44,27 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $deposit = empty($_POST['wang_deposit']) ? 0 : (int)$_POST['wang_deposit'];
         $contribution = empty($_POST['sumbangan_tabung']) ? 0 : (int)$_POST['sumbangan_tabung'];
         $fixedDeposit = empty($_POST['simpanan_tetap']) ? 0 : (int)$_POST['simpanan_tetap'];
-        $others = empty($_POST['lain_lain']) ? 0 : (int)$_POST['lain_lain'];
 
-        $stmt->bind_param("iiiiiiii", 
+        mysqli_stmt_bind_param($stmt, "iiiiiii", 
             $employeeID,
             $entryFee,
             $modalShare,
             $feeCapital,
             $deposit,
             $contribution,
-            $fixedDeposit,
-            $others
+            $fixedDeposit
         );
 
-        if (!$stmt->execute()) {
-            throw new Exception("Error saving fees: " . $stmt->error);
+        if (!mysqli_stmt_execute($stmt)) {
+            throw new Exception("Error saving fees");
         }
 
         // 2. Save Family Member Information
         // First delete existing records for this employee
         $deleteFamily = "DELETE FROM tb_memberregistration_familymemberinfo WHERE employeeID = ?";
-        $stmt = $conn->prepare($deleteFamily);
-        $stmt->bind_param("i", $employeeID);
-        $stmt->execute();
+        $stmt = mysqli_prepare($conn, $deleteFamily);
+        mysqli_stmt_bind_param($stmt, "i", $employeeID);
+        mysqli_stmt_execute($stmt);
 
         // Then insert new family members
         if (isset($_POST['hubungan']) && is_array($_POST['hubungan'])) {
@@ -77,40 +72,65 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                            (employeeID, relationship, name, icFamilyMember) 
                            VALUES (?, ?, ?, ?)";
             
-            $stmt = $conn->prepare($insertFamily);
+            $stmt = mysqli_prepare($conn, $insertFamily);
 
             foreach ($_POST['hubungan'] as $i => $hubungan) {
-                // Skip if any required field is empty
                 if (empty($hubungan) || empty($_POST['nama_waris'][$i]) || empty($_POST['no_kp_waris'][$i])) {
                     continue;
                 }
 
-                $stmt->bind_param("isss",
+                mysqli_stmt_bind_param($stmt, "isss",
                     $employeeID,
                     $_POST['hubungan'][$i],
                     $_POST['nama_waris'][$i],
                     $_POST['no_kp_waris'][$i]
                 );
 
-                if (!$stmt->execute()) {
-                    throw new Exception("Error saving family member: " . $stmt->error);
+                if (!mysqli_stmt_execute($stmt)) {
+                    throw new Exception("Error saving family member");
                 }
             }
         }
 
-        // If everything is successful, commit the transaction
-        $conn->commit();
+        // 3. Get user's email from database
+        $emailQuery = "SELECT email FROM tb_member WHERE employeeID = ?";
+        $stmt = mysqli_prepare($conn, $emailQuery);
+        mysqli_stmt_bind_param($stmt, "i", $employeeID);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+        $userEmail = mysqli_fetch_assoc($result)['email'];
+
+        // 4. Try to send email
+        try {
+            $emailHelper = new EmailHelper();
+            $emailData = [
+                'fee_masuk' => $entryFee,
+                'modal_syer' => $modalShare,
+                'modal_yuran' => $feeCapital,
+                'wang_deposit' => $deposit,
+                'sumbangan_tabung' => $contribution,
+                'simpanan_tetap' => $fixedDeposit
+            ];
+            
+            $emailHelper->sendRegistrationEmail($userEmail, $emailData);
+            $_SESSION['success_message'] = 'Pendaftaran anda telah berjaya disimpan dan email pengesahan telah dihantar.';
+            $_SESSION['email_sent'] = true;
+        } catch (Exception $e) {
+            error_log("Email sending failed: " . $e->getMessage());
+            $_SESSION['success_message'] = 'Pendaftaran anda telah berjaya disimpan tetapi email pengesahan tidak dapat dihantar.';
+        }
         
-        // Redirect to success page
-        $_SESSION['success_message'] = "Maklumat berjaya disimpan!";
-        header("Location: success_page.php");
+        mysqli_commit($conn);
+        ob_end_clean();
+        header('Location: success.php');
         exit();
 
     } catch (Exception $e) {
-        // If there's an error, rollback the transaction
-        $conn->rollback();
-        echo "<div class='alert alert-danger'>Error: " . $e->getMessage() . "</div>";
-        error_log("Error in maklumat_tambahan.php: " . $e->getMessage());
+        mysqli_rollback($conn);
+        $_SESSION['error_message'] = $e->getMessage();
+        ob_end_clean();
+        header('Location: success.php');
+        exit();
     }
 }
 
@@ -132,6 +152,7 @@ if (isset($conn->error) && $conn->error) {
     <!-- Then add Bootstrap and other resources -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
 
@@ -309,7 +330,7 @@ if (isset($conn->error) && $conn->error) {
                         <tr>
                             <td>1</td>
                             <td>FEE MASUK</td>
-                            <td><input type="number" name="fee_masuk" class="form-control" min="0" step="1"></td>
+                            <td><input type="number" name="fee_masuk" class="form-control" value="50" readonly></td>
                         </tr>
                         <tr>
                             <td>2</td>
@@ -319,7 +340,7 @@ if (isset($conn->error) && $conn->error) {
                         <tr>
                             <td>3</td>
                             <td>MODAL YURAN</td>
-                            <td><input type="number" name="modal_yuran" class="form-control" min="0" step="1"></td>
+                            <td><input type="number" name="modal_yuran" class="form-control" min="35" step="1"></td>
                         </tr>
                         <tr>
                             <td>4</td>
@@ -335,11 +356,6 @@ if (isset($conn->error) && $conn->error) {
                             <td>6</td>
                             <td>SIMPANAN TETAP</td>
                             <td><input type="number" name="simpanan_tetap" class="form-control" min="0" step="1"></td>
-                        </tr>
-                        <tr>
-                            <td>7</td>
-                            <td>LAIN-LAIN</td>
-                            <td><input type="number" name="lain_lain" class="form-control" min="0" step="1"></td>
                         </tr>
                     </tbody>
                 </table>
@@ -428,33 +444,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const submitBtn = document.getElementById('submitBtn');
 
     form.addEventListener('submit', function(e) {
-        e.preventDefault();
-
-        // Get form data
-        const formData = new FormData(form);
-
-        // Show loading state
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = 'Menghantar... <i class="fas fa-spinner fa-spin"></i>';
-
-        // Send form data using fetch
-        fetch(form.action, {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            // Redirect to success page
-            window.location.href = 'success.php';
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Ralat semasa menghantar borang. Sila cuba lagi.');
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = 'Menghantar <i class="fas fa-paper-plane"></i>';
-        });
+        if (!validateForm()) {
+            e.preventDefault();
+            return false;
+        }
+        // Form will submit normally to the same page
     });
 });
 
@@ -472,8 +466,7 @@ function validateForm() {
         modal_yuran: document.querySelector('input[name="modal_yuran"]').value,
         wang_deposit: document.querySelector('input[name="wang_deposit"]').value,
         sumbangan_tabung: document.querySelector('input[name="sumbangan_tabung"]').value,
-        simpanan_tetap: document.querySelector('input[name="simpanan_tetap"]').value,
-        lain_lain: document.querySelector('input[name="lain_lain"]').value
+        simpanan_tetap: document.querySelector('input[name="simpanan_tetap"]').value
     };
 
     // Debug: Log fees data
@@ -495,22 +488,20 @@ function validateForm() {
     // Debug: Log family members data
     console.log('Family members:', familyMembers);
 
+    // Validate fee masuk is 50
+    if (parseInt(fees.fee_masuk) !== 50) {
+        alert('Fee masuk mestilah RM50');
+        return false;
+    }
+
+    // Validate modal yuran is at least 35
+    if (parseInt(fees.modal_yuran) < 35) {
+        alert('Modal yuran mestilah minimum RM35');
+        return false;
+    }
+
     return true;
 }
-
-// Add event listener to form submission
-document.getElementById('registrationForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    if (validateForm()) {
-        const submitBtn = document.getElementById('submitBtn');
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = 'Menghantar... <i class="fas fa-spinner fa-spin"></i>';
-        
-        // Submit the form
-        this.submit();
-    }
-});
 </script>
 
 </body>
