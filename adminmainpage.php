@@ -520,6 +520,14 @@ if (!isset($_SESSION['employeeID']) || $_SESSION['role'] !== 'admin') {
                 <span>Rekod Pembayaran</span>
             </div>
         </a>
+        <div class="col">
+            <a href="manage_interest.php" class="circle">
+                <div class="circle-content">
+                    <i class="fas fa-percentage mb-2"></i>
+                    <span>Kadar Faedah</span>
+                </div>
+            </a>
+        </div>
     </div>
 
     <div class="tables-container">

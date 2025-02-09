@@ -76,6 +76,12 @@ $memberData = mysqli_fetch_assoc($result);
 
 // Close the statement
 mysqli_stmt_close($stmt);
+
+// Get current interest rate
+$rateSql = "SELECT rate FROM tb_interestrate ORDER BY updated_at DESC LIMIT 1";
+$rateResult = mysqli_query($conn, $rateSql);
+$rateRow = mysqli_fetch_assoc($rateResult);
+$interestRate = $rateRow['rate'] ?? 2.00; // Default to 2% if no rate found
 ?>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
@@ -280,6 +286,21 @@ mysqli_stmt_close($stmt);
                 </div>
 
                 <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="kadar_faedah" class="form-label">Kadar Faedah Tahunan</label>
+                        <div class="input-group">
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="kadar_faedah" 
+                                   value="<?php echo number_format($interestRate, 2); ?>%" 
+                                   readonly>
+                            <input type="hidden" 
+                                   id="kadar_faedah_value" 
+                                   name="interestRate"
+                                   value="<?php echo $interestRate; ?>">
+                        </div>
+                        <small class="text-muted">*Kadar faedah adalah tertakluk kepada perubahan</small>
+                    </div>
                     <div class="col-md-6">
                         <label for="ansuran_bulanan" class="form-label">Ansuran Bulanan</label>
                         <div class="input-group">
@@ -1340,22 +1361,57 @@ $(document).ready(function() {
 
 <script>
 $(document).ready(function() {
-    // Function to calculate monthly payment
+    // Function to calculate monthly payment with interest
     function calculateMonthlyPayment() {
         const loanAmount = parseFloat($('#jumlah_pinjaman').val()) || 0;
         const loanTerm = parseFloat($('#tempoh_pembayaran').val()) || 0;
+        const annualInterestRate = parseFloat($('#kadar_faedah_value').val()) || 0;
         
-        // Simple calculation: loan amount divided by number of months
-        // You can modify this formula based on your interest rate requirements
         if (loanAmount > 0 && loanTerm > 0) {
-            const monthlyPayment = loanAmount / loanTerm;
+            // Convert annual rate to monthly rate (divide by 12 months and 100 for percentage)
+            const monthlyRate = (annualInterestRate / 100) / 12;
+            
+            // Calculate monthly payment using loan amortization formula
+            // Formula: PMT = P * (r * (1 + r)^n) / ((1 + r)^n - 1)
+            // Where: P = Principal, r = Monthly Interest Rate, n = Number of Payments
+            
+            const numerator = monthlyRate * Math.pow(1 + monthlyRate, loanTerm);
+            const denominator = Math.pow(1 + monthlyRate, loanTerm) - 1;
+            
+            let monthlyPayment;
+            if (monthlyRate === 0) {
+                // If no interest, simple division
+                monthlyPayment = loanAmount / loanTerm;
+            } else {
+                // With interest calculation
+                monthlyPayment = loanAmount * (numerator / denominator);
+            }
+            
+            // Round to 2 decimal places
+            monthlyPayment = Math.round(monthlyPayment * 100) / 100;
+            
+            // Update the monthly payment field
             $('#ansuran_bulanan').val(monthlyPayment.toFixed(2));
+            
+            // Optionally show total interest and total payment
+            const totalPayment = monthlyPayment * loanTerm;
+            const totalInterest = totalPayment - loanAmount;
+            
+            // If you want to display total interest and payment somewhere
+            if ($('#total_interest').length) {
+                $('#total_interest').text('RM ' + totalInterest.toFixed(2));
+                $('#total_payment').text('RM ' + totalPayment.toFixed(2));
+            }
         } else {
             $('#ansuran_bulanan').val('');
+            if ($('#total_interest').length) {
+                $('#total_interest').text('RM 0.00');
+                $('#total_payment').text('RM 0.00');
+            }
         }
     }
 
-    // Add event listeners to trigger calculation
+    // Add event listeners to recalculate when amount or period changes
     $('#jumlah_pinjaman, #tempoh_pembayaran').on('input', calculateMonthlyPayment);
 });
 </script>
