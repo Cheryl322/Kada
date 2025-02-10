@@ -7,6 +7,11 @@ if (!isset($_SESSION['employeeID'])) {
     exit();
 }
 
+if (isset($_SESSION['formData'])) {
+    $formData = $_SESSION['formData'];
+    unset($_SESSION['formData']); // Clear the stored form data
+}
+
 include 'dbconnect.php';
 
 // Check registration status
@@ -212,7 +217,15 @@ $interestRate = $rateRow['rate'] ?? 2.00; // Default to 2% if no rate found
                     </div>
                 </div>
 
-                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="fieldName" class="form-label">Field Name</label>
+                        <input type="text" 
+                               name="fieldName" 
+                               value="<?php echo isset($formData['fieldName']) ? htmlspecialchars($formData['fieldName']) : ''; ?>"
+                               class="form-control">
+                    </div>
+                </div>
 
                 <div class="mt-3">
                     <button type="button" class="btn btn-primary next-step">Seterusnya</button>

@@ -26,7 +26,7 @@ if (!isset($_SESSION['status'])) {
                 confirmButtonColor: '#75B798',
                 allowOutsideClick: false
             }).then((result) => {
-                window.location.href = 'statuspermohonan.php';
+                window.location.href = 'statuspermohonanloan.php';
             });
 
         <?php } else { ?>
@@ -34,12 +34,12 @@ if (!isset($_SESSION['status'])) {
                 icon: 'error',
                 title: 'Ralat!',
                 text: '<?php echo $_SESSION['error']; ?>',
-                confirmButtonText: 'Kembali ke Permohonan',
+                confirmButtonText: 'Kembali',
                 confirmButtonColor: '#75B798',
                 allowOutsideClick: false
-
             }).then((result) => {
-                window.location.href = 'permohonanloan.php';
+                // Go back to previous page instead of redirecting
+                window.history.back();
             });
         <?php } ?>
 
