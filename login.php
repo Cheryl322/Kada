@@ -179,9 +179,9 @@ body::before {
 
                 <form action="" method="POST">
                     <div class="form-group">
-                        <label for="employeeID" class="form-label">Employee ID</label>
+                        <label for="employeeID" class="form-label">ID Pekerja</label>
                         <input type="text" class="form-control" id="employeeID" name="employeeID" 
-                               placeholder="Masukkan employee ID" required>
+                               placeholder="Masukkan ID pekerja" required>
                     </div>
 
                     <div class="form-group">
