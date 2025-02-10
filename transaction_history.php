@@ -86,95 +86,213 @@ if (!isset($_GET['year']) || !isset($_GET['month'])) {
     $year = key($available_dates);
     $month = $available_dates[$year][0];
 }
+
+$months_in_malay = [
+    1 => 'Januari', 2 => 'Februari', 3 => 'Mac',
+    4 => 'April', 5 => 'Mei', 6 => 'Jun',
+    7 => 'Julai', 8 => 'Ogos', 9 => 'September',
+    10 => 'Oktober', 11 => 'November', 12 => 'Disember'
+];
 ?>
 
 <div class="container mt-4">
-    <div class="mb-4">
-        <a href="penyatakewangan.php" class="btn btn-secondary">
-            <i class="fas fa-arrow-left"></i> Kembali
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Rekod Transaksi</h2>
+        <a href="penyatakewangan.php" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Kembali
         </a>
     </div>
 
-    <h2 class="mb-4">Rekod Pembayaran</h2>
-    
-    <div class="card mb-4">
-        <div class="card-body">
-            <form method="GET" class="row g-3">
-                <div class="col-md-5">
-                    <label class="form-label">Tahun</label>
-                    <select name="year" class="form-select" id="yearSelect">
-                        <?php foreach ($available_dates as $y => $months): ?>
-                            <option value="<?php echo $y; ?>" <?php echo ($y == $year) ? 'selected' : ''; ?>>
-                                <?php echo $y; ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-                <div class="col-md-5">
-                    <label class="form-label">Bulan</label>
-                    <select name="month" class="form-select" id="monthSelect">
-                        <?php 
-                        $months_in_malay = [
-                            1 => 'Januari', 2 => 'Februari', 3 => 'Mac',
-                            4 => 'April', 5 => 'Mei', 6 => 'Jun',
-                            7 => 'Julai', 8 => 'Ogos', 9 => 'September',
-                            10 => 'Oktober', 11 => 'November', 12 => 'Disember'
-                        ];
-                        
-                        if (isset($available_dates[$year])) {
-                            foreach ($available_dates[$year] as $m) {
-                                $selected = ($m == $month) ? 'selected' : '';
-                                echo "<option value='{$m}' {$selected}>{$months_in_malay[$m]}</option>";
-                            }
+    <!-- Filter Card -->
+    <div class="filter-card mb-4">
+        <form method="GET" class="row g-3">
+            <div class="col-md-5">
+                <label class="filter-label">Tahun</label>
+                <select name="year" class="form-select custom-select" id="yearSelect">
+                    <?php foreach ($available_dates as $y => $months): ?>
+                        <option value="<?php echo $y; ?>" <?php echo ($y == $year) ? 'selected' : ''; ?>>
+                            <?php echo $y; ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="col-md-5">
+                <label class="filter-label">Bulan</label>
+                <select name="month" class="form-select custom-select" id="monthSelect">
+                    <?php 
+                    if (isset($available_dates[$year])) {
+                        foreach ($available_dates[$year] as $m) {
+                            $selected = ($m == $month) ? 'selected' : '';
+                            echo "<option value='{$m}' {$selected}>{$months_in_malay[$m]}</option>";
                         }
-                        ?>
-                    </select>
-                </div>
-                <div class="col-md-2 d-flex align-items-end">
-                    <button type="submit" class="btn btn-primary w-100">
-                        <i class="fas fa-filter me-2"></i>Tapis
-                    </button>
-                </div>
-            </form>
-        </div>
+                    }
+                    ?>
+                </select>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-filter me-2"></i>Tapis
+                </button>
+            </div>
+        </form>
     </div>
 
-    <div class="card">
-        <div class="card-body">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Tarikh</th>
-                        <th>Jenis Pembayaran</th>
-                        <th>Jumlah (RM)</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php if (mysqli_num_rows($result) > 0): ?>
-                        <?php 
-                        while ($row = mysqli_fetch_assoc($result)): 
-                            $totalAmount += $row['transAmt'];
-                        ?>
-                            <tr>
-                                <td><?php echo date('d/m/Y', strtotime($row['transDate'])); ?></td>
-                                <td><?php echo $row['displayType']; ?></td>
-                                <td><?php echo number_format($row['transAmt'], 2); ?></td>
-                            </tr>
-                        <?php endwhile; ?>
-                        <tr class="table-info">
-                            <td colspan="2" class="text-end"><strong>Jumlah Keseluruhan:</strong></td>
-                            <td><strong>RM <?php echo number_format($totalAmount, 2); ?></strong></td>
-                        </tr>
-                    <?php else: ?>
-                        <tr>
-                            <td colspan="3" class="text-center">Tiada rekod pembayaran</td>
-                        </tr>
-                    <?php endif; ?>
-                </tbody>
-            </table>
+    <!-- Transactions Card -->
+    <div class="transaction-card">
+        <div class="transaction-header">
+            <h3>Transaksi <?php echo $months_in_malay[$month] . ' ' . $year; ?></h3>
+            <div class="total-amount">
+                Jumlah: <span>RM <?php echo number_format($totalAmount, 2); ?></span>
+            </div>
+        </div>
+        <div class="transaction-body">
+            <?php if (mysqli_num_rows($result) > 0): ?>
+                <?php while ($row = mysqli_fetch_assoc($result)): ?>
+                    <div class="transaction-item">
+                        <div class="transaction-icon">
+                            <i class="fas fa-receipt"></i>
+                        </div>
+                        <div class="transaction-details">
+                            <div class="transaction-type"><?php echo $row['displayType']; ?></div>
+                            <div class="transaction-date"><?php echo date('d/m/Y', strtotime($row['transDate'])); ?></div>
+                        </div>
+                        <div class="transaction-amount">
+                            RM <?php echo number_format($row['transAmt'], 2); ?>
+                        </div>
+                    </div>
+                <?php endwhile; ?>
+            <?php else: ?>
+                <div class="no-transactions">
+                    <i class="fas fa-receipt fa-3x mb-3"></i>
+                    <p>Tiada rekod transaksi untuk tempoh ini</p>
+                </div>
+            <?php endif; ?>
         </div>
     </div>
 </div>
+
+<style>
+.filter-card {
+    background: white;
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+}
+
+.filter-label {
+    font-weight: 500;
+    color: #2c3e50;
+    margin-bottom: 8px;
+}
+
+.custom-select {
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    padding: 10px;
+}
+
+.transaction-card {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+}
+
+.transaction-header {
+    padding: 20px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.transaction-header h3 {
+    margin: 0;
+    font-size: 18px;
+    color: #2c3e50;
+}
+
+.total-amount {
+    font-weight: 500;
+    color: #2c3e50;
+}
+
+.total-amount span {
+    color: #4CAF50;
+    font-weight: 600;
+}
+
+.transaction-body {
+    padding: 10px;
+}
+
+.transaction-item {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+    transition: background-color 0.3s;
+}
+
+.transaction-item:hover {
+    background-color: #f8f9fa;
+}
+
+.transaction-icon {
+    width: 40px;
+    height: 40px;
+    background: #e3f2fd;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 15px;
+    color: #2196F3;
+}
+
+.transaction-details {
+    flex: 1;
+}
+
+.transaction-type {
+    font-weight: 500;
+    color: #2c3e50;
+    margin-bottom: 4px;
+}
+
+.transaction-date {
+    font-size: 13px;
+    color: #666;
+}
+
+.transaction-amount {
+    font-weight: 600;
+    color: #4CAF50;
+}
+
+.no-transactions {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+}
+
+.btn-outline-secondary {
+    border-radius: 10px;
+    padding: 8px 20px;
+}
+
+.btn-primary {
+    border-radius: 10px;
+    padding: 10px;
+    background: #4CAF50;
+    border: none;
+}
+
+.btn-primary:hover {
+    background: #45a049;
+}
+</style>
 
 <script>
 document.getElementById('yearSelect').addEventListener('change', function() {

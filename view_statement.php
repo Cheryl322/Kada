@@ -183,52 +183,62 @@ $savings['deposit'] = $savings['deposit'] ?? 0;
 
 ?>
 
-<div class="container mt-5">
-    <div class="mb-4 no-print">
-        <a href="monthly_statements.php" class="btn btn-secondary">
-            <i class="fas fa-arrow-left"></i> Kembali
-        </a>
-        <button onclick="window.print()" class="btn btn-primary">
-            <i class="fas fa-print"></i> Cetak
-        </button>
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Penyata Kewangan</h2>
+        <div class="d-flex gap-2 no-print">
+            <button onclick="window.print()" class="btn btn-primary">
+                <i class="fas fa-print me-2"></i>Cetak
+            </button>
+            <a href="monthly_statements.php" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Kembali
+            </a>
+        </div>
     </div>
-    
-    <div class="card">
-        <div class="card-body">
-            <!-- Logo 和报表头部 -->
-            <div class="text-center mb-4">
-                <img src="img/kadalogo.jpg" alt="KADA Logo" class="mb-3" style="height: 80px;">
-                <h2 class="mb-2">Koperasi Kakitangan Kada Kelantan Berhad</h2>
-                <h4 class="mb-3">PENYATA KEWANGAN BULANAN</h4>
-                <h5><?php echo strtoupper(date('F Y', mktime(0, 0, 0, $month, 1, $year))); ?></h5>
-            </div>
-            
-            
-            <div class="row mb-4">
-                <div class="col-md-6">
-                    <table class="table table-borderless">
+
+    <div class="statement-card">
+        <!-- Header Section -->
+        <div class="statement-header text-center">
+            <img src="img/kadalogo.jpg" alt="KADA Logo" class="mb-3">
+            <h2 class="mb-2">Koperasi Kakitangan Kada Kelantan Berhad</h2>
+            <h4 class="mb-3">PENYATA KEWANGAN BULANAN</h4>
+            <h5><?php echo strtoupper(date('F Y', mktime(0, 0, 0, $month, 1, $year))); ?></h5>
+        </div>
+
+        <!-- Member Info Section -->
+        <div class="member-info-section">
+            <div class="row">
+                <div class="col-md-8">
+                    <table class="info-table">
                         <tr>
-                            <td width="150"><strong>No. Anggota</strong></td>
-                            <td>: <?php echo formatNumber($member['employeeID']); ?></td>
+                            <td class="label-column">No. Anggota</td>
+                            <td class="separator">:</td>
+                            <td><?php echo formatNumber($member['employeeID']); ?></td>
                         </tr>
                         <tr>
-                            <td><strong>Nama</strong></td>
-                            <td>: <?php echo $member['memberName']; ?></td>
+                            <td class="label-column">Nama</td>
+                            <td class="separator">:</td>
+                            <td><?php echo $member['memberName']; ?></td>
                         </tr>
                         <tr>
-                            <td><strong>No. K/P</strong></td>
-                            <td>: <?php echo $member['ic']; ?></td>
+                            <td class="label-column">No. K/P</td>
+                            <td class="separator">:</td>
+                            <td><?php echo $member['ic']; ?></td>
                         </tr>
                     </table>
                 </div>
-                <div class="col-md-6 text-end">
-                    <p class="mb-1">Tarikh Cetak: <?php echo date('d/m/Y'); ?></p>
+                <div class="col-md-4">
+                    <div class="print-date text-end">
+                        Tarikh Cetak: <?php echo date('d/m/Y'); ?>
+                    </div>
                 </div>
             </div>
+        </div>
 
-            <!-- 储蓄信息 -->
-            <div class="mb-4">
-                <h5 class="border-bottom pb-2">MAKLUMAT SIMPANAN</h5>
+        <!-- Financial Summary Section -->
+        <div class="financial-section">
+            <h5 class="section-title">MAKLUMAT SIMPANAN</h5>
+            <div class="financial-details">
                 <div class="row">
                     <div class="col-md-8"> 
                         <table class="table table-borderless financial-table">
@@ -272,10 +282,12 @@ $savings['deposit'] = $savings['deposit'] ?? 0;
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- 贷款信息部分 -->
-            <div class="mb-4">
-                <h5 class="border-bottom pb-2">MAKLUMAT PINJAMAN</h5>
+        <!-- Loan Information Section -->
+        <div class="financial-section">
+            <h5 class="section-title">MAKLUMAT PINJAMAN</h5>
+            <div class="financial-details">
                 <div class="row">
                     <div class="col-md-8"> 
                         <table class="table table-borderless financial-table">
@@ -303,162 +315,371 @@ $savings['deposit'] = $savings['deposit'] ?? 0;
                     </div>
                 </div>
             </div>
+        </div>
 
-            
-            <div class="mb-4">
-                <h5 class="border-bottom pb-2">BUTIRAN TRANSAKSI BULANAN</h5>
-                <div class="table-responsive">
-                    <table class="table table-bordered">
-                        <thead class="table-light">
+        <!-- Monthly Transactions Section -->
+        <div class="financial-section">
+            <h5 class="section-title">BUTIRAN TRANSAKSI BULANAN</h5>
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead class="table-light">
+                        <tr>
+                            <th>No.</th>
+                            <th>Tarikh</th>
+                            <th>Jenis Transaksi</th>
+                            <th class="text-end">Amaun (RM)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php 
+                        $no = 1;
+                        if (mysqli_num_rows($result) > 0): 
+                            while ($row = mysqli_fetch_assoc($result)): 
+                        ?>
                             <tr>
-                                <th>No.</th>
-                                <th>Tarikh</th>
-                                <th>Jenis Transaksi</th>
-                                <th class="text-end">Amaun (RM)</th>
+                                <td><?php echo $no++; ?></td>
+                                <td><?php echo isset($row['transDate']) ? date('d/m/Y', strtotime($row['transDate'])) : '-'; ?></td>
+                                <td><?php echo $row['transType'] ?? '-'; ?></td>
+                                <td class="text-end"><?php echo isset($row['transAmt']) ? number_format($row['transAmt'], 2) : '0.00'; ?></td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            <?php 
-                            $no = 1;
-                            if (mysqli_num_rows($result) > 0): 
-                                while ($row = mysqli_fetch_assoc($result)): 
-                            ?>
-                                <tr>
-                                    <td><?php echo $no++; ?></td>
-                                    <td><?php echo isset($row['transDate']) ? date('d/m/Y', strtotime($row['transDate'])) : '-'; ?></td>
-                                    <td><?php echo $row['transType'] ?? '-'; ?></td>
-                                    <td class="text-end"><?php echo isset($row['transAmt']) ? number_format($row['transAmt'], 2) : '0.00'; ?></td>
-                                </tr>
-                            <?php 
-                                endwhile;
-                                if ($totalAmount > 0):
-                            ?>
-                                <tr class="table-light">
-                                    <td colspan="3"><strong>JUMLAH</strong></td>
-                                    <td class="text-end"><strong>RM <?php echo number_format($totalAmount, 2); ?></strong></td>
-                                </tr>
-                            <?php 
-                                endif;
-                            else: 
-                            ?>
-                                <tr>
-                                    <td colspan="4" class="text-center">Tiada transaksi untuk bulan ini</td>
-                                </tr>
-                            <?php endif; ?>
-                        </tbody>
-                    </table>
-                </div>
+                        <?php 
+                            endwhile;
+                            if ($totalAmount > 0):
+                        ?>
+                            <tr class="table-light">
+                                <td colspan="3"><strong>JUMLAH</strong></td>
+                                <td class="text-end"><strong>RM <?php echo number_format($totalAmount, 2); ?></strong></td>
+                            </tr>
+                        <?php 
+                            endif;
+                        else: 
+                        ?>
+                            <tr>
+                                <td colspan="4" class="text-center">Tiada transaksi untuk bulan ini</td>
+                            </tr>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
             </div>
+        </div>
 
-            <!-- 页脚 -->
-            <div class="mt-5 pt-4 border-top">
-                <p class="text-center mb-0">Ini adalah cetakan komputer. Tandatangan tidak diperlukan.</p>
-            </div>
+        <!-- Footer Section -->
+        <div class="statement-footer">
+            <p>Ini adalah cetakan komputer. Tandatangan tidak diperlukan.</p>
         </div>
     </div>
 </div>
 
 <style>
-    @media print {
-        /* 基本设置 */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: Arial, sans-serif;
-        }
+.statement-card {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+    padding: 30px;
+    margin-bottom: 30px;
+}
 
-        /* 移除所有边框和背景 */
-        .card, 
-        .table,
-        .container,
-        .card-body {
-            border: none !important;
-            box-shadow: none !important;
-            background: none !important;
-            padding: 0 !important;
-            margin: 0 !important;
-        }
+.statement-header img {
+    height: 80px;
+    margin-bottom: 20px;
+}
 
-        /* 页面设置 */
-        @page {
-            size: A4;
-            margin: 2cm;
-        }
+.statement-header h2 {
+    color: #2c3e50;
+    font-size: 24px;
+    font-weight: 600;
+}
 
-        /* 容器和内容设置 */
-        .container {
-            width: 100% !重要;
-            max-width: none !important;
-        }
+.statement-header h4 {
+    color: #34495e;
+    font-size: 20px;
+}
 
-        /* 表格设置 */
-        .table {
-            width: 100% !important;
-            border-collapse: collapse !重要;
-        }
+.statement-header h5 {
+    color: #34495e;
+    font-size: 18px;
+    font-weight: 400;
+}
 
-        /* 只保留必要的边框 */
-        .table-bordered,
-        .table-bordered th,
-        .table-bordered td {
-            border: 1px solid #000 !important;
-        }
+.member-info-section {
+    margin: 30px 0;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 10px;
+}
 
-        .table-borderless,
-        .table-borderless td,
-        .table-borderless th {
-            border: none !important;
-        }
+.info-table {
+    width: 100%;
+}
 
-        /* 文字大小设置 */
-        body { font-size: 12pt; }
-        h2 { font-size: 16pt; }
-        h4 { font-size: 14pt; }
-        h5 { font-size: 12pt; }
-        td, th, p { font-size: 11pt; }
+.info-table td {
+    padding: 8px 0;
+}
 
-        /* Logo 大小控制 */
-        img {
-            height: 60px !重要;
-            width: auto !important;
-        }
+.label-column {
+    width: 150px;
+    font-weight: 500;
+    color: #2c3e50;
+}
 
-        /* 隐藏不需要的元素 */
-        .no-print,
-        .navbar,
-        .header-section,
-        .btn,
-        header {
-            display: none !important;
-        }
+.separator {
+    width: 30px;
+    text-align: center;
+}
 
-        /* 确保打印时显示完整内容 */
-        .card {
-            position: static !important;
-            transform: none !重要;
-        }
+.print-date {
+    color: #666;
+    font-size: 14px;
+}
 
-        /* 文本对齐 */
-        .text-end { text-align: right !重要; }
-        .text-center { text-align: center !重要; }
+.section-title {
+    color: #2c3e50;
+    font-size: 18px;
+    font-weight: 600;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #eee;
+}
 
-        /* 表格间距 */
-        .table td,
-        .table th {
-            padding: 4px 8px !重要;
-        }
+.financial-section {
+    margin-bottom: 30px;
+}
 
-        /* 移除 Bootstrap 的背景色 */
-        .table-light,
-        .table-light td,
-        .table-light th {
-            background-color: transparent !重要;
-        }
+.financial-details {
+    background: #fff;
+    border-radius: 10px;
+    padding: 20px;
+}
+
+.statement-footer {
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+    text-align: center;
+    color: #666;
+}
+
+.table {
+    margin-bottom: 0;
+}
+
+.table th {
+    background: #f8f9fa;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.table td {
+    vertical-align: middle;
+}
+
+.btn-primary {
+    background: #4CAF50;
+    border: none;
+}
+
+.btn-primary:hover {
+    background: #45a049;
+}
+
+@media print {
+    /* 基本设置 */
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: 'Times New Roman', Times, serif;
+        color: #000 !important;
     }
 
-    /* 屏幕显示样式保持不变
-    // ...existing code... */
+    body {
+        background: #fff;
+        line-height: 1.5;
+    }
+
+    /* 隐藏网页元素 */
+    .no-print,
+    .btn,
+    .navbar,
+    header,
+    footer,
+    .d-flex.justify-content-between {
+        display: none !important;
+    }
+
+    /* 文档容器 */
+    .container {
+        width: 100%;
+        max-width: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    /* 文档卡片 */
+    .statement-card {
+        box-shadow: none;
+        border: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    /* 文档头部优化 */
+    .statement-header {
+        text-align: center;
+        margin-bottom: 20px;
+        padding: 10px 0;
+        border-bottom: 1px solid #000;
+    }
+
+    .statement-header img {
+        height: 60px;
+        margin-bottom: 10px;
+    }
+
+    .statement-header h2 {
+        font-size: 13pt;
+        font-weight: bold;
+        margin: 5px 0;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .statement-header h4 {
+        font-size: 12pt;
+        font-weight: bold;
+        margin: 5px 0;
+    }
+
+    .statement-header h5 {
+        font-size: 11pt;
+        margin-top: 3px;
+    }
+
+    /* 会员信息部分调整 */
+    .member-info-section {
+        margin: 15px 0;
+        padding: 0;
+        background: none;
+    }
+
+    .info-table {
+        width: 100%;
+        margin-bottom: 15px;
+    }
+
+    .info-table td {
+        padding: 3px 0;
+        font-size: 11pt;
+    }
+
+    .label-column {
+        font-weight: bold;
+        width: 150px;
+    }
+
+    .separator {
+        width: 20px;
+        text-align: center;
+    }
+
+    /* 财务部分 */
+    .financial-section {
+        margin: 25px 0;
+        page-break-inside: avoid;
+    }
+
+    .section-title {
+        font-size: 12pt;
+        font-weight: bold;
+        margin-bottom: 15px;
+        padding-bottom: 5px;
+        border-bottom: 1px solid #000;
+    }
+
+    /* 表格样式 */
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+    }
+
+    .table th,
+    .table td {
+        border: 1px solid #000;
+        padding: 6px 8px;
+        font-size: 10pt;
+    }
+
+    .table th {
+        background-color: #f5f5f5 !important;
+        -webkit-print-color-adjust: exact;
+        font-weight: bold;
+        text-align: left;
+    }
+
+    .table td {
+        text-align: left;
+    }
+
+    .text-end {
+        text-align: right !important;
+    }
+
+    /* 文档编号和日期 */
+    .print-date {
+        font-size: 10pt;
+        text-align: right;
+        margin-bottom: 20px;
+    }
+
+    /* 页面设置 */
+    @page {
+        size: A4;
+        margin: 2cm;
+    }
+
+    /* 页脚 */
+    .statement-footer {
+        margin-top: 40px;
+        padding-top: 20px;
+        border-top: 1px solid #000;
+        text-align: center;
+        font-size: 9pt;
+        page-break-inside: avoid;
+    }
+
+    /* 确保表格不分页 */
+    table { 
+        page-break-inside: avoid; 
+    }
+
+    tr { 
+        page-break-inside: avoid; 
+    }
+
+    /* 金额样式 */
+    .detail-amount,
+    .transaction-amount {
+        font-family: 'Courier New', Courier, monospace;
+        font-weight: normal;
+    }
+
+    /* 表格行样式 */
+    .table tr:nth-child(even) {
+        background-color: #fafafa !important;
+        -webkit-print-color-adjust: exact;
+    }
+
+    /* 总计行样式 */
+    .yearly-total td,
+    .table tr.total td {
+        font-weight: bold;
+        border-top: 2px solid #000;
+    }
+}
+
+/* 屏幕显示样式保持不变
+// ...existing code... */
 </style>
 
 <!-- 添加调试信息 -->

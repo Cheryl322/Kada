@@ -98,238 +98,371 @@ $malay_months = [
 
 ?>
 
-<div class="container mt-5">
-    <div class="mb-4 no-print">
-        <a href="monthly_statements.php" class="btn btn-secondary">
-            <i class="fas fa-arrow-left"></i> Kembali
-        </a>
-        <button onclick="window.print()" class="btn btn-primary">
-            <i class="fas fa-print"></i> Cetak
-        </button>
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Penyata Tahunan</h2>
+        <div class="d-flex gap-2 no-print">
+            <button onclick="window.print()" class="btn btn-primary">
+                <i class="fas fa-print me-2"></i>Cetak
+            </button>
+            <a href="monthly_statements.php" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Kembali
+            </a>
+        </div>
     </div>
 
-    <div class="card">
-        <div class="card-body">
-            
-            <div class="text-center mb-4">
-                <img src="img/kadalogo.jpg" alt="KADA Logo" class="mb-3" style="height: 80px;">
-                <h2 class="mb-2">Koperasi Kakitangan Kada Kelantan Berhad</h2>
-                <h4 class="mb-3">PENYATA KEWANGAN TAHUNAN</h4>
-                <h5><?php echo $year; ?></h5>
-            </div>
+    <div class="statement-card">
+        <!-- Header Section -->
+        <div class="statement-header text-center">
+            <img src="img/kadalogo.jpg" alt="KADA Logo" class="mb-3">
+            <h2 class="mb-2">Koperasi Kakitangan Kada Kelantan Berhad</h2>
+            <h4 class="mb-3">PENYATA KEWANGAN TAHUNAN</h4>
+            <h5><?php echo $year; ?></h5>
+        </div>
 
-            
-            <div class="row mb-4">
-                <div class="col-md-6">
-                    <table class="table table-borderless">
+        <!-- Member Info Section -->
+        <div class="member-info-section">
+            <div class="row">
+                <div class="col-md-8">
+                    <table class="info-table">
                         <tr>
-                            <td width="150"><strong>No. Anggota</strong></td>
-                            <td>: <?php echo formatNumber($member['employeeID']); ?></td>
+                            <td class="label-column">No. Anggota</td>
+                            <td class="separator">:</td>
+                            <td><?php echo formatNumber($member['employeeID']); ?></td>
                         </tr>
                         <tr>
-                            <td><strong>Nama</strong></td>
-                            <td>: <?php echo $member['memberName']; ?></td>
+                            <td class="label-column">Nama</td>
+                            <td class="separator">:</td>
+                            <td><?php echo $member['memberName']; ?></td>
                         </tr>
                         <tr>
-                            <td><strong>No. K/P</strong></td>
-                            <td>: <?php echo $member['ic']; ?></td>
+                            <td class="label-column">No. K/P</td>
+                            <td class="separator">:</td>
+                            <td><?php echo $member['ic']; ?></td>
                         </tr>
                     </table>
                 </div>
-                <div class="col-md-6 text-end">
-                    <p class="mb-1">Tarikh Cetak: <?php echo date('d/m/Y'); ?></p>
+                <div class="col-md-4">
+                    <div class="print-date text-end">
+                        Tarikh Cetak: <?php echo date('d/m/Y'); ?>
+                    </div>
                 </div>
             </div>
+        </div>
 
-            
-            <div class="mb-4">
-                <h5 class="border-bottom pb-2">RINGKASAN TRANSAKSI BULANAN</h5>
+        <!-- Yearly Summary Section -->
+        <div class="financial-section">
+            <h5 class="section-title">RINGKASAN TRANSAKSI BULANAN</h5>
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Bulan</th>
+                            <th>Modal<br>Syer</th>
+                            <th>Modal<br>Yuran</th>
+                            <th>Simpanan<br>Tetap</th>
+                            <th>Sumbangan<br>Tabung<br>Kebajikan</th>
+                            <th>Wang<br>Deposit</th>
+                            <th>Jumlah<br>(RM)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php 
+                        $months_with_data = array_keys($monthly_data);
+                        sort($months_with_data); 
+                        
+                        foreach ($months_with_data as $month): 
+                            $data = $monthly_data[$month];
+                        ?>
+                            <tr>
+                                <td><?php echo $malay_months[$month]; ?></td>
+                                <td class="text-end"><?php echo number_format($data['modal_syer'], 2); ?></td>
+                                <td class="text-end"><?php echo number_format($data['modal_yuran'], 2); ?></td>
+                                <td class="text-end"><?php echo number_format($data['simpanan_tetap'], 2); ?></td>
+                                <td class="text-end"><?php echo number_format($data['tabung_kebajikan'], 2); ?></td>
+                                <td class="text-end"><?php echo number_format($data['wang_deposit'], 2); ?></td>
+                                <td class="text-end"><strong>
+                                    RM <?php echo number_format($data['total'], 2); ?>
+                                </strong></td>
+                            </tr>
+                        <?php endforeach; ?>
+                        
+                        
+                        <tr class="table-light">
+                            <td><strong>JUMLAH</strong></td>
+                            <?php
+                            for ($type = 1; $type <= 5; $type++) {
+                                echo "<td class='text-end'><strong>RM " . 
+                                     number_format($type_totals[$type], 2) . 
+                                     "</strong></td>";
+                            }
+                            ?>
+                            <td class="text-end"><strong>
+                                RM <?php echo number_format($year_total, 2); ?>
+                            </strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Loan Information Section -->
+        <div class="financial-section">
+            <h5 class="section-title">MAKLUMAT PINJAMAN</h5>
+            <?php if ($loan_data): ?>
                 <div class="table-responsive">
                     <table class="table table-bordered">
-                        <thead class="table-light">
+                        <thead>
                             <tr>
-                                <th>Bulan</th>
-                                <th>Modal<br>Syer</th>
-                                <th>Modal<br>Yuran</th>
-                                <th>Simpanan<br>Tetap</th>
-                                <th>Sumbangan<br>Tabung<br>Kebajikan</th>
-                                <th>Wang<br>Deposit</th>
-                                <th>Jumlah<br>(RM)</th>
+                                <th>Jenis Pinjaman</th>
+                                <th>Jumlah Pinjaman</th>
+                                <th>Bayaran Bulanan</th>
+                                <th>Baki Pinjaman</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <?php 
-                            $months_with_data = array_keys($monthly_data);
-                            sort($months_with_data); 
-                            
-                            foreach ($months_with_data as $month): 
-                                $data = $monthly_data[$month];
-                            ?>
-                                <tr>
-                                    <td><?php echo $malay_months[$month]; ?></td>
-                                    <td class="text-end"><?php echo number_format($data['modal_syer'], 2); ?></td>
-                                    <td class="text-end"><?php echo number_format($data['modal_yuran'], 2); ?></td>
-                                    <td class="text-end"><?php echo number_format($data['simpanan_tetap'], 2); ?></td>
-                                    <td class="text-end"><?php echo number_format($data['tabung_kebajikan'], 2); ?></td>
-                                    <td class="text-end"><?php echo number_format($data['wang_deposit'], 2); ?></td>
-                                    <td class="text-end"><strong>
-                                        RM <?php echo number_format($data['total'], 2); ?>
-                                    </strong></td>
-                                </tr>
-                            <?php endforeach; ?>
-                            
-                            
-                            <tr class="table-light">
-                                <td><strong>JUMLAH</strong></td>
-                                <?php
-                                for ($type = 1; $type <= 5; $type++) {
-                                    echo "<td class='text-end'><strong>RM " . 
-                                         number_format($type_totals[$type], 2) . 
-                                         "</strong></td>";
-                                }
-                                ?>
-                                <td class="text-end"><strong>
-                                    RM <?php echo number_format($year_total, 2); ?>
-                                </strong></td>
+                            <tr>
+                                <td><?php echo $loan_data['loanType']; ?></td>
+                                <td class="text-end">RM <?php echo number_format($loan_data['amountRequested'], 2); ?></td>
+                                <td class="text-end">RM <?php echo number_format($loan_data['monthlyInstallments'], 2); ?></td>
+                                <td class="text-end">RM <?php echo number_format($loan_data['balance'], 2); ?></td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
-            </div>
+            <?php else: ?>
+                <div class="no-data-message">
+                    <p>Tiada pinjaman aktif</p>
+                </div>
+            <?php endif; ?>
+        </div>
 
-            
-            <div class="mb-4">
-                <h5 class="border-bottom pb-2">MAKLUMAT PINJAMAN</h5>
-                <?php if ($loan_data): ?>
-                <table class="table table-bordered">
-                    <thead>
-                        <tr>
-                            <th>Jenis Pinjaman</th>
-                            <th>Jumlah Pinjaman</th>
-                            <th>Bayaran Bulanan</th>
-                            <th>Baki Pinjaman</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><?php echo $loan_data['loanType']; ?></td>
-                            <td class="text-end">RM <?php echo number_format($loan_data['amountRequested'], 2); ?></td>
-                            <td class="text-end">RM <?php echo number_format($loan_data['monthlyInstallments'], 2); ?></td>
-                            <td class="text-end">RM <?php echo number_format($loan_data['balance'], 2); ?></td>
-                        </tr>
-                    </tbody>
-                </table>
-                <?php else: ?>
-                <p class="text-center">Tiada pinjaman aktif</p>
-                <?php endif; ?>
-            </div>
-
-            <div class="mt-5 pt-4 border-top">
-                <p class="text-center mb-0">Ini adalah cetakan komputer. Tandatangan tidak diperlukan.</p>
-            </div>
+        <!-- Footer Section -->
+        <div class="statement-footer">
+            <p>Ini adalah cetakan komputer. Tandatangan tidak diperlukan.</p>
         </div>
     </div>
 </div>
 
-
-
 <style>
-    @media print {
-        /* 基本设置 */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: Arial, sans-serif;
-        }
+.statement-card {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+    padding: 30px;
+    margin-bottom: 30px;
+}
 
-        /* 移除所有边框和背景 */
-        .card, 
-        .table,
-        .container,
-        .card-body {
-            border: none !important;
-            box-shadow: none !important;
-            background: none !important;
-            padding: 0 !important;
-            margin: 0 !important;
-        }
+.statement-header img {
+    height: 80px;
+    margin-bottom: 20px;
+}
 
-        /* 页面设置 */
-        @page {
-            size: A4;
-            margin: 2cm;
-        }
+.statement-header h2 {
+    color: #2c3e50;
+    font-size: 24px;
+    font-weight: 600;
+}
 
-        /* 容器和内容设置 */
-        .container {
-            width: 100% !重要;
-            max-width: none !important;
-        }
+.statement-header h4 {
+    color: #34495e;
+    font-size: 20px;
+}
 
-        /* 表格设置 */
-        .table {
-            width: 100% !important;
-            border-collapse: collapse !重要;
-        }
+.member-info-section {
+    margin: 30px 0;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 10px;
+}
 
-        /* 只保留必要的边框 */
-        .table-bordered,
-        .table-bordered th,
-        .table-bordered td {
-            border: 1px solid #000 !important;
-        }
+.info-table {
+    width: 100%;
+}
 
-        .table-borderless,
-        .table-borderless td,
-        .table-borderless th {
-            border: none !important;
-        }
+.info-table td {
+    padding: 8px 0;
+}
 
-        /* 文字大小设置 */
-        body { font-size: 12pt; }
-        h2 { font-size: 16pt; }
-        h4 { font-size: 14pt; }
-        h5 { font-size: 12pt; }
-        td, th, p { font-size: 11pt; }
+.label-column {
+    width: 150px;
+    font-weight: 500;
+    color: #2c3e50;
+}
 
-        /* Logo 大小控制 */
-        img {
-            height: 60px !重要;
-            width: auto !important;
-        }
+.separator {
+    width: 30px;
+    text-align: center;
+}
 
-        /* 隐藏不需要的元素 */
-        .no-print,
-        .navbar,
-        .header-section,
-        .btn,
-        header {
-            display: none !important;
-        }
+.print-date {
+    color: #666;
+    font-size: 14px;
+}
 
-        /* 确保打印时显示完整内容 */
-        .card {
-            position: static !important;
-            transform: none !重要;
-        }
+.section-title {
+    color: #2c3e50;
+    font-size: 18px;
+    font-weight: 600;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #eee;
+}
 
-        /* 文本对齐 */
-        .text-end { text-align: right !重要; }
-        .text-center { text-align: center !重要; }
+.financial-section {
+    margin-bottom: 30px;
+}
 
-        /* 表格间距 */
-        .table td,
-        .table th {
-            padding: 4px 8px !重要;
-        }
+.financial-details {
+    background: #fff;
+    border-radius: 10px;
+    padding: 20px;
+}
 
-        /* 移除 Bootstrap 的背景色 */
-        .table-light,
-        .table-light td,
-        .table-light th {
-            background-color: transparent !重要;
-        }
+.statement-footer {
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+    text-align: center;
+    color: #666;
+}
+
+.table {
+    margin-bottom: 0;
+}
+
+.table th {
+    background: #f8f9fa;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.table td {
+    vertical-align: middle;
+}
+
+.btn-primary {
+    background: #4CAF50;
+    border: none;
+}
+
+.btn-primary:hover {
+    background: #45a049;
+}
+
+.no-data-message {
+    text-align: center;
+    padding: 30px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    color: #666;
+}
+
+.yearly-summary th {
+    white-space: nowrap;
+    font-size: 14px;
+}
+
+.yearly-total {
+    font-weight: 600;
+    background: #f8f9fa;
+}
+
+@media print {
+    /* 基本设置 */
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: Arial, sans-serif;
     }
 
+    /* 移除所有边框和背景 */
+    .card, 
+    .table,
+    .container,
+    .card-body {
+        border: none !important;
+        box-shadow: none !important;
+        background: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    /* 页面设置 */
+    @page {
+        size: A4;
+        margin: 2cm;
+    }
+
+    /* 容器和内容设置 */
+    .container {
+        width: 100% !重要;
+        max-width: none !important;
+    }
+
+    /* 表格设置 */
+    .table {
+        width: 100% !important;
+        border-collapse: collapse !重要;
+    }
+
+    /* 只保留必要的边框 */
+    .table-bordered,
+    .table-bordered th,
+    .table-bordered td {
+        border: 1px solid #000 !important;
+    }
+
+    .table-borderless,
+    .table-borderless td,
+    .table-borderless th {
+        border: none !important;
+    }
+
+    /* 文字大小设置 */
+    body { font-size: 12pt; }
+    h2 { font-size: 16pt; }
+    h4 { font-size: 14pt; }
+    h5 { font-size: 12pt; }
+    td, th, p { font-size: 11pt; }
+
+    /* Logo 大小控制 */
+    img {
+        height: 60px !重要;
+        width: auto !important;
+    }
+
+    /* 隐藏不需要的元素 */
+    .no-print,
+    .navbar,
+    .header-section,
+    .btn,
+    header {
+        display: none !important;
+    }
+
+    /* 确保打印时显示完整内容 */
+    .card {
+        position: static !important;
+        transform: none !重要;
+    }
+
+    /* 文本对齐 */
+    .text-end { text-align: right !重要; }
+    .text-center { text-align: center !重要; }
+
+    /* 表格间距 */
+    .table td,
+    .table th {
+        padding: 4px 8px !重要;
+    }
+
+    /* 移除 Bootstrap 的背景色 */
+    .table-light,
+    .table-light td,
+    .table-light th {
+        background-color: transparent !重要;
+    }
+}
 </style>
