@@ -76,6 +76,12 @@ $memberData = mysqli_fetch_assoc($result);
 
 // Close the statement
 mysqli_stmt_close($stmt);
+
+// Get current interest rate
+$rateSql = "SELECT rate FROM tb_interestrate ORDER BY updated_at DESC LIMIT 1";
+$rateResult = mysqli_query($conn, $rateSql);
+$rateRow = mysqli_fetch_assoc($rateResult);
+$interestRate = $rateRow['rate'] ?? 2.00; // Default to 2% if no rate found
 ?>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
@@ -209,7 +215,7 @@ mysqli_stmt_close($stmt);
                 
 
                 <div class="mt-3">
-                    <button type="button" class="btn btn-primary next-step" >Seterusnya</button>
+                    <button type="button" class="btn btn-primary next-step">Seterusnya</button>
                 </div>
             </div>
 
@@ -281,6 +287,21 @@ mysqli_stmt_close($stmt);
 
                 <div class="row mb-3">
                     <div class="col-md-6">
+                        <label for="kadar_faedah" class="form-label">Kadar Faedah Tahunan</label>
+                        <div class="input-group">
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="kadar_faedah" 
+                                   value="<?php echo number_format($interestRate, 2); ?>%" 
+                                   readonly>
+                            <input type="hidden" 
+                                   id="kadar_faedah_value" 
+                                   name="interestRate"
+                                   value="<?php echo $interestRate; ?>">
+                        </div>
+                        <small class="text-muted">*Kadar faedah adalah tertakluk kepada perubahan</small>
+                    </div>
+                    <div class="col-md-6">
                         <label for="ansuran_bulanan" class="form-label">Ansuran Bulanan</label>
                         <div class="input-group">
                             <span class="input-group-text">RM</span>
@@ -295,7 +316,7 @@ mysqli_stmt_close($stmt);
                 
                 <div class="mt-3">
                     <button type="button" class="btn btn-secondary prev-step">Kembali</button>
-                    <button type="button" class="btn btn-primary" onclick="validateStep(2);">Seterusnya</button>
+                    <button type="button" class="btn btn-primary next-step">Seterusnya</button>
                 </div>
             </div>
 
@@ -1479,312 +1500,31 @@ document.getElementById('submitBtn').addEventListener('click', function(e) {
 </script>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Form validation
-    const form = document.querySelector('#loanForm');
+function submitForm() {
+    console.log('Form submission started'); // Debug line
     
-    // Helper function to create error message div
-    function createErrorDiv() {
-        const div = document.createElement('div');
-        div.className = 'invalid-feedback';
-        return div;
+    // Get the form element
+    var form = document.getElementById('loanForm');
+    
+    // Submit the form
+    if (form) {
+        form.submit();
+    } else {
+        console.log('Form not found'); // Debug line
     }
+}
 
-    // Helper function to validate input and show error message
-    function validateInput(input, regex, errorMessage) {
-        const isValid = regex.test(input.value);
-        const errorDiv = input.nextElementSibling?.classList.contains('invalid-feedback') 
-            ? input.nextElementSibling 
-            : createErrorDiv();
-        
-        if (!isValid && input.value !== '') {
-            input.classList.add('is-invalid');
-            input.classList.remove('is-valid');
-            errorDiv.textContent = errorMessage;
-            if (!input.nextElementSibling?.classList.contains('invalid-feedback')) {
-                input.parentNode.insertBefore(errorDiv, input.nextSibling);
-            }
-        } else if (input.value !== '') {
-            input.classList.remove('is-invalid');
-            input.classList.add('is-valid');
-            errorDiv.remove();
-        } else {
-            input.classList.remove('is-invalid', 'is-valid');
-            errorDiv.remove();
-        }
-        return isValid;
-    }
-
-    // Next button click handler for each step
-    $('.next-step').click(function(e) {
+// Add form submission event listener
+document.getElementById('loanForm').addEventListener('submit', function(e) {
+    console.log('Form submitted via event listener'); // Debug line
+    
+    // Prevent default only if validation fails
+    if (!this.checkValidity()) {
         e.preventDefault();
-        const currentStep = $(this).closest('.form-step');
-        let isValid = true;
-        
-        // Validate all required fields in current step
-        const requiredInputs = currentStep.find('[required]');
-        requiredInputs.each(function() {
-            if (!$(this).val()) {
-                isValid = false;
-                $(this).addClass('is-invalid');
-                // Add error message if not exists
-                if (!$(this).next('.invalid-feedback').length) {
-                    $(this).after('<div class="invalid-feedback">Sila isi ruangan ini</div>');
-                }
-            } else {
-                $(this).removeClass('is-invalid');
-                $(this).next('.invalid-feedback').remove();
-            }
-        });
-
-        // Specific validations for different fields
-        if (currentStep.attr('id') === 'step2') {
-            // Validate loan amount
-            const loanAmount = $('#jumlah_pinjaman');
-            if (loanAmount.val() <= 0) {
-                isValid = false;
-                loanAmount.addClass('is-invalid');
-                if (!loanAmount.next('.invalid-feedback').length) {
-                    loanAmount.after('<div class="invalid-feedback">Sila masukkan jumlah pinjaman yang sah</div>');
-                }
-            }
-
-            // Validate financing period
-            const period = $('#tempoh_pembayaran');
-            if (period.val() <= 0) {
-                isValid = false;
-                period.addClass('is-invalid');
-                if (!period.next('.invalid-feedback').length) {
-                    period.after('<div class="invalid-feedback">Sila masukkan tempoh yang sah</div>');
-                }
-            }
-        }
-
-        if (currentStep.attr('id') === 'step3') {
-            // Validate guarantor IC numbers
-            const guarantorIC1 = $('#guarantorIC1');
-            const guarantorIC2 = $('#guarantorIC2');
-            
-            if (!validateInput(guarantorIC1[0], /^\d{12}$/, 'Sila masukkan 12 digit nombor kad pengenalan')) {
-                isValid = false;
-            }
-            if (!validateInput(guarantorIC2[0], /^\d{12}$/, 'Sila masukkan 12 digit nombor kad pengenalan')) {
-                isValid = false;
-            }
-        }
-
-        if (!isValid) {
-            Swal.fire({
-                // title: 'Ralat!',
-                text: 'Sila lengkapkan semua maklumat yang diperlukan.',
-                // icon: 'error',
-                confirmButtonText: 'OK',
-                confirmButtonColor: '#5CBA9B'
-            });
-            return false;
-        }
-
-        // If validation passes, proceed to next step
-        if (currentStep.next('.form-step').length) {
-            currentStep.hide();
-            currentStep.next('.form-step').show();
-            updateProgressBar(currentStep.next('.form-step').attr('id'));
-        }
-    });
-
-    // Remove validation styling when user starts typing
-    $('input, select, textarea').on('input change', function() {
-        $(this).removeClass('is-invalid');
-        $(this).next('.invalid-feedback').remove();
-    });
-});
-
-// Function to update progress bar (if you have one)
-function updateProgressBar(stepId) {
-    const step = parseInt(stepId.replace('step', ''));
-    const progress = (step / 4) * 100;
-    $('.progress-bar').css('width', progress + '%');
-}
-</script>
-
-<style>
-/* Add these styles if not already present */
-.invalid-feedback {
-    display: block;
-    color: #dc3545;
-    font-size: 0.875em;
-    margin-top: 0.25rem;
-}
-
-.is-invalid {
-    border-color: #dc3545 !important;
-    padding-right: calc(1.5em + 0.75rem) !important;
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e") !important;
-    background-repeat: no-repeat !important;
-    background-position: right calc(0.375em + 0.1875rem) center !important;
-    background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem) !important;
-}
-</style>
-
-<script>
-// Add this function to handle the button click
-function validateAndProceed(currentStep) {
-    // Get all required fields in current step
-    const requiredFields = document.querySelectorAll(`#step${currentStep} [required]`);
-    let isValid = true;
-
-    // Clear previous error messages
-    document.querySelectorAll('.invalid-feedback').forEach(el => el.remove());
-    document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
-
-    // Check each required field
-    requiredFields.forEach(field => {
-        if (!field.value.trim()) {
-            isValid = false;
-            field.classList.add('is-invalid');
-            const errorDiv = document.createElement('div');
-            errorDiv.className = 'invalid-feedback';
-            errorDiv.textContent = 'Sila isi ruangan ini';
-            field.parentNode.appendChild(errorDiv);
-        }
-    });
-
-    // Additional validation for loan details in step 2
-    if (currentStep === 2) {
-        const loanAmount = document.querySelector('#jumlah_pinjaman');
-        const period = document.querySelector('#tempoh_pembayaran');
-
-        if (!loanAmount.value || parseFloat(loanAmount.value) <= 0) {
-            isValid = false;
-            loanAmount.classList.add('is-invalid');
-            const errorDiv = document.createElement('div');
-            errorDiv.className = 'invalid-feedback';
-            errorDiv.textContent = 'Sila masukkan jumlah pinjaman yang sah';
-            loanAmount.parentNode.appendChild(errorDiv);
-        }
-
-        if (!period.value || parseInt(period.value) <= 0) {
-            isValid = false;
-            period.classList.add('is-invalid');
-            const errorDiv = document.createElement('div');
-            errorDiv.className = 'invalid-feedback';
-            errorDiv.textContent = 'Sila masukkan tempoh yang sah';
-            period.parentNode.appendChild(errorDiv);
-        }
-    }
-
-    if (!isValid) {
-        // Show error message and stay on current step
-        Swal.fire({
-            // title: 'Ralat!',
-            text: 'Sila lengkapkan semua maklumat yang diperlukan.',
-            // icon: 'error',
-            confirmButtonText: 'OK',
-            confirmButtonColor: '#5CBA9B'
-        });
         return false;
     }
-
-    // If validation passes, proceed to next step
-    const currentStepDiv = document.querySelector(`#step${currentStep}`);
-    const nextStepDiv = document.querySelector(`#step${currentStep + 1}`);
     
-    if (nextStepDiv) {
-        currentStepDiv.style.display = 'none';
-        nextStepDiv.style.display = 'block';
-        updateProgressBar(currentStep + 1);
-    }
-}
-
-// Add event listeners for input changes
-document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('input, select, textarea').forEach(input => {
-        input.addEventListener('input', function() {
-            this.classList.remove('is-invalid');
-            const errorDiv = this.parentNode.querySelector('.invalid-feedback');
-            if (errorDiv) {
-                errorDiv.remove();
-            }
-        });
-    });
-});
-</script>
-
-<script>
-function validateStep(stepNumber) {
-    // Get all required fields in current step
-    const currentStep = document.querySelector(`#step${stepNumber}`);
-    const requiredFields = currentStep.querySelectorAll('[required]');
-    let isValid = true;
-
-    // Clear previous errors
-    currentStep.querySelectorAll('.invalid-feedback').forEach(el => el.remove());
-    currentStep.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
-
-    // Check each required field
-    requiredFields.forEach(field => {
-        if (!field.value.trim()) {
-            isValid = false;
-            field.classList.add('is-invalid');
-            const errorDiv = document.createElement('div');
-            errorDiv.className = 'invalid-feedback';
-            errorDiv.textContent = 'Sila isi ruangan ini';
-            field.parentNode.appendChild(errorDiv);
-        }
-    });
-
-    // Additional validation for loan amount and period
-    const loanAmount = currentStep.querySelector('#jumlah_pinjaman');
-    const period = currentStep.querySelector('#tempoh_pembayaran');
-
-    if (loanAmount && (!loanAmount.value || parseFloat(loanAmount.value) <= 0)) {
-        isValid = false;
-        loanAmount.classList.add('is-invalid');
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'invalid-feedback';
-        errorDiv.textContent = 'Sila masukkan jumlah pinjaman yang sah';
-        loanAmount.parentNode.appendChild(errorDiv);
-    }
-
-    if (period && (!period.value || parseInt(period.value) <= 0)) {
-        isValid = false;
-        period.classList.add('is-invalid');
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'invalid-feedback';
-        errorDiv.textContent = 'Sila masukkan tempoh yang sah';
-        period.parentNode.appendChild(errorDiv);
-    }
-
-    if (!isValid) {
-        Swal.fire({
-            // title: 'Ralat!',
-            text: 'Sila lengkapkan semua maklumat yang diperlukan.',
-            // icon: 'error',
-            confirmButtonText: 'OK',
-            confirmButtonColor: '#5CBA9B'
-        });
-    } else {
-        // Only proceed if all validations pass
-        const nextStep = document.querySelector(`#step${stepNumber + 1}`);
-        if (nextStep) {
-            currentStep.style.display = 'none';
-            nextStep.style.display = 'block';
-            updateProgressBar(stepNumber + 1);
-        }
-    }
-}
-
-// Remove validation styling when user starts typing
-document.addEventListener('DOMContentLoaded', function() {
-    const inputs = document.querySelectorAll('input, select');
-    inputs.forEach(input => {
-        input.addEventListener('input', function() {
-            this.classList.remove('is-invalid');
-            const errorDiv = this.parentNode.querySelector('.invalid-feedback');
-            if (errorDiv) {
-                errorDiv.remove();
-            }
-        });
-    });
+    // If validation passes, let the form submit
+    return true;
 });
 </script>

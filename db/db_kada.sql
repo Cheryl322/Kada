@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Feb 03, 2025 at 06:17 PM
+-- Generation Time: Feb 09, 2025 at 03:13 PM
 -- Server version: 10.4.32-MariaDB
--- PHP Version: 8.0.30
+-- PHP Version: 8.2.12
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -92,7 +92,82 @@ INSERT INTO `tb_bank` (`bankID`, `loanApplicationID`, `employeeID`, `bankName`, 
 (31, 39, 5522, 'Bank Rakyat', '54'),
 (33, 41, 5522, 'Public Bank', '22'),
 (34, 42, 4567, 'Public Bank', '1234567891'),
-(36, 49, 5522, 'Maybank', '77');
+(36, 49, 5522, 'Maybank', '77'),
+(37, 43, 9876, 'Maybank', '1234567896');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `tb_berhenti`
+--
+
+CREATE TABLE `tb_berhenti` (
+  `berhentiID` int(10) NOT NULL,
+  `employeeID` int(4) NOT NULL,
+  `reason` text NOT NULL,
+  `applyDate` date NOT NULL DEFAULT current_timestamp(),
+  `approvalStatus` enum('Pending','Tolak','Lulus','') NOT NULL DEFAULT 'Pending',
+  `approveDate` date DEFAULT current_timestamp(),
+  `rejectReason` text DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `tb_deduction`
+--
+
+CREATE TABLE `tb_deduction` (
+  `Deduct_ID` int(10) NOT NULL,
+  `employeeID` int(4) NOT NULL,
+  `DeducType_ID` int(10) NOT NULL,
+  `Deduct_Amt` decimal(10,2) NOT NULL,
+  `Deduct_date` date NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `tb_deduction`
+--
+
+INSERT INTO `tb_deduction` (`Deduct_ID`, `employeeID`, `DeducType_ID`, `Deduct_Amt`, `Deduct_date`) VALUES
+(56, 9876, 1, 300.00, '2025-02-04'),
+(57, 9876, 2, 20.00, '2025-02-04'),
+(58, 9876, 3, 20.00, '2025-02-04'),
+(59, 9876, 4, 20.00, '2025-02-04'),
+(60, 9876, 5, 20.00, '2025-02-04'),
+(61, 9876, 6, 250.00, '2025-02-04'),
+(62, 9876, 7, 50.00, '2025-02-04'),
+(75, 9876, 1, 300.00, '2025-03-05'),
+(76, 9876, 2, 20.00, '2025-03-05'),
+(77, 9876, 3, 20.00, '2025-03-05'),
+(78, 9876, 4, 20.00, '2025-03-05'),
+(79, 9876, 5, 20.00, '2025-03-05'),
+(80, 9876, 6, 250.00, '2025-03-05');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `tb_deduction_type`
+--
+
+CREATE TABLE `tb_deduction_type` (
+  `DeducType_ID` int(10) NOT NULL,
+  `typeName` varchar(50) NOT NULL,
+  `d_desc` text NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `tb_deduction_type`
+--
+
+INSERT INTO `tb_deduction_type` (`DeducType_ID`, `typeName`, `d_desc`) VALUES
+(1, 'Modal Share', 'Modal Share Deduction'),
+(2, 'Fee Capital', 'Fee Capital Deduction'),
+(3, 'Fixed Deposit', 'Fixed Deposit Deduction'),
+(4, 'Contribution', 'Contribution Deduction'),
+(5, 'Deposit', 'Deposit Deduction'),
+(6, 'Loan Payment', 'Loan Payment Deduction'),
+(7, 'Entry Fee', 'Entry Fee Payment');
 
 -- --------------------------------------------------------
 
@@ -168,7 +243,7 @@ INSERT INTO `tb_financialstatus` (`employeeID`, `modalShare`, `feeCapital`, `con
 (322, 0, 0, 0, 0, 2147483647),
 (1234, 0, 0, 0, 0, 2147483647),
 (5522, 0, 0, 0, 0, 2147483647),
-(9876, 900, 60, 60, 60, 1737350531);
+(9876, 900, 60, 60, 60, 1739107364);
 
 -- --------------------------------------------------------
 
@@ -212,6 +287,28 @@ INSERT INTO `tb_guarantor` (`guarantorID`, `loanApplicationID`, `employeeID`, `g
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `tb_interestrate`
+--
+
+CREATE TABLE `tb_interestrate` (
+  `id` int(11) NOT NULL,
+  `rate` decimal(5,2) NOT NULL,
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `updated_by` varchar(50) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `tb_interestrate`
+--
+
+INSERT INTO `tb_interestrate` (`id`, `rate`, `updated_at`, `updated_by`) VALUES
+(1, 2.00, '2025-02-09 05:11:03', 'System'),
+(2, 2.50, '2025-02-09 05:33:59', '1234'),
+(3, 2.50, '2025-02-09 05:34:18', '1234');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `tb_loan`
 --
 
@@ -244,7 +341,7 @@ INSERT INTO `tb_loan` (`loanType`, `loanID`, `loanApplicationID`, `employeeID`, 
 ('', 23, 39, 5522, 5555.00, 4, 1388.75, 'miao', '99', 2000.00, 2000.00, 'uploads/678739c3e18c2_Quiz3.pdf', NULL, '2025-01-18 16:46:10', '2025-01-18 16:47:01'),
 ('AL-BAI', 24, 41, 5522, 22222.00, 222, 100.10, 'rr', '22', 2222.00, 2222.00, 'uploads/67877e31ccd61_Quiz3.pdf', 22222.00, '2025-01-18 16:46:10', '2025-01-18 17:10:34'),
 ('AL-INAH', 25, 42, 4567, 3000.00, 4, 750.00, 'fdsfaghJKLDGSHAJKLGFD', '12123445645', 5000.00, 5000.00, 'uploads/678be359daa55_SDT_2024_Test (1).pdf', 2250.00, '2025-01-18 17:22:33', '2025-01-18 20:15:29'),
-('AL-BAI', 26, 43, 9876, 3000.00, 12, 250.00, 'fdsfaghJKLDGSHAJKLGFD', '12123445645', 5000.00, 5000.00, 'uploads/678c6e1fe238a_UTM - Course Registration Slip.pdf', 2250.00, '2025-01-19 03:14:39', '2025-01-20 04:58:29'),
+('AL-BAI', 26, 43, 9876, 3000.00, 12, 250.00, 'fdsfaghJKLDGSHAJKLGFD', '12123445645', 5000.00, 5000.00, 'uploads/678c6e1fe238a_UTM - Course Registration Slip.pdf', 2500.00, '2025-01-19 03:14:39', '2025-02-09 11:10:07'),
 ('AL-BAI', 31, 49, 5522, 7777.00, 7, 1111.00, 'yingyingying', '77', 7777.00, 6666.00, '678e603446a37_Quiz3.pdf', NULL, '2025-01-20 14:39:48', '2025-01-20 14:39:48');
 
 -- --------------------------------------------------------
@@ -260,22 +357,23 @@ CREATE TABLE `tb_loanapplication` (
   `loanStatus` varchar(20) DEFAULT 'Pending',
   `amountRequested` decimal(10,2) NOT NULL,
   `financingPeriod` int(11) NOT NULL,
-  `monthlyInstallments` decimal(10,2) NOT NULL
+  `monthlyInstallments` decimal(10,2) NOT NULL,
+  `explanation` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `tb_loanapplication`
 --
 
-INSERT INTO `tb_loanapplication` (`loanApplicationID`, `employeeID`, `loanApplicationDate`, `loanStatus`, `amountRequested`, `financingPeriod`, `monthlyInstallments`) VALUES
-(36, 322, '2025-01-15', 'Diluluskan', 3000.00, 12, 250.00),
-(37, 322, '2025-01-15', 'Diluluskan', 3000.00, 12, 250.00),
-(38, 5522, '2025-01-15', 'Pending', 4455.00, 4, 1113.75),
-(39, 5522, '2025-01-15', 'Pending', 5555.00, 4, 1388.75),
-(41, 5522, '2025-01-15', 'Diluluskan', 22222.00, 222, 100.10),
-(42, 4567, '2025-01-19', 'Diluluskan', 3000.00, 4, 750.00),
-(43, 9876, '2025-01-19', 'Diluluskan', 3000.00, 12, 250.00),
-(49, 5522, '2025-01-20', 'Pending', 7777.00, 7, 1111.00);
+INSERT INTO `tb_loanapplication` (`loanApplicationID`, `employeeID`, `loanApplicationDate`, `loanStatus`, `amountRequested`, `financingPeriod`, `monthlyInstallments`, `explanation`) VALUES
+(36, 322, '2025-01-15', 'Diluluskan', 3000.00, 12, 250.00, NULL),
+(37, 322, '2025-01-15', 'Diluluskan', 3000.00, 12, 250.00, NULL),
+(38, 5522, '2025-01-15', 'Pending', 4455.00, 4, 1113.75, NULL),
+(39, 5522, '2025-01-15', 'Pending', 5555.00, 4, 1388.75, 'invalid'),
+(41, 5522, '2025-01-15', 'Diluluskan', 22222.00, 222, 100.10, NULL),
+(42, 4567, '2025-01-19', 'Diluluskan', 3000.00, 4, 750.00, NULL),
+(43, 9876, '2025-01-19', 'Diluluskan', 3000.00, 12, 250.00, NULL),
+(49, 5522, '2025-01-20', 'Pending', 7777.00, 7, 1111.00, NULL);
 
 -- --------------------------------------------------------
 
@@ -410,25 +508,28 @@ INSERT INTO `tb_memberregistration_feesandcontribution` (`employeeID`, `entryFee
 CREATE TABLE `tb_memberregistration_memberapplicationdetails` (
   `memberRegistrationID` int(11) NOT NULL,
   `regisDate` date NOT NULL,
-  `regisStatus` varchar(20) NOT NULL
+  `regisStatus` varchar(20) NOT NULL,
+  `explanation` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `tb_memberregistration_memberapplicationdetails`
 --
 
-INSERT INTO `tb_memberregistration_memberapplicationdetails` (`memberRegistrationID`, `regisDate`, `regisStatus`) VALUES
-(5522, '2025-01-15', 'Diluluskan'),
-(322, '2025-01-18', 'Diluluskan'),
-(4567, '2025-01-18', 'Diluluskan'),
-(9876, '2025-01-19', 'Diluluskan'),
-(9876, '2025-01-19', 'Diluluskan'),
-(1214, '2025-02-03', 'Belum Selesai'),
-(1214, '2025-02-03', 'Belum Selesai'),
-(1214, '2025-02-03', 'Belum Selesai'),
-(1214, '2025-02-03', 'Belum Selesai'),
-(1214, '2025-02-03', 'Belum Selesai'),
-(1214, '2025-02-03', 'Belum Selesai');
+INSERT INTO `tb_memberregistration_memberapplicationdetails` (`memberRegistrationID`, `regisDate`, `regisStatus`, `explanation`) VALUES
+(5522, '2025-01-15', 'Diluluskan', NULL),
+(322, '2025-01-18', 'Diluluskan', NULL),
+(4567, '2025-01-18', 'Diluluskan', NULL),
+(9876, '2025-01-19', 'Diluluskan', NULL),
+(9876, '2025-01-19', 'Diluluskan', NULL),
+(1214, '2025-02-05', 'Ditolak', NULL),
+(1214, '2025-02-05', 'Ditolak', NULL),
+(1214, '2025-02-05', 'Ditolak', NULL),
+(1214, '2025-02-05', 'Ditolak', NULL),
+(1214, '2025-02-05', 'Ditolak', NULL),
+(1214, '2025-02-05', 'Ditolak', NULL),
+(1214, '2025-02-05', 'Ditolak', NULL),
+(1214, '2025-02-06', 'Ditolak', 'invalid');
 
 -- --------------------------------------------------------
 
@@ -488,6 +589,19 @@ INSERT INTO `tb_member_officeaddress` (`employeeID`, `officeAddress`, `officePos
 (4567, 'UTM', 81810, 'Johor'),
 (5522, 'UTM', 31400, 'Perak'),
 (9876, 'UTM', 81800, 'Johor');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `tb_member_status`
+--
+
+CREATE TABLE `tb_member_status` (
+  `statusID` int(10) NOT NULL,
+  `employeeID` int(4) NOT NULL,
+  `status` enum('Aktif','Berhenti','Pencen','Aktif/Pencen') NOT NULL DEFAULT 'Aktif',
+  `dateUpdated` date NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -604,6 +718,26 @@ ALTER TABLE `tb_bank`
   ADD KEY `loanApplicationID` (`loanApplicationID`);
 
 --
+-- Indexes for table `tb_berhenti`
+--
+ALTER TABLE `tb_berhenti`
+  ADD PRIMARY KEY (`berhentiID`);
+
+--
+-- Indexes for table `tb_deduction`
+--
+ALTER TABLE `tb_deduction`
+  ADD PRIMARY KEY (`Deduct_ID`),
+  ADD KEY `deduction_member` (`employeeID`),
+  ADD KEY `deduction_type` (`DeducType_ID`);
+
+--
+-- Indexes for table `tb_deduction_type`
+--
+ALTER TABLE `tb_deduction_type`
+  ADD PRIMARY KEY (`DeducType_ID`);
+
+--
 -- Indexes for table `tb_employee`
 --
 ALTER TABLE `tb_employee`
@@ -634,6 +768,12 @@ ALTER TABLE `tb_financialstatus`
 --
 ALTER TABLE `tb_guarantor`
   ADD PRIMARY KEY (`guarantorID`);
+
+--
+-- Indexes for table `tb_interestrate`
+--
+ALTER TABLE `tb_interestrate`
+  ADD PRIMARY KEY (`id`);
 
 --
 -- Indexes for table `tb_loan`
@@ -708,6 +848,13 @@ ALTER TABLE `tb_member_officeaddress`
   ADD PRIMARY KEY (`employeeID`);
 
 --
+-- Indexes for table `tb_member_status`
+--
+ALTER TABLE `tb_member_status`
+  ADD PRIMARY KEY (`statusID`),
+  ADD KEY `employeeID` (`employeeID`);
+
+--
 -- Indexes for table `tb_member_transaction`
 --
 ALTER TABLE `tb_member_transaction`
@@ -738,13 +885,37 @@ ALTER TABLE `tb_transaction_financialstatus`
 -- AUTO_INCREMENT for table `tb_bank`
 --
 ALTER TABLE `tb_bank`
-  MODIFY `bankID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=37;
+  MODIFY `bankID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=38;
+
+--
+-- AUTO_INCREMENT for table `tb_berhenti`
+--
+ALTER TABLE `tb_berhenti`
+  MODIFY `berhentiID` int(10) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `tb_deduction`
+--
+ALTER TABLE `tb_deduction`
+  MODIFY `Deduct_ID` int(10) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=81;
+
+--
+-- AUTO_INCREMENT for table `tb_deduction_type`
+--
+ALTER TABLE `tb_deduction_type`
+  MODIFY `DeducType_ID` int(10) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `tb_guarantor`
 --
 ALTER TABLE `tb_guarantor`
   MODIFY `guarantorID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
+
+--
+-- AUTO_INCREMENT for table `tb_interestrate`
+--
+ALTER TABLE `tb_interestrate`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `tb_loan`
@@ -757,6 +928,12 @@ ALTER TABLE `tb_loan`
 --
 ALTER TABLE `tb_loanapplication`
   MODIFY `loanApplicationID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=50;
+
+--
+-- AUTO_INCREMENT for table `tb_member_status`
+--
+ALTER TABLE `tb_member_status`
+  MODIFY `statusID` int(10) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `tb_transaction`
@@ -809,6 +986,12 @@ ALTER TABLE `tb_member_homeaddress`
 --
 ALTER TABLE `tb_member_officeaddress`
   ADD CONSTRAINT `tb_member_officeaddress_ibfk_1` FOREIGN KEY (`employeeID`) REFERENCES `tb_member` (`employeeID`);
+
+--
+-- Constraints for table `tb_member_status`
+--
+ALTER TABLE `tb_member_status`
+  ADD CONSTRAINT `tb_member_status_ibfk_1` FOREIGN KEY (`employeeID`) REFERENCES `tb_employee` (`employeeID`);
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
