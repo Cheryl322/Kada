@@ -9,51 +9,50 @@ if (!isset($_SESSION['employeeID'])) {
 }
 
 $employeeID = $_SESSION['employeeID'];
-// 移除前导零
-// $employeeID = ltrim($employeeID, '0');
+$employeeID = ltrim($employeeID, '0');
 
-// 获取筛选参数
 $month = isset($_GET['month']) ? $_GET['month'] : date('m');
 $year = isset($_GET['year']) ? $_GET['year'] : date('Y');
 
-// 获取会员的第一次付款日期
-$sql_first_payment = "SELECT MIN(Deduct_date) as first_payment 
-                     FROM tb_deduction 
-                     WHERE employeeID = ?";
-$stmt_first = mysqli_prepare($conn, $sql_first_payment);
-mysqli_stmt_bind_param($stmt_first, 's', $employeeID);
-mysqli_stmt_execute($stmt_first);
-$first_payment = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_first))['first_payment'];
-
-// 检查当前选择的月份是否是第一次付款的月份
-$is_first_month = false;
-if ($first_payment) {
-    $first_payment_month = date('m', strtotime($first_payment));
-    $first_payment_year = date('Y', strtotime($first_payment));
-    $is_first_month = ($month == $first_payment_month && $year == $first_payment_year);
-}
-
-// 修改主查询
 $sql = "SELECT d.Deduct_date as transDate, 
                dt.typeName as transType, 
-               d.Deduct_Amt as transAmt
+               d.Deduct_Amt as transAmt,
+               CASE 
+                   WHEN dt.DeducType_ID = 7 THEN 'Fee Masuk'
+                   WHEN dt.DeducType_ID = 1 THEN 'Modal Syer'
+                   WHEN dt.DeducType_ID = 2 THEN 'Modal Yuran'
+                   WHEN dt.DeducType_ID = 3 THEN 'Simpanan Tetap'
+                   WHEN dt.DeducType_ID = 4 THEN 'Sumbangan Tabung Kebajikan (AL-ABRAR)'
+                   WHEN dt.DeducType_ID = 5 THEN 'Wang Deposit Anggota'
+                   ELSE dt.typeName 
+               END as displayType
         FROM tb_deduction d
         JOIN tb_deduction_type dt ON d.DeducType_ID = dt.DeducType_ID
         WHERE d.employeeID = ? 
         AND MONTH(d.Deduct_date) = ? 
-        AND YEAR(d.Deduct_date) = ?";
-
-// 如果不是第一个月，排除 entry fee 和 deposit
-if (!$is_first_month) {
-    $sql .= " AND dt.typeName NOT IN ('Entry Fee', 'Deposit')";
-}
-
-$sql .= " ORDER BY d.Deduct_date DESC";
+        AND YEAR(d.Deduct_date) = ?
+        ORDER BY d.Deduct_date DESC";
 
 $stmt = mysqli_prepare($conn, $sql);
 mysqli_stmt_bind_param($stmt, 'sii', $employeeID, $month, $year);
 mysqli_stmt_execute($stmt);
 $result = mysqli_stmt_get_result($stmt);
+
+$view = isset($_GET['view']) ? $_GET['view'] : 'monthly';
+$year = isset($_GET['year']) ? $_GET['year'] : date('Y');
+$month = isset($_GET['month']) ? $_GET['month'] : date('m');
+
+if ($view == 'yearly') {
+    $sql = "SELECT DISTINCT YEAR(Deduct_date) as year 
+            FROM tb_deduction
+            WHERE employeeID = ? 
+            ORDER BY year DESC";
+} else {
+    $sql = "SELECT DISTINCT YEAR(Deduct_date) as year, MONTH(Deduct_date) as month 
+            FROM tb_deduction
+            WHERE employeeID = ?
+            ORDER BY year DESC, month DESC";
+}
 
 if (!$result) {
     die("Query failed: " . mysqli_error($conn));
@@ -63,6 +62,29 @@ $totalAmount = 0;
 
 function formatNumber($number) {
     return str_pad($number, 4, '0', STR_PAD_LEFT);
+}
+
+$sql_dates = "SELECT DISTINCT 
+                MONTH(Deduct_date) as month, 
+                YEAR(Deduct_date) as year
+              FROM tb_deduction 
+              WHERE employeeID = ?
+              ORDER BY year DESC, month DESC";
+
+$stmt_dates = mysqli_prepare($conn, $sql_dates);
+mysqli_stmt_bind_param($stmt_dates, 's', $employeeID);
+mysqli_stmt_execute($stmt_dates);
+$dates_result = mysqli_stmt_get_result($stmt_dates);
+
+$available_dates = [];
+while ($row = mysqli_fetch_assoc($dates_result)) {
+    $available_dates[$row['year']][] = $row['month'];
+}
+
+if (!isset($_GET['year']) || !isset($_GET['month'])) {
+    reset($available_dates);
+    $year = key($available_dates);
+    $month = $available_dates[$year][0];
 }
 ?>
 
@@ -75,55 +97,48 @@ function formatNumber($number) {
 
     <h2 class="mb-4">Rekod Pembayaran</h2>
     
-    <!-- Filter Form -->
     <div class="card mb-4">
         <div class="card-body">
             <form method="GET" class="row g-3">
-                <div class="col-md-4">
-                    <label class="form-label">Bulan</label>
-                    <select name="month" class="form-select">
-                        <?php
-                        $months = [
-                            '1' => 'Januari',
-                            '2' => 'Februari',
-                            '3' => 'Mac',
-                            '4' => 'April',
-                            '5' => 'Mei',
-                            '6' => 'Jun',
-                            '7' => 'Julai',
-                            '8' => 'Ogos',
-                            '9' => 'September',
-                            '10' => 'Oktober',
-                            '11' => 'November',
-                            '12' => 'Disember'
-                        ];
-                        foreach ($months as $key => $value) {
-                            $selected = ($key == $month) ? 'selected' : '';
-                            echo "<option value='$key' $selected>$value</option>";
-                        }
-                        ?>
-                    </select>
-                </div>
-                <div class="col-md-4">
+                <div class="col-md-5">
                     <label class="form-label">Tahun</label>
-                    <select name="year" class="form-select">
-                        <?php
-                        $currentYear = date('Y');
-                        for ($y = $currentYear; $y >= $currentYear - 5; $y--) {
-                            $selected = ($y == $year) ? 'selected' : '';
-                            echo "<option value='$y' $selected>$y</option>";
+                    <select name="year" class="form-select" id="yearSelect">
+                        <?php foreach ($available_dates as $y => $months): ?>
+                            <option value="<?php echo $y; ?>" <?php echo ($y == $year) ? 'selected' : ''; ?>>
+                                <?php echo $y; ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label">Bulan</label>
+                    <select name="month" class="form-select" id="monthSelect">
+                        <?php 
+                        $months_in_malay = [
+                            1 => 'Januari', 2 => 'Februari', 3 => 'Mac',
+                            4 => 'April', 5 => 'Mei', 6 => 'Jun',
+                            7 => 'Julai', 8 => 'Ogos', 9 => 'September',
+                            10 => 'Oktober', 11 => 'November', 12 => 'Disember'
+                        ];
+                        
+                        if (isset($available_dates[$year])) {
+                            foreach ($available_dates[$year] as $m) {
+                                $selected = ($m == $month) ? 'selected' : '';
+                                echo "<option value='{$m}' {$selected}>{$months_in_malay[$m]}</option>";
+                            }
                         }
                         ?>
                     </select>
                 </div>
-                <div class="col-md-4 d-flex align-items-end">
-                    <button type="submit" class="btn btn-primary">Tapis</button>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-filter me-2"></i>Tapis
+                    </button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Transaction Table -->
     <div class="card">
         <div class="card-body">
             <table class="table">
@@ -142,7 +157,7 @@ function formatNumber($number) {
                         ?>
                             <tr>
                                 <td><?php echo date('d/m/Y', strtotime($row['transDate'])); ?></td>
-                                <td><?php echo $row['transType']; ?></td>
+                                <td><?php echo $row['displayType']; ?></td>
                                 <td><?php echo number_format($row['transAmt'], 2); ?></td>
                             </tr>
                         <?php endwhile; ?>
@@ -160,3 +175,21 @@ function formatNumber($number) {
         </div>
     </div>
 </div>
+
+<script>
+document.getElementById('yearSelect').addEventListener('change', function() {
+    const year = this.value;
+    const monthSelect = document.getElementById('monthSelect');
+    const availableDates = <?php echo json_encode($available_dates); ?>;
+    const monthsInMalay = <?php echo json_encode($months_in_malay); ?>;
+    
+    monthSelect.innerHTML = '';
+    
+    if (availableDates[year]) {
+        availableDates[year].forEach(month => {
+            const option = new Option(monthsInMalay[month], month);
+            monthSelect.add(option);
+        });
+    }
+});
+</script>

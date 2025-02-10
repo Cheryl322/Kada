@@ -81,6 +81,19 @@ $memberData = mysqli_fetch_assoc($result);
                                 </a>
                             </div>
                         </div>
+                        <div class="col-md-6 mb-4">
+                            <div class="status-card">
+                                <a href="status_permohonanberhenti.php" class="text-decoration-none">
+                                    <div class="card h-100 status-option">
+                                        <div class="card-body text-center">
+                                            <i class="fas fa-user-check fa-4x mb-3" style="color: #5CBA9B;"></i>
+                                            <h4 class="card-title">Status Permohonan Berhenti</h4>
+                                            <p class="card-text">Lihat status permohonan berhenti anda</p>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -164,7 +164,8 @@ $stmt = mysqli_prepare($conn, $sqlBank);
 mysqli_stmt_bind_param($stmt, "s", $employeeID);
 mysqli_stmt_execute($stmt);
 $result = mysqli_stmt_get_result($stmt);
-$accountNo = ($row = mysqli_fetch_assoc($result)) ? $row['accountNo'] : '-';
+$row = mysqli_fetch_assoc($result);
+$accountNo = $row ? $row['accountNo'] : '-';
 $lastUpdate = date('d M Y, h:i A');
 
 // 首先更新贷款余额
@@ -337,74 +338,77 @@ $totalAllLoans = $albai_total + $alinnah_total + $bpulih_total +
 
 // 获取各类型储蓄的最新总额 - 修改查询，添加 deposit
 $sql_savings = "SELECT 
-    SUM(CASE WHEN DeducType_ID = 1 THEN Deduct_Amt ELSE 0 END) as modal_saham,
-    SUM(CASE WHEN DeducType_ID = 2 THEN Deduct_Amt ELSE 0 END) as modal_yuran,
-    SUM(CASE WHEN DeducType_ID = 3 THEN Deduct_Amt ELSE 0 END) as simpanan_tetap,
-    SUM(CASE WHEN DeducType_ID = 4 THEN Deduct_Amt ELSE 0 END) as tabung_anggota,
-    SUM(CASE WHEN DeducType_ID = 5 THEN Deduct_Amt ELSE 0 END) as wang_deposit
-FROM tb_deduction 
-WHERE employeeID = ?";
+    (SELECT SUM(Deduct_Amt) FROM tb_deduction WHERE employeeID = ? AND DeducType_ID = 1) as modal_saham,
+    (SELECT SUM(Deduct_Amt) FROM tb_deduction WHERE employeeID = ? AND DeducType_ID = 2) as modal_yuran,
+    (SELECT SUM(Deduct_Amt) FROM tb_deduction WHERE employeeID = ? AND DeducType_ID = 3) as simpanan_tetap,
+    (SELECT SUM(Deduct_Amt) FROM tb_deduction WHERE employeeID = ? AND DeducType_ID = 4) as tabung_anggota,
+    (SELECT SUM(Deduct_Amt) FROM tb_deduction WHERE employeeID = ? AND DeducType_ID = 5) as wang_deposit";
 
 $stmt_savings = mysqli_prepare($conn, $sql_savings);
-mysqli_stmt_bind_param($stmt_savings, 's', $employeeID);
+mysqli_stmt_bind_param($stmt_savings, 'sssss', $employeeID, $employeeID, $employeeID, $employeeID, $employeeID);
 mysqli_stmt_execute($stmt_savings);
 $savings = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_savings));
 
 // 在页面中只显示一次贷款信息卡片
 ?>
-<div class="mt-4 mb-4 ms-3">
-    <a href="javascript:history.back()" class="btn btn-kembali">
-        <i class="fas fa-arrow-left me-2"></i>Kembali
-    </a>
-</div>
-
 <div class="container mt-4">
-    <h2 class="mb-4">Penyata Kewangan</h2>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Penyata Kewangan</h2>
+    </div>
 
-        <!-- Summary Cards -->
-        <div class="row mb-4">
+    <!-- Main Summary Cards -->
+    <div class="row mb-4">
         <!-- Total Savings Card -->
         <div class="col-md-6 mb-3">
-            <div class="card bg-success text-white h-100">
-                <div class="card-body">
-                    <div class="d-flex align-items-center mb-2">
-                        <i class="fas fa-piggy-bank me-2"></i>
-                        <h5 class="card-title mb-0">Jumlah Simpanan</h5>
-                    </div>
-                    <h2 class="card-text mb-2">RM <?php echo number_format($totalSavings, 2); ?></h2>
-                    <div class="small">
-                        No. Akaun: <?php echo $accountNo; ?><br>
-                        Kemas kini terakhir: <?php echo $lastUpdate; ?>
+            <div class="summary-card">
+                <div class="summary-icon">
+                    <i class="fas fa-wallet"></i>
+                </div>
+                <div class="summary-details">
+                    <h3>Jumlah Simpanan</h3>
+                    <h2 class="amount">RM <?php echo number_format($totalSavings, 2); ?></h2>
+                    <div class="additional-info">
+                        <span class="info-item">
+                            <i class="fas fa-university me-1"></i>
+                            No. Akaun: <?php echo !empty($accountNo) ? $accountNo : '-'; ?>
+                        </span>
+                        <span class="info-item">
+                            <i class="fas fa-clock me-1"></i>
+                            Kemas kini: <?php echo $lastUpdate; ?>
+                        </span>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Loan Card -->
+        <!-- Total Loans Card -->
         <div class="col-md-6 mb-3">
-            <div class="card bg-info text-white h-100">
-                <div class="card-body">
-                    <div class="d-flex align-items-center mb-2">
-                        <i class="fas fa-money-bill-wave me-2"></i>
-                        <h5 class="card-title mb-0">Jumlah Pinjaman</h5>
-                    </div>
-                    <h2 class="card-text mb-2">RM <?php echo number_format($totalAllLoans, 2); ?></h2>
-                    <div class="small">
-                        <?php 
-                        $loanTypes = array();
-                        if ($albai_total > 0) $loanTypes[] = "AL-BAI";
-                        if ($alinnah_total > 0) $loanTypes[] = "AL-INNAH";
-                        if ($bpulih_total > 0) $loanTypes[] = "B/PULIH KENDERAAN";
-                        if ($roadtax_total > 0) $loanTypes[] = "ROAD TAX & INSURAN";
-                        if ($skimkhas_total > 0) $loanTypes[] = "SKIM KHAS";
-                        if ($karnival_total > 0) $loanTypes[] = "KARNIVAL MUSIM ISTIMEWA";
-                        
-                        if (!empty($loanTypes)) {
-                            echo implode(", ", $loanTypes);
-                        } else {
-                            echo "Tiada pinjaman aktif";
-                        }
-                        ?>
+            <div class="summary-card">
+                <div class="summary-icon loans">
+                    <i class="fas fa-hand-holding-usd"></i>
+                </div>
+                <div class="summary-details">
+                    <h3>Jumlah Pinjaman</h3>
+                    <h2 class="amount">RM <?php echo number_format($totalAllLoans, 2); ?></h2>
+                    <div class="additional-info">
+                        <span class="info-item">
+                            <i class="fas fa-tag me-1"></i>
+                            <?php 
+                            $loanTypes = array_filter([
+                                $albai_amount > 0 ? 'Al-Bai' : null,
+                                $alinnah_amount > 0 ? 'Al-Innah' : null,
+                                $bpulih_amount > 0 ? 'B/Pulih' : null,
+                                $roadtax_amount > 0 ? 'Road Tax' : null,
+                                $skimkhas_amount > 0 ? 'Skim Khas' : null,
+                                $karnival_amount > 0 ? 'Karnival' : null
+                            ]);
+                            echo implode(' • ', $loanTypes) ?: 'Tiada pinjaman aktif';
+                            ?>
+                        </span>
+                        <span class="info-item">
+                            <i class="fas fa-clock me-1"></i>
+                            Kemas kini: <?php echo $lastUpdate; ?>
+                        </span>
                     </div>
                 </div>
             </div>
@@ -413,483 +417,233 @@ $savings = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_savings));
 
     <!-- Navigation Cards -->
     <div class="row mb-4">
-        <div class="col-md-4">
-            <a href="transaction_history.php" class="card text-decoration-none">
-                <div class="card-body text-center">
-                    <i class="fas fa-history fa-2x mb-2 text-primary"></i>
-                    <h5 class="card-title">Rekod Transaksi</h5>
-                </div>
-            </a>
+        <div class="col-md-4 mb-3">
+            <div class="nav-card">
+                <a href="transaction_history.php" class="nav-card-content">
+                    <div class="nav-card-icon history">
+                        <i class="fas fa-history"></i>
+                    </div>
+                    <div class="nav-card-details">
+                        <h3 class="nav-card-title">Rekod Transaksi</h3>
+                    </div>
+                </a>
+            </div>
         </div>
-        <div class="col-md-4">
-            <a href="monthly_statements.php" class="card text-decoration-none">
-                <div class="card-body text-center">
-                    <i class="fas fa-file-alt fa-2x mb-2 text-success"></i>
-                    <h5 class="card-title">Penyata Bulanan</h5>
-                </div>
-            </a>
+        <div class="col-md-4 mb-3">
+            <div class="nav-card">
+                <a href="monthly_statements.php" class="nav-card-content">
+                    <div class="nav-card-icon monthly">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <div class="nav-card-details">
+                        <h3 class="nav-card-title">Penyata Bulanan</h3>
+                    </div>
+                </a>
+            </div>
         </div>
-        <div class="col-md-4">
-            <a href="financial_statement.php" class="card text-decoration-none">
-                <div class="card-body text-center">
-                    <i class="fas fa-file-invoice fa-2x mb-2 text-info"></i>
-                    <h5 class="card-title">Penyata Kewangan</h5>
-                </div>
-            </a>
+        <div class="col-md-4 mb-3">
+            <div class="nav-card">
+                <a href="financial_statement.php" class="nav-card-content">
+                    <div class="nav-card-icon yearly">
+                        <i class="fas fa-file-invoice"></i>
+                    </div>
+                    <div class="nav-card-details">
+                        <h3 class="nav-card-title">Penyata Kewangan</h3>
+                    </div>
+                </a>
+            </div>
         </div>
     </div>
 
-    <!-- Financial Summary -->
+    <!-- 保留现有的详细信息部分，但使用新的样式 -->
     <div class="row">
-        <!-- Savings & Shares Section -->
+        <!-- Savings Section -->
         <div class="col-md-6 mb-4">
-            <div class="card h-100">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">Saham & Simpanan</h5>
+            <div class="details-card">
+                <h3 class="details-title">
+                    <i class="fas fa-piggy-bank me-2"></i>
+                    Butiran Simpanan
+                </h3>
+                <!-- 现有的储蓄详情，使用新样式 -->
+                <?php foreach ($savings as $type => $amount): ?>
+                <div class="detail-item">
+                    <span class="detail-label"><?php echo ucwords(str_replace('_', ' ', $type)); ?></span>
+                    <span class="detail-amount">RM <?php echo number_format($amount ?? 0, 2); ?></span>
                 </div>
-                <div class="card-body py-4">
-                    <div class="row g-4">
-                        <!-- Modal Saham -->
-                        <div class="col-12">  <!-- 改为全宽 -->
-                            <div class="border rounded p-3 savings-item">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <h6 class="fw-bold mb-0">Modal Syer</h6>
-                                    <h4 class="text-primary mb-0">RM <?php echo number_format($savings['modal_saham'] ?? 0, 2); ?></h4>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- Modal Yuran -->
-                        <div class="col-12">
-                            <div class="border rounded p-3 savings-item">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <h6 class="fw-bold mb-0">Modal Yuran</h6>
-                                    <h4 class="text-primary mb-0">RM <?php echo number_format($savings['modal_yuran'] ?? 0, 2); ?></h4>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- Simpanan Tetap -->
-                        <div class="col-12">
-                            <div class="border rounded p-3 savings-item">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <h6 class="fw-bold mb-0">Simpanan Tetap</h6>
-                                    <h4 class="text-primary mb-0">RM <?php echo number_format($savings['simpanan_tetap'] ?? 0, 2); ?></h4>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- Tabung Anggota -->
-                        <div class="col-12">
-                            <div class="border rounded p-3 savings-item">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <h6 class="fw-bold mb-0">Sumbangan Tabung Kebajikan (AL-ABRAR)</h6>
-                                    <h4 class="text-primary mb-0">RM <?php echo number_format($savings['tabung_anggota'] ?? 0, 2); ?></h4>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- Wang Deposit -->
-                        <div class="col-12">
-                            <div class="border rounded p-3 savings-item">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <h6 class="fw-bold mb-0">Wang Deposit Anggota</h6>
-                                    <h4 class="text-primary mb-0">RM <?php echo number_format($savings['wang_deposit'] ?? 0, 2); ?></h4>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <?php endforeach; ?>
             </div>
         </div>
 
         <!-- Loans Section -->
         <div class="col-md-6 mb-4">
-            <div class="card h-100">
-                <div class="card-header bg-success text-white">
-                    <h5 class="mb-0">Maklumat Pinjaman</h5>
+            <div class="details-card">
+                <h3 class="details-title">
+                    <i class="fas fa-file-invoice-dollar me-2"></i>
+                    Butiran Pinjaman
+                </h3>
+                <!-- Al-Bai -->
+                <?php if ($albai_amount > 0): ?>
+                <div class="detail-item">
+                    <span class="detail-label">Al-Bai</span>
+                    <span class="detail-amount">
+                        RM <?php echo number_format($albai_amount, 2); ?> / 
+                        RM <?php echo number_format($albai_total, 2); ?>
+                    </span>
                 </div>
-                <div class="card-body py-4">
-                    <!-- Summary Row -->
-                    <div class="loan-summary mb-4">
-                        <div class="row g-3">
-                            <div class="col-6">
-                                <div class="summary-item border rounded p-3">
-                                    <h6 class="text-muted mb-1">Jumlah Pinjaman</h6>
-                                    <h4 class="text-success">RM <?php 
-                                        $totalLoanSum = $albai_amount + $alinnah_amount + $bpulih_amount + 
-                                                      $roadtax_amount + $skimkhas_amount + $karnival_amount;
-                                        echo number_format($totalLoanSum, 2); 
-                                    ?></h4>
-                                </div>
-                            </div>
-                            <div class="col-6">
-                                <div class="summary-item border rounded p-3">
-                                    <h6 class="text-muted mb-1">Bilangan Pinjaman</h6>
-                                    <h4 class="text-success"><?php 
-                                        $activeLoanCount = 0;
-                                        if ($albai_amount > 0) $activeLoanCount++;
-                                        if ($alinnah_amount > 0) $activeLoanCount++;
-                                        if ($bpulih_amount > 0) $activeLoanCount++;
-                                        if ($roadtax_amount > 0) $activeLoanCount++;
-                                        if ($skimkhas_amount > 0) $activeLoanCount++;
-                                        if ($karnival_amount > 0) $activeLoanCount++;
-                                        echo $activeLoanCount;
-                                    ?></h4>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Divider -->
-                    <hr class="my-4">
-
-                    <!-- Loan Details -->
-                    <div class="loan-details">
-                        <h6 class="text-muted mb-3">Butiran Pinjaman</h6>
-                        <div class="row g-4">
-                            <!-- Al-Bai -->
-                            <?php if ($albai_amount > 0): ?>
-                            <div class="col-12">
-                                <div class="border rounded p-3 savings-item loan-item">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <h6 class="fw-bold mb-0">Al-Bai</h6>
-                                        <h4 class="text-success mb-0">
-                                            RM <?php echo number_format($albai_amount, 2); ?> / 
-                                            RM <?php echo number_format($albai_total, 2); ?>
-                                        </h4>
-                                    </div>
-                                </div>
-                            </div>
-                            <?php endif; ?>
-                            
-                            <!-- 其他贷款项目使用相同的模式 -->
-                            <?php if ($alinnah_amount > 0): ?>
-                            <div class="col-12">
-                                <div class="border rounded p-3 savings-item loan-item">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <h6 class="fw-bold mb-0">Al-Innah</h6>
-                                        <h4 class="text-success mb-0">
-                                            RM <?php echo number_format($alinnah_amount, 2); ?> / 
-                                            RM <?php echo number_format($alinnah_total, 2); ?>
-                                        </h4>
-                                    </div>
-                                </div>
-                            </div>
-                            <?php endif; ?>
-                            
-                            <?php if ($bpulih_amount > 0): ?>
-                            <div class="col-12">
-                                <div class="border rounded p-3 savings-item loan-item">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <h6 class="fw-bold mb-0">B/Pulih Kenderaan</h6>
-                                        <h4 class="text-success mb-0">
-                                            RM <?php echo number_format($bpulih_amount, 2); ?> / 
-                                            RM <?php echo number_format($bpulih_total, 2); ?>
-                                        </h4>
-                                    </div>
-                                </div>
-                            </div>
-                            <?php endif; ?>
-                            
-                            <?php if ($roadtax_amount > 0): ?>
-                            <div class="col-12">
-                                <div class="border rounded p-3 savings-item loan-item">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <h6 class="fw-bold mb-0">Road Tax & Insuran</h6>
-                                        <h4 class="text-success mb-0">
-                                            RM <?php echo number_format($roadtax_amount, 2); ?> / 
-                                            RM <?php echo number_format($roadtax_total, 2); ?>
-                                        </h4>
-                                    </div>
-                                </div>
-                            </div>
-                            <?php endif; ?>
-                            
-                            <?php if ($skimkhas_amount > 0): ?>
-                            <div class="col-12">
-                                <div class="border rounded p-3 savings-item loan-item">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <h6 class="fw-bold mb-0">Skim Khas</h6>
-                                        <h4 class="text-success mb-0">
-                                            RM <?php echo number_format($skimkhas_amount, 2); ?> / 
-                                            RM <?php echo number_format($skimkhas_total, 2); ?>
-                                        </h4>
-                                    </div>
-                                </div>
-                            </div>
-                            <?php endif; ?>
-                            
-                            <?php if ($karnival_amount > 0): ?>
-                            <div class="col-12">
-                                <div class="border rounded p-3 savings-item loan-item">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <h6 class="fw-bold mb-0">Karnival Musim Istimewa</h6>
-                                        <h4 class="text-success mb-0">
-                                            RM <?php echo number_format($karnival_amount, 2); ?> / 
-                                            RM <?php echo number_format($karnival_total, 2); ?>
-                                        </h4>
-                                    </div>
-                                </div>
-                            </div>
-                            <?php endif; ?>
-                        </div>
-                    </div>
+                <?php endif; ?>
+                
+                <!-- Al-Innah -->
+                <?php if ($alinnah_amount > 0): ?>
+                <div class="detail-item">
+                    <span class="detail-label">Al-Innah</span>
+                    <span class="detail-amount">
+                        RM <?php echo number_format($alinnah_amount, 2); ?> / 
+                        RM <?php echo number_format($alinnah_total, 2); ?>
+                    </span>
                 </div>
+                <?php endif; ?>
+                
+                <!-- B/Pulih -->
+                <?php if ($bpulih_amount > 0): ?>
+                <div class="detail-item">
+                    <span class="detail-label">B/Pulih Kenderaan</span>
+                    <span class="detail-amount">
+                        RM <?php echo number_format($bpulih_amount, 2); ?> / 
+                        RM <?php echo number_format($bpulih_total, 2); ?>
+                    </span>
+                </div>
+                <?php endif; ?>
+                
+                <!-- Road Tax -->
+                <?php if ($roadtax_amount > 0): ?>
+                <div class="detail-item">
+                    <span class="detail-label">Road Tax & Insuran</span>
+                    <span class="detail-amount">
+                        RM <?php echo number_format($roadtax_amount, 2); ?> / 
+                        RM <?php echo number_format($roadtax_total, 2); ?>
+                    </span>
+                </div>
+                <?php endif; ?>
+                
+                <!-- Skim Khas -->
+                <?php if ($skimkhas_amount > 0): ?>
+                <div class="detail-item">
+                    <span class="detail-label">Skim Khas</span>
+                    <span class="detail-amount">
+                        RM <?php echo number_format($skimkhas_amount, 2); ?> / 
+                        RM <?php echo number_format($skimkhas_total, 2); ?>
+                    </span>
+                </div>
+                <?php endif; ?>
+                
+                <!-- Karnival -->
+                <?php if ($karnival_amount > 0): ?>
+                <div class="detail-item">
+                    <span class="detail-label">Karnival Musim Istimewa</span>
+                    <span class="detail-amount">
+                        RM <?php echo number_format($karnival_amount, 2); ?> / 
+                        RM <?php echo number_format($karnival_total, 2); ?>
+                    </span>
+                </div>
+                <?php endif; ?>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Add Font Awesome for icons -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-
-<!-- <style>
-.card {
-    transition: transform 0.2s;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.card:hover {
-    transform: translateY(-5px);
-}
-
-.border.rounded {
-    transition: all 0.3s;
-}
-
-.border.rounded:hover {
-    background-color: #f8f9fa;
-}
-
-h4 {
-    margin-bottom: 0;
-}
-
-h6 {
-    color: #6c757d;
-    margin-bottom: 0.5rem;
-}
-
-.savings-card {
-    background: linear-gradient(135deg,rgb(105, 212, 164) 0%,rgb(129, 195, 180) 100%);
-    border: none;
-    border-radius: 15px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-}
-
-.savings-card .btn-light {
-    background: rgba(255, 255, 255, 0.9);
-    border: none;
-    border-radius: 8px;
-    font-weight: 500;
-    padding: 8px 16px;
-    transition: all 0.3s ease;
-}
-
-.savings-card .btn-light:hover {
-    background: white;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-}
-
-.savings-card .card-title {
-    font-size: 2.5rem;
-    font-weight: 600;
-}
-
-.savings-card small {
-    opacity: 0.8;
-}
-
-.btn-kembali {
-    background-color: #FF9999;
-    color: white;
-    padding: 8px 20px;
-    
-    border: none;
-    font-size: 14px;
-    transition: all 0.3s ease;
-}
-
-.btn-kembali:hover {
-    background-color: #FF8080;
-    color: white;
-}
-
-.savings-item {
-    background-color: #fff;
-    transition: all 0.3s ease;
-    border: 1px solid #e0e0e0 !important;
-}
-
-.savings-item:hover {
-    background-color: #f8f9fa;
-    transform: translateX(5px);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-.savings-item h6 {
-    color: #2c3e50;
-    font-size: 0.95rem;
-}
-
-.savings-item h4 {
-    font-weight: 600;
-}
-
-/* 修复背景色继承问题 */
-.savings-bg .card-body, 
-.loan-bg .card-body {
-    background-color: inherit !important; /* 修正语法错误，删除中文注释 */
-    background: inherit !重要;
-}
-
-/* 移除可能造成冲突的样式 */
-.card-body {
-    background-color: transparent;
-}
-
-/* 确保渐变色正确显示 */
-.savings-bg {
-    background: linear-gradient(135deg, var(--mint-light) 0%, var(--mint-lighter) 100%) !important;
-}
-
-.loan-bg {
-    background: linear-gradient(135deg, var(--mint-lighter) 0%, var(--mint-light) 100%) !important;
-}
-
-.loan-item:hover {
-    transform: translateX(5px);
-    background-color: #f0fff0;
-}
-
-.loan-item h4 {
-    font-weight: 600;
-}
-
-.summary-item {
-    background: #fff;
-    transition: all 0.3s ease;
-}
-
-.summary-item:hover {
-    background-color: #f0fff0;
-    transform: translateY(-3px);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-.loan-details {
-    opacity: 0.9;
-}
-
-.loan-details:hover {
-    opacity: 1;
-}
-
-hr {
-    border-color: #e0e0e0;
-    opacity: 0.5;
-}
-
-.summary-card {
-    border: none;
-}
-
-/* 定义新的薄荷绿色变量 - 稍微加深的色调 */
-:root {
-    --mint-light: #7CCDB5;     /* 原来是 #98D8C6，调深一点 */
-    --mint-lighter: #96D6C4;   /* 原来是 #B5E4D7，调深一点 */
-}
-
-.savings-bg {
-    background: linear-gradient(135deg, var(--mint-light) 0%, var(--mint-lighter) 100%) !重要;
-    color: white !重要;
-}
-
-.loan-bg {
-    background: linear-gradient(135deg, var(--mint-lighter) 0%, var(--mint-light) 100%) !重要;
-    color: white !重要;
-} 
-
-.bg-primary {
-    background-color: var(--mint-light) !重要;
-}
-
-.bg-success {
-    background-color: var(--mint-lighter) !重要;
-}
-
-.savings-bg .card-body, .loan-bg .card-body {
-    background-color: inherit !重要; /* 继承父元素的背景色 */
-}
-
-.summary-card .card-title, 
-.summary-card .card-text, 
-.summary-card .small {
-    color: white !重要;
-}
-</style> -->
-
 <style>
-.card {
-    transition: transform 0.2s;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+.summary-card {
+    background: white;
+    border-radius: 10px;
+    padding: 25px;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+    display: flex;
+    align-items: flex-start;
+    transition: all 0.3s ease;
+    height: 100%;
 }
 
-.card:hover {
-    transform: translateY(-5px);
+.summary-icon {
+    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 20px;
 }
 
-.border.rounded {
-    transition: all 0.3s;
+.summary-icon.loans {
+    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
 }
 
-.border.rounded:hover {
-    background-color: #f8f9fa;
+.summary-icon.account {
+    background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
 }
 
-h4 {
-    margin-bottom: 0;
+.summary-icon i {
+    font-size: 24px;
+    color: white;
 }
 
-h6 {
-    color: #6c757d;
-    margin-bottom: 0.5rem;
+.summary-details h3 {
+    font-size: 14px;
+    color: #707070;
+    margin-bottom: 5px;
 }
 
-.savings-card {
-    background: linear-gradient(135deg,rgb(105, 212, 164) 0%,rgb(129, 195, 180) 100%);
-    border: none;
-    border-radius: 15px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+.summary-details .amount {
+    font-size: 24px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0;
 }
 
-.savings-card .btn-light {
-    background: rgba(255, 255, 255, 0.9);
-    border: none;
-    border-radius: 8px;
-    font-weight: 500;
-    padding: 8px 16px;
+.details-card {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+    height: 100%;
+}
+
+.details-title {
+    font-size: 18px;
+    color: #2c3e50;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.detail-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #eee;
     transition: all 0.3s ease;
 }
 
-.savings-card .btn-light:hover {
-    background: white;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+.detail-item:hover {
+    background-color: #f8f9fa;
+    transform: translateX(5px);
 }
 
-.savings-card .card-title {
-    font-size: 2.5rem;
+.detail-label {
+    color: #707070;
+    font-weight: 500;
+}
+
+.detail-amount {
     font-weight: 600;
-}
-
-.savings-card small {
-    opacity: 0.8;
+    color: #2c3e50;
 }
 
 .btn-kembali {
     background-color: #FF9999;
     color: white;
     padding: 8px 20px;
-    
     border: none;
     font-size: 14px;
     transition: all 0.3s ease;
@@ -898,6 +652,108 @@ h6 {
 .btn-kembali:hover {
     background-color: #FF8080;
     color: white;
+}
+
+/* Add these new styles to your existing CSS */
+.additional-info {
+    margin-top: 8px;
+    font-size: 12px;
+    color: #666;
+}
+
+.info-item {
+    display: block;
+    margin-top: 4px;
+}
+
+.info-item i {
+    width: 16px;
+    text-align: center;
+}
+
+/* Update existing card styles */
+.summary-card {
+    background: white;
+    border-radius: 10px;
+    padding: 25px;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+    display: flex;
+    align-items: flex-start;
+    transition: all 0.3s ease;
+    height: 100%;
+}
+
+.summary-details {
+    flex: 1;
+}
+
+/* Rest of your existing styles remain the same */
+
+/* Add these new styles for navigation cards */
+.nav-card {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+    height: 100%;
+}
+
+.nav-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.nav-card-content {
+    display: flex;
+    align-items: center;
+    padding: 20px;
+    text-decoration: none;
+    color: inherit;
+}
+
+.nav-card-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 15px;
+    flex-shrink: 0;
+}
+
+.nav-card-icon.history {
+    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+}
+
+.nav-card-icon.monthly {
+    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+}
+
+.nav-card-icon.yearly {
+    background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+}
+
+.nav-card-icon i {
+    font-size: 20px;
+    color: white;
+}
+
+.nav-card-details {
+    flex: 1;
+}
+
+.nav-card-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0 0 5px 0;
+}
+
+.nav-card-desc {
+    font-size: 12px;
+    color: #666;
+    margin: 0;
 }
 </style>
 
