@@ -480,6 +480,166 @@ if (!isset($_SESSION['employeeID']) || $_SESSION['role'] !== 'admin') {
 .table-wrapper:last-child .custom-table td:nth-child(4) {
     width: 25%;
 }
+
+.dashboard-container {
+    padding: 4rem 2rem 2rem; /* Increased top padding */
+    max-width: 1400px;
+    margin: 0 auto;
+    margin-top: 60px; /* Add margin-top to push content below header */
+}
+
+.menu-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    padding: 1rem;
+}
+
+.menu-card {
+    background: white;
+    border-radius: 15px;
+    padding: 2rem 1.5rem;
+    text-align: center;
+    text-decoration: none;
+    color: #2c3e50;
+    transition: all 0.3s ease;
+    border: 2px solid #e9ecef;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.menu-icon {
+    width: 80px;
+    height: 80px;
+    background: #75B798;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.menu-icon i {
+    font-size: 2rem;
+    color: white;
+}
+
+.menu-card span {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: #2c3e50;
+}
+
+.menu-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    border-color: #75B798;
+}
+
+.menu-card:hover .menu-icon {
+    transform: scale(1.1);
+    background: #5dbea3;
+}
+
+@media (max-width: 768px) {
+    .dashboard-container {
+        padding: 4rem 2rem 2rem;
+    }
+
+    .menu-grid {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+
+    .menu-card {
+        padding: 1.5rem 1rem;
+    }
+
+    .menu-icon {
+        width: 60px;
+        height: 60px;
+    }
+
+    .menu-icon i {
+        font-size: 1.5rem;
+    }
+
+    .menu-card span {
+        font-size: 1rem;
+    }
+}
+
+.circles-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 2rem;
+    padding: 2rem 1rem;
+    justify-items: center;
+    margin-top: 20px; /* Additional spacing from top */
+}
+
+.circle-item {
+    width: 180px;
+    height: 180px;
+    background:rgb(124, 186, 157);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    color: white;
+    transition: all 0.3s ease;
+    border: 3px solid white;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.circle-inner {
+    text-align: center;
+    padding: 1rem;
+}
+
+.circle-inner i {
+    font-size: 2.5rem;
+    margin-bottom: 0.8rem;
+    display: block;
+}
+
+.circle-inner span {
+    font-size: 1rem;
+    font-weight: 500;
+    display: block;
+    line-height: 1.2;
+}
+
+.circle-item:hover {
+    transform: translateY(-5px);
+    background: #5dbea3;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+
+@media (max-width: 768px) {
+    .circles-grid {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .circle-item {
+        width: 150px;
+        height: 150px;
+    }
+
+    .circle-inner i {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .circle-inner span {
+        font-size: 0.9rem;
+    }
+}
 </style>
 </head>
 
@@ -489,42 +649,54 @@ if (!isset($_SESSION['employeeID']) || $_SESSION['role'] !== 'admin') {
     include "headeradmin.php";
     ?>
 
-    <div class="circle-container">
-        <a href="senaraiPermohonanAhli.php" class="circle">
-            <div class="circle-content">
-                <i class="fas fa-user-plus mb-2"></i>
-                <span>Pendaftaran Ahli</span>
-            </div>
-        </a>
-        <a href="senaraiPermohonanPinjaman.php" class="circle">
-            <div class="circle-content">
-                <i class="fas fa-hand-holding-usd mb-2"></i>
-                <span>Permohonan Pinjaman</span>
-            </div>
-        </a>
-        <a href="hasilreport.php" class="circle">
-            <div class="circle-content">
-                <i class="fas fa-file-alt mb-2"></i>
-                <span>Hasil Laporan</span>
-            </div>
-        </a>
-        <a href="adminviewreport.php" class="circle">
-            <div class="circle-content">
-                <i class="fas fa-clipboard-check mb-2"></i>
-                <span>Cek Laporan</span>
-            </div>
-        </a>
-        <a href="admin_upload_payment.php" class="circle">
-            <div class="circle-content">
-                <i class="fas fa-money-bill-wave mb-2"></i>
-                <span>Rekod Pembayaran</span>
-            </div>
-        </a>
-        <div class="col">
-            <a href="manage_interest.php" class="circle">
-                <div class="circle-content">
-                    <i class="fas fa-percentage mb-2"></i>
+    <div class="dashboard-container">
+        <div class="circles-grid">
+            <a href="senaraiPermohonanAhli.php" class="circle-item">
+                <div class="circle-inner">
+                    <i class="fas fa-user-plus"></i>
+                    <span>Pendaftaran Ahli</span>
+                </div>
+            </a>
+
+            <a href="senaraiPermohonanPinjaman.php" class="circle-item">
+                <div class="circle-inner">
+                    <i class="fas fa-hand-holding-usd"></i>
+                    <span>Permohonan Pinjaman</span>
+                </div>
+            </a>
+
+            <a href="hasilreport.php" class="circle-item">
+                <div class="circle-inner">
+                    <i class="fas fa-file-alt"></i>
+                    <span>Hasil Laporan</span>
+                </div>
+            </a>
+
+            <a href="adminviewreport.php" class="circle-item">
+                <div class="circle-inner">
+                    <i class="fas fa-clipboard-check"></i>
+                    <span>Cek Laporan</span>
+                </div>
+            </a>
+
+            <a href="admin_upload_payment.php" class="circle-item">
+                <div class="circle-inner">
+                    <i class="fas fa-money-bill-wave"></i>
+                    <span>Rekod Pembayaran</span>
+                </div>
+            </a>
+
+            <a href="manage_interest.php" class="circle-item">
+                <div class="circle-inner">
+                    <i class="fas fa-percentage"></i>
                     <span>Kadar Faedah</span>
+                </div>
+            </a>
+
+            <a href="berhentiapproval.php" class="circle-item">
+                <div class="circle-inner">
+                    <i class="fas fa-user-slash"></i>
+                    <span>Permohonan Berhenti</span>
                 </div>
             </a>
         </div>

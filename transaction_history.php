@@ -11,11 +11,9 @@ if (!isset($_SESSION['employeeID'])) {
 $employeeID = $_SESSION['employeeID'];
 $employeeID = ltrim($employeeID, '0');
 
-// 获取筛选参数
 $month = isset($_GET['month']) ? $_GET['month'] : date('m');
 $year = isset($_GET['year']) ? $_GET['year'] : date('Y');
 
-// 修改主查询中的 CASE 语句
 $sql = "SELECT d.Deduct_date as transDate, 
                dt.typeName as transType, 
                d.Deduct_Amt as transAmt,
@@ -40,12 +38,10 @@ mysqli_stmt_bind_param($stmt, 'sii', $employeeID, $month, $year);
 mysqli_stmt_execute($stmt);
 $result = mysqli_stmt_get_result($stmt);
 
-// 添加视图类型参数
 $view = isset($_GET['view']) ? $_GET['view'] : 'monthly';
 $year = isset($_GET['year']) ? $_GET['year'] : date('Y');
 $month = isset($_GET['month']) ? $_GET['month'] : date('m');
 
-// 修改 SQL 查询以支持按月和按年查看
 if ($view == 'yearly') {
     $sql = "SELECT DISTINCT YEAR(Deduct_date) as year 
             FROM tb_deduction
@@ -68,7 +64,6 @@ function formatNumber($number) {
     return str_pad($number, 4, '0', STR_PAD_LEFT);
 }
 
-// 获取所有有交易记录的月份和年份
 $sql_dates = "SELECT DISTINCT 
                 MONTH(Deduct_date) as month, 
                 YEAR(Deduct_date) as year
@@ -86,7 +81,6 @@ while ($row = mysqli_fetch_assoc($dates_result)) {
     $available_dates[$row['year']][] = $row['month'];
 }
 
-// 如果没有选择月份和年份，使用最新的记录
 if (!isset($_GET['year']) || !isset($_GET['month'])) {
     reset($available_dates);
     $year = key($available_dates);
@@ -103,7 +97,6 @@ if (!isset($_GET['year']) || !isset($_GET['month'])) {
 
     <h2 class="mb-4">Rekod Pembayaran</h2>
     
-    <!-- 修改筛选表单 -->
     <div class="card mb-4">
         <div class="card-body">
             <form method="GET" class="row g-3">
@@ -146,7 +139,6 @@ if (!isset($_GET['year']) || !isset($_GET['month'])) {
         </div>
     </div>
 
-    <!-- Transaction Table -->
     <div class="card">
         <div class="card-body">
             <table class="table">
@@ -191,10 +183,8 @@ document.getElementById('yearSelect').addEventListener('change', function() {
     const availableDates = <?php echo json_encode($available_dates); ?>;
     const monthsInMalay = <?php echo json_encode($months_in_malay); ?>;
     
-    // Clear current options
     monthSelect.innerHTML = '';
     
-    // Add new options based on selected year
     if (availableDates[year]) {
         availableDates[year].forEach(month => {
             const option = new Option(monthsInMalay[month], month);

@@ -83,6 +83,7 @@ body::before {
               </ul>
             </a>
             <a class="dropdown-item" href="permohonanloan.php">Permohonan Pembiayaan</a>
+            <a class="dropdown-item" href="permohonanberhenti.php">Permohonan Berhenti Menjadi Anggota</a>
           </div>
         </li>
 

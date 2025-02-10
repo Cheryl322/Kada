@@ -70,12 +70,10 @@ $memberData = mysqli_fetch_assoc($result);
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label class="form-label">Nama Penuh:</label>
-                                <!-- <p class="form-control"><?php echo isset($memberData['memberName']) ? $memberData['memberName'] : '-'; ?></p> -->
                                 <p><input type="text" class="form-control" name="memberName" value="<?php echo htmlspecialchars($memberData['memberName']); ?>"readonly></p>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">No. MyKad:</label>
-                                <!-- <p class="form-control"><?php echo isset($memberData['ic']) ? $memberData['ic'] : '-'; ?></p> -->
                                 <p><input type="text" class="form-control" name="ic" value="<?php echo htmlspecialchars($memberData['ic']); ?>"readonly></p>
                             </div>
                         </div>
@@ -83,12 +81,10 @@ $memberData = mysqli_fetch_assoc($result);
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label class="form-label">Alamat Email:</label>
-                                <!-- <p class="form-control"><?php echo isset($memberData['email']) ? $memberData['email'] : '-'; ?></p> -->
                                 <p><input type="text" class="form-control" name="email" value="<?php echo htmlspecialchars($memberData['email']); ?>"readonly></p>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">No. Telefon:</label>
-                                <!-- <p class="form-control"><?php echo isset($memberData['phoneNumber']) ? $memberData['phoneNumber'] : '-'; ?></p> -->
                                 <p><input type="text" class="form-control" name="phoneNumber" value="<?php echo htmlspecialchars($memberData['phoneNumber']); ?>"readonly></p>
                             </div>
                         </div>
@@ -96,12 +92,10 @@ $memberData = mysqli_fetch_assoc($result);
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label class="form-label">Jantina:</label>
-                                <!-- <p class="form-control"><?php echo isset($memberData['sex']) ? $memberData['sex'] : '-'; ?></p> -->
                                 <p><input type="text" class="form-control" name="sex" value="<?php echo htmlspecialchars($memberData['sex']); ?>"readonly></p>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Status Perkahwinan:</label>
-                                <!-- <p class="form-control"><?php echo isset($memberData['maritalStatus']) ? $memberData['maritalStatus'] : '-'; ?></p> -->
                                 <p><input type="text" class="form-control" name="maritalStatus" value="<?php echo htmlspecialchars($memberData['maritalStatus']); ?>"readonly></p>
                             </div>
                         </div>
@@ -109,12 +103,10 @@ $memberData = mysqli_fetch_assoc($result);
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label class="form-label">Agama:</label>
-                                <!-- <p class="form-control"><?php echo isset($memberData['religion']) ? $memberData['religion'] : '-'; ?></p> -->
                                 <p><input type="text" class="form-control" name="religion" value="<?php echo htmlspecialchars($memberData['religion']); ?>"readonly></p>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Bangsa:</label>
-                                <!-- <p class="form-control"><?php echo isset($memberData['nation']) ? $memberData['nation'] : '-'; ?></p> -->
                                 <p><input type="text" class="form-control" name="nation" value="<?php echo htmlspecialchars($memberData['nation']); ?>"readonly></p>
                             </div>
                         </div>
@@ -124,9 +116,6 @@ $memberData = mysqli_fetch_assoc($result);
                                 <h5 class="mb-0">Alamat Rumah</h5>
                             </div>
                             <div class="card-body">
-                                <!-- <p><strong>Alamat:</strong> <?php echo isset($memberData['homeAddress']) ? $memberData['homeAddress'] : '-'; ?></p>
-                                <p><strong>Poskod:</strong> <?php echo isset($memberData['homePostcode']) ? $memberData['homePostcode'] : '-'; ?></p>
-                                <p><strong>Negeri:</strong> <?php echo isset($memberData['homeState']) ? $memberData['homeState'] : '-'; ?></p> -->
                                 <p><strong>Alamat:</strong><input type="text" class="form-control" name="homeAddress" value="<?php echo htmlspecialchars($memberData['homeAddress']); ?>"readonly>
                                 <p><strong>Poskod:</strong><input type="text" class="form-control" name="homePostcode" value="<?php echo htmlspecialchars($memberData['homePostcode']); ?>"readonly>
                                 <p><strong>Negeri:</strong><input type="text" class="form-control" name="homeState" value="<?php echo htmlspecialchars($memberData['homeState']); ?>"readonly>
@@ -138,10 +127,7 @@ $memberData = mysqli_fetch_assoc($result);
                                 <h5 class="mb-0">Alamat Pejabat</h5>
                             </div>
                             <div class="card-body">
-                                <!-- <p><strong>Alamat:</strong> <?php echo isset($memberData['officeAddress']) ? $memberData['officeAddress'] : '-'; ?></p>
-                                <p><strong>Poskod:</strong> <?php echo isset($memberData['officePostcode']) ? $memberData['officePostcode'] : '-'; ?></p>
-                                <p><strong>Negeri:</strong> <?php echo isset($memberData['officeState']) ? $memberData['officeState'] : '-'; ?></p>  -->
-                                <p><strong>Alamat:</strong><input type="text" class="form-control" name="officeAddress" value="<?php echo htmlspecialchars($memberData['officeAddress']); ?>"readonly>
+                               <p><strong>Alamat:</strong><input type="text" class="form-control" name="officeAddress" value="<?php echo htmlspecialchars($memberData['officeAddress']); ?>"readonly>
                                 <p><strong>Poskod:</strong><input type="text" class="form-control" name="officePostcode" value="<?php echo htmlspecialchars($memberData['officePostcode']); ?>"readonly>
                                 <p><strong>Negeri:</strong><input type="text" class="form-control" name="officeState" value="<?php echo htmlspecialchars($memberData['officeState']); ?>"readonly>
                             </div>
