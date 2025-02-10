@@ -140,6 +140,18 @@ include 'headeradmin.php';
                             Pembiayaan
                         </label>
                     </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="reportType" id="monthly" value="monthly">
+                        <label class="form-check-label" for="monthly">
+                            Bulanan
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="reportType" id="yearly" value="yearly">
+                        <label class="form-check-label" for="yearly">
+                            Tahunan
+                        </label>
+                    </div>
                     <div class="invalid-feedback">
                         Sila pilih jenis laporan
                     </div>

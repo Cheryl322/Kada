@@ -2,6 +2,35 @@
 session_start();
 include 'headeradmin.php';
 
+// Add delete period functionality
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['period']) && isset($_POST['reportType'])) {
+    include 'dbconnect.php';
+    
+    $period = $_POST['period'];
+    $reportType = $_POST['reportType'];
+    
+    // Format date condition based on report type
+    $dateFormat = $reportType === 'monthly' ? '%Y-%m' : '%Y';
+    
+    try {
+        // Remove the period data from session
+        if (isset($_SESSION['reportData'])) {
+            $_SESSION['reportData'] = array_filter($_SESSION['reportData'], function($item) use ($period) {
+                $itemPeriod = date('Y-m', strtotime($item['tarikh_daftar']));
+                return $itemPeriod !== $period;
+            });
+        }
+        
+        $_SESSION['success_message'] = "Entri berjaya dipadamkan.";
+    } catch (Exception $e) {
+        $_SESSION['error_message'] = "Ralat semasa memadamkan entri: " . $e->getMessage();
+    }
+    
+    // Redirect to refresh the page
+    header('Location: ' . $_SERVER['PHP_SELF']);
+    exit();
+}
+
 // Add title tag right after header inclusion
 echo '<title>Cek Laporan</title>';
 
@@ -204,133 +233,246 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_index'])) {
 $reportData = $_SESSION['reportData'];
 ?>
 
-<div class="main-content" style="margin-top: 80px;">
-    <h2 style="color: rgb(34, 119, 210);">Cek Laporan</h2>
-    <hr style="border: 1px solid #ddd; margin-top: 10px; margin-bottom: 20px;">
+<!-- Update the Cek Laporan section with container styling -->
+<div class="report-container" style="margin: 20px; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+    <h3 style="color: rgb(34, 119, 210); margin-bottom: 20px;">Cek Laporan</h3>
     
-    <!-- Search bar only -->
-    <div class="d-flex justify-content-end align-items-center mb-3" style="margin: 0 20px;">
+    <!-- Search bar -->
+    <div class="d-flex justify-content-end align-items-center mb-3">
         <div style="width: 300px;">
             <input type="text" id="searchInput" class="form-control" placeholder="Cari...">
         </div>
     </div>
-</div>
 
-<div class="table-responsive" style="margin: 20px;">
-    <table class="table table-bordered table-hover" id="dataTable">
-        <thead class="table-light">
-            <tr>
-                <th>No.</th>
-                <th>Nama</th>
-                <th>No. Anggota</th>
-                <th>Tarikh Daftar</th>
-                <th>Penyata Ahli</th>
-                <th>No. Pembiayaan</th>
-                <th>Tarikh Pembiayaan</th>
-                <th>Penyata Kewangan</th>
-                <th>Tindakan</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php 
-            // Calculate pagination variables
-            $itemsPerPage = 10;
-            $totalItems = count($reportData);
-            $totalPages = ceil($totalItems / $itemsPerPage);
-            $currentPage = isset($_GET['page']) ? max(1, min($totalPages, intval($_GET['page']))) : 1;
-            $startIndex = ($currentPage - 1) * $itemsPerPage;
-            
-            // Get items for current page
-            $pageItems = array_slice($reportData, $startIndex, $itemsPerPage);
-            
-            if (!empty($pageItems)): 
-                foreach ($pageItems as $index => $data): 
-                    $displayIndex = $startIndex + $index + 1;
-            ?>
+    <!-- Table -->
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover" id="dataTable">
+            <thead class="table-light">
                 <tr>
-                    <td><?php echo $displayIndex; ?></td>
-                    <td><?php echo htmlspecialchars($data['memberName']); ?></td>
-                    <td><?php echo htmlspecialchars($data['employeeID']); ?></td>
-                    <td><?php echo htmlspecialchars($data['tarikh_daftar']); ?></td>
-                    <td class="text-center">
-                        <div class="btn-group" role="group">
-                            <button class="btn btn-primary" onclick="viewMemberStatement('<?php echo $data['employeeID']; ?>')">
-                                Lihat Penyata
-                            </button>
-                            <button class="btn btn-success" onclick="downloadMemberStatement('<?php echo $data['employeeID']; ?>')">
-                                <i class="fas fa-download"></i>
-                            </button>
-                        </div>
-                    </td>
-                    <td><?php echo $data['reportType'] === 'member' ? '-' : htmlspecialchars($data['loanApplicationID']); ?></td>
-                    <td><?php echo $data['reportType'] === 'member' ? '-' : htmlspecialchars($data['tarikh_pembiayaan']); ?></td>
-                    <td class="text-center">
-                        <div class="btn-group" role="group">
-                            <?php if ($data['reportType'] === 'pembiayaan'): ?>
-                                <button class="btn btn-primary" onclick="viewFinancialStatement('<?php echo $data['loanApplicationID']; ?>', '<?php echo isset($data['reportType']) ? $data['reportType'] : 'member'; ?>')">
+                    <th>No.</th>
+                    <th>Nama</th>
+                    <th>No. Anggota</th>
+                    <th>Tarikh Daftar</th>
+                    <th>Penyata Ahli</th>
+                    <th>No. Pembiayaan</th>
+                    <th>Tarikh Pembiayaan</th>
+                    <th>Penyata Kewangan</th>
+                    <th>Tindakan</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php 
+                // Calculate pagination variables
+                $itemsPerPage = 10;
+                $totalItems = count($reportData);
+                $totalPages = ceil($totalItems / $itemsPerPage);
+                $currentPage = isset($_GET['page']) ? max(1, min($totalPages, intval($_GET['page']))) : 1;
+                $startIndex = ($currentPage - 1) * $itemsPerPage;
+                
+                // Get items for current page
+                $pageItems = array_slice($reportData, $startIndex, $itemsPerPage);
+                
+                if (!empty($pageItems)): 
+                    foreach ($pageItems as $index => $data): 
+                        $displayIndex = $startIndex + $index + 1;
+                ?>
+                    <tr>
+                        <td><?php echo $displayIndex; ?></td>
+                        <td><?php echo htmlspecialchars($data['memberName']); ?></td>
+                        <td><?php echo htmlspecialchars($data['employeeID']); ?></td>
+                        <td><?php echo htmlspecialchars($data['tarikh_daftar']); ?></td>
+                        <td class="text-center">
+                            <div class="btn-group" role="group">
+                                <button class="btn btn-primary" onclick="viewMemberStatement('<?php echo $data['employeeID']; ?>')">
                                     Lihat Penyata
                                 </button>
-                                <button class="btn btn-success" onclick="downloadFinancialStatement('<?php echo $data['loanApplicationID']; ?>', '<?php echo isset($data['reportType']) ? $data['reportType'] : 'member'; ?>')">
+                                <button class="btn btn-success" onclick="downloadMemberStatement('<?php echo $data['employeeID']; ?>')">
                                     <i class="fas fa-download"></i>
                                 </button>
-                            <?php else: ?>
-                                -
-                            <?php endif; ?>
-                        </div>
-                    </td>
-                    <td class="text-center">
-                        <button class="btn btn-danger btn-sm" onclick="deleteEntry(<?php echo $startIndex + $index; ?>)">
-                            Padam
-                        </button>
-                    </td>
-                </tr>
-            <?php 
-                endforeach; 
-            else: 
-            ?>
-                <tr>
-                    <td colspan="9" class="text-center">Tiada data</td>
-                </tr>
-            <?php endif; ?>
-        </tbody>
-    </table>
+                            </div>
+                        </td>
+                        <td><?php echo $data['reportType'] === 'member' ? '-' : htmlspecialchars($data['loanApplicationID']); ?></td>
+                        <td><?php echo $data['reportType'] === 'member' ? '-' : htmlspecialchars($data['tarikh_pembiayaan']); ?></td>
+                        <td class="text-center">
+                            <div class="btn-group" role="group">
+                                <?php if ($data['reportType'] === 'pembiayaan'): ?>
+                                    <button class="btn btn-primary view-statement-btn" 
+                                            data-period="<?php echo date('Y-m', strtotime($data['tarikh_pembiayaan'])); ?>" 
+                                            data-type="monthly">
+                                        Lihat Penyata
+                                    </button>
+                                    <button class="btn btn-success" onclick="downloadFinancialStatement('<?php echo $data['loanApplicationID']; ?>', '<?php echo isset($data['reportType']) ? $data['reportType'] : 'member'; ?>')">
+                                        <i class="fas fa-download"></i>
+                                    </button>
+                                <?php else: ?>
+                                    -
+                                <?php endif; ?>
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            <button class="btn btn-danger btn-sm" onclick="deleteEntry(<?php echo $startIndex + $index; ?>)">
+                                Padam
+                            </button>
+                        </td>
+                    </tr>
+                <?php 
+                    endforeach; 
+                else: 
+                ?>
+                    <tr>
+                        <td colspan="9" class="text-center">Tiada data</td>
+                    </tr>
+                <?php endif; ?>
+            </tbody>
+        </table>
 
-    <!-- Modified pagination to always show -->
-    <div class="d-flex justify-content-end mt-3">
-        <nav aria-label="Page navigation">
-            <ul class="pagination">
-                <!-- Previous button -->
-                <li class="page-item <?php echo ($currentPage <= 1) ? 'disabled' : ''; ?>">
-                    <a class="page-link" href="?page=<?php echo $currentPage - 1; ?>" aria-label="Previous">
-                        <span aria-hidden="true">&laquo;</span>
-                    </a>
-                </li>
+        <!-- Pagination -->
+        <div class="d-flex justify-content-end mt-3">
+            <nav aria-label="Page navigation">
+                <ul class="pagination">
+                    <!-- Previous button -->
+                    <li class="page-item <?php echo ($currentPage <= 1) ? 'disabled' : ''; ?>">
+                        <a class="page-link" href="?page=<?php echo $currentPage - 1; ?>" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
 
-                <!-- Page numbers -->
-                <?php for ($i = 1; $i <= max(1, $totalPages); $i++): ?>
-                    <?php if ($i == 1 || $i == $totalPages || abs($i - $currentPage) <= 2): ?>
-                        <li class="page-item <?php echo ($i == $currentPage) ? 'active' : ''; ?>">
-                            <a class="page-link" href="?page=<?php echo $i; ?>"><?php echo $i; ?></a>
-                        </li>
-                    <?php elseif (abs($i - $currentPage) == 3): ?>
-                        <li class="page-item disabled">
-                            <span class="page-link">...</span>
-                        </li>
-                    <?php endif; ?>
-                <?php endfor; ?>
+                    <!-- Page numbers -->
+                    <?php for ($i = 1; $i <= max(1, $totalPages); $i++): ?>
+                        <?php if ($i == 1 || $i == $totalPages || abs($i - $currentPage) <= 2): ?>
+                            <li class="page-item <?php echo ($i == $currentPage) ? 'active' : ''; ?>">
+                                <a class="page-link" href="?page=<?php echo $i; ?>"><?php echo $i; ?></a>
+                            </li>
+                        <?php elseif (abs($i - $currentPage) == 3): ?>
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                        <?php endif; ?>
+                    <?php endfor; ?>
 
-                <!-- Next button -->
-                <li class="page-item <?php echo ($currentPage >= $totalPages) ? 'disabled' : ''; ?>">
-                    <a class="page-link" href="?page=<?php echo $currentPage + 1; ?>" aria-label="Next">
-                        <span aria-hidden="true">&raquo;</span>
-                    </a>
-                </li>
-            </ul>
-        </nav>
+                    <!-- Next button -->
+                    <li class="page-item <?php echo ($currentPage >= $totalPages) ? 'disabled' : ''; ?>">
+                        <a class="page-link" href="?page=<?php echo $currentPage + 1; ?>" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
     </div>
 </div>
 
-<!-- Add this button at the bottom of the table -->
+<!-- Ringkasan Laporan container (already styled correctly) -->
+<div class="report-summary" style="margin: 20px; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+    <h3 style="color: rgb(34, 119, 210); margin-bottom: 20px;">Ringkasan Laporan</h3>
+    
+    <?php
+    if ($_SESSION['reportType'] === 'monthly' || $_SESSION['reportType'] === 'yearly') {
+        include 'dbconnect.php';
+        
+        $period = $_SESSION['reportType'] === 'monthly' ? 'MONTH' : 'YEAR';
+        $format = $_SESSION['reportType'] === 'monthly' ? '%Y-%m' : '%Y';
+        
+        // Query for member registrations
+        $memberQuery = "SELECT 
+            DATE_FORMAT(created_at, '$format') as period,
+            COUNT(*) as count
+        FROM tb_member
+        GROUP BY period
+        ORDER BY period DESC";
+        
+        // Query for loan applications
+        $loanQuery = "SELECT 
+            DATE_FORMAT(created_at, '$format') as period,
+            COUNT(*) as count,
+            SUM(amountRequested) as total_amount
+        FROM tb_loan
+        GROUP BY period
+        ORDER BY period DESC";
+        
+        $memberResult = $conn->query($memberQuery);
+        $loanResult = $conn->query($loanQuery);
+        ?>
+        
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th><?php echo $_SESSION['reportType'] === 'monthly' ? 'Bulan' : 'Tahun'; ?></th>
+                        <th>Jumlah Ahli Baru</th>
+                        <th>Jumlah Pembiayaan</th>
+                        <th>Nilai Pembiayaan (RM)</th>
+                        <th>Laporan</th>
+                        <th>Tindakan</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php
+                    $periods = array();
+                    $memberData = array();
+                    $loanData = array();
+                    
+                    // Process member data
+                    while ($row = $memberResult->fetch_assoc()) {
+                        $periods[$row['period']] = true;
+                        $memberData[$row['period']] = $row['count'];
+                    }
+                    
+                    // Process loan data
+                    while ($row = $loanResult->fetch_assoc()) {
+                        $periods[$row['period']] = true;
+                        $loanData[$row['period']] = [
+                            'count' => $row['count'],
+                            'amount' => $row['total_amount']
+                        ];
+                    }
+                    
+                    // Sort periods in descending order
+                    krsort($periods);
+                    
+                    foreach (array_keys($periods) as $period) {
+                        $displayPeriod = $_SESSION['reportType'] === 'monthly' 
+                            ? date('F Y', strtotime($period . '-01'))
+                            : $period;
+                            
+                        echo "<tr>";
+                        echo "<td>" . htmlspecialchars($displayPeriod) . "</td>";
+                        echo "<td>" . (isset($memberData[$period]) ? $memberData[$period] : 0) . "</td>";
+                        echo "<td>" . (isset($loanData[$period]) ? $loanData[$period]['count'] : 0) . "</td>";
+                        echo "<td>" . (isset($loanData[$period]) ? number_format($loanData[$period]['amount'], 2) : '0.00') . "</td>";
+                        echo "<td class='text-center'>";
+                        echo "<div class='btn-group' role='group'>";
+                        echo "<button class='btn btn-primary' onclick='viewPeriodStatement(\"$period\", \"" . $_SESSION['reportType'] . "\")'>Lihat Penyata</button>";
+                        echo "<button class='btn btn-success' onclick='downloadPeriodStatement(\"$period\", \"" . $_SESSION['reportType'] . "\")'><i class='fas fa-download'></i></button>";
+                        echo "</div>";
+                        echo "</td>";
+                        echo "<td class='text-center'>";
+                        echo "<button class='btn btn-danger btn-sm' onclick='deletePeriodEntry(\"$period\")'>";
+                        echo "Padam";
+                        echo "</button>";
+                        echo "</td>";
+                        echo "</tr>";
+                    }
+                    ?>
+                </tbody>
+                <tfoot class="table-light">
+                    <tr>
+                        <th>Jumlah</th>
+                        <th><?php echo array_sum($memberData); ?></th>
+                        <th><?php echo array_sum(array_column($loanData, 'count')); ?></th>
+                        <th><?php echo number_format(array_sum(array_column($loanData, 'amount')), 2); ?></th>
+                        <th></th>
+                        <th></th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        <?php
+    }
+    ?>
+</div>
+
+<!-- Add this button at the bottom -->
 <div class="d-flex justify-content-start mt-4 mb-5" style="margin-left: 20px;">
     <button type="button" class="btn btn-primary" onclick="showBackConfirmation()">
         <i class="fas fa-arrow-left me-2"></i>Kembali
@@ -366,6 +508,75 @@ $reportData = $_SESSION['reportData'];
             </div>
             <div class="modal-body" style="height: 80vh; padding: 0;">
                 <iframe id="statementFrame" style="width: 100%; height: 100%; border: none;"></iframe>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Modal for viewing statements -->
+<div class="modal fade" id="periodStatementModal" tabindex="-1" aria-labelledby="periodStatementModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="periodStatementModalLabel">Penyata</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" style="height: 80vh; padding: 0;">
+                <iframe id="periodStatementFrame" style="width: 100%; height: 100%; border: none;"></iframe>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modify the summary report modal structure -->
+<div class="modal fade" id="summaryReportModal" tabindex="-1" aria-labelledby="summaryReportModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="summaryReportModalLabel">Ringkasan Penyata</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h6 class="card-title">Maklumat Ahli</h6>
+                                <p class="mb-1">Jumlah Ahli Baru: <strong id="newMemberCount">0</strong></p>
+                                <p class="mb-1">Jumlah Keseluruhan Ahli: <strong id="totalMemberCount">0</strong></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h6 class="card-title">Maklumat Pembiayaan</h6>
+                                <p class="mb-1">Jumlah Pembiayaan Baru: <strong id="newLoanCount">0</strong></p>
+                                <p class="mb-1">Nilai Pembiayaan: <strong>RM <span id="totalLoanAmount">0.00</span></strong></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="table-responsive mt-3">
+                    <table class="table table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Status</th>
+                                <th>Jumlah</th>
+                                <th>Peratus</th>
+                            </tr>
+                        </thead>
+                        <tbody id="loanStatusTable">
+                            <!-- Loan status data will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                <button type="button" class="btn btn-success" onclick="downloadPeriodStatement(currentPeriod, currentReportType)">
+                    <i class="fas fa-download me-2"></i>Muat Turun
+                </button>
             </div>
         </div>
     </div>
@@ -433,106 +644,31 @@ function downloadMemberStatement(employeeID) {
 function downloadFinancialStatement(id, reportType) {
     const url = reportType === 'pembiayaan' ? 
         `download_report_loan.php?loanApplicationID=${id}` : 
-        `download_report_loan.php?loanApplicationID=${id}`;
+        `download_report_ahli.php?employeeID=${id}`;
     window.location.href = url;
 }
 
-// Add search functionality
-document.getElementById('searchInput').addEventListener('keyup', function() {
-    const searchValue = this.value.toLowerCase();
-    const table = document.getElementById('dataTable');
-    const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
-
-    for (let row of rows) {
-        let text = '';
-        const cells = row.getElementsByTagName('td');
+function deletePeriodEntry(period) {
+    if (confirm('Adakah anda pasti mahu memadamkan entri ini?')) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '<?php echo $_SERVER["PHP_SELF"]; ?>';  // Submit to same page
         
-        // Skip the search if it's the "no data" row
-        if (cells.length === 1 && cells[0].getAttribute('colspan')) {
-            continue;
-        }
-
-        // Concatenate the text content of each cell (excluding button cells)
-        for (let i = 0; i < cells.length; i++) {
-            // Skip the button columns (index 4, 6, and 7)
-            if (i !== 4 && i !== 6 && i !== 7) {
-                text += cells[i].textContent.toLowerCase() + ' ';
-            }
-        }
-
-        // Show/hide row based on search match
-        if (text.includes(searchValue)) {
-            row.style.display = '';
-        } else {
-            row.style.display = 'none';
-        }
+        const periodInput = document.createElement('input');
+        periodInput.type = 'hidden';
+        periodInput.name = 'period';
+        periodInput.value = period;
+        
+        const typeInput = document.createElement('input');
+        typeInput.type = 'hidden';
+        typeInput.name = 'reportType';
+        typeInput.value = '<?php echo $_SESSION["reportType"]; ?>';
+        
+        form.appendChild(periodInput);
+        form.appendChild(typeInput);
+        document.body.appendChild(form);
+        form.submit();
     }
-});
-
-function viewLoanReport(employeeID) {
-    var iframe = document.getElementById('loanReportFrame');
-    // Add a console log to check the URL being generated
-    console.log('view_report_loan.php?id=' + employeeID);
-    iframe.src = 'view_report_loan.php?id=' + employeeID;
-    $('#loanReportModal').modal('show');
-}
-
-function showBackConfirmation() {
-    const backModal = new bootstrap.Modal(document.getElementById('backConfirmationModal'));
-    backModal.show();
-}
-
-function confirmBack() {
-    // Redirect to hasilreport.php
-    window.location.href = 'hasilreport.php';
 }
 </script>
-
-<style>
-body .content-wrapper {
-    position: relative !important;
-    margin-top: 80px !important;
-    padding: 20px !important;
-}
-
-body .content-wrapper .title {
-    position: absolute !important;
-    left: 320px !important;
-    top: 20px !important;
-    font-size: 24px !important;
-    color: #0066cc !important;
-    font-weight: 500 !important;
-    z-index: 1 !important;  /* Added to ensure it's above other elements */
-}
-
-/* Adjust title position when sidebar is closed */
-body .sidebar-closed .content-wrapper .title {
-    left: 120px !important;
-}
-
-/* Adjust margin when sidebar is open */
-.sidebar-open .content-wrapper {
-    margin-left: 270px;  /* Increased from 250px to 270px */
-}
-
-/* Add these specific overrides */
-.title-container {
-    position: fixed !important;
-    top: 70px !important;
-    left: 350px !important;
-    z-index: 1000 !important;
-}
-
-.page-title {
-    font-size: 24px !important;
-    color: #0066cc !important;
-    font-weight: 500 !important;
-}
-
-/* When sidebar is closed */
-.sidebar-closed .title-container {
-    left: 100px !important;
-}
-</style>
-
-<?php include 'footer.php'; ?>
+</rewritten_file>
