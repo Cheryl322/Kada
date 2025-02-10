@@ -22,24 +22,27 @@ if (!isset($_SESSION['status'])) {
                 icon: 'success',
                 title: 'Berjaya!',
                 text: '<?php echo $_SESSION['message']; ?>',
-                confirmButtonText: 'Kembali ke Laman Utama',
+                confirmButtonText: 'Ke Status Permohonan',
                 confirmButtonColor: '#75B798',
                 allowOutsideClick: false
             }).then((result) => {
-                window.location.href = 'mainpage.php';
+                window.location.href = 'statuspermohonan.php';
             });
+
         <?php } else { ?>
             Swal.fire({
                 icon: 'error',
                 title: 'Ralat!',
                 text: '<?php echo $_SESSION['error']; ?>',
-                confirmButtonText: 'Kembali ke Laman Utama',
+                confirmButtonText: 'Kembali ke Permohonan',
                 confirmButtonColor: '#75B798',
                 allowOutsideClick: false
+
             }).then((result) => {
-                window.location.href = 'mainpage.php';
+                window.location.href = 'permohonanloan.php';
             });
         <?php } ?>
+
     });
     </script>
 
