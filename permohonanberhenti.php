@@ -10,6 +10,44 @@ if (!isset($_SESSION['employeeID'])) {
 
 $employeeID = $_SESSION['employeeID'];
 
+// 从IC提取生日和计算年龄
+function getBirthDateFromIC($ic) {
+    $year = substr($ic, 0, 2);
+    $month = substr($ic, 2, 2);
+    $day = substr($ic, 4, 2);
+    
+    // 确定世纪
+    $year = (int)$year;
+    if ($year >= 00 && $year <= 30) {
+        $year += 2000;
+    } else {
+        $year += 1900;
+    }
+    
+    // 验证日期的有效性
+    if (!checkdate((int)$month, (int)$day, $year)) {
+        // 如果日期无效，返回空值或默认日期
+        return null;
+    }
+    
+    return sprintf('%04d-%02d-%02d', $year, $month, $day);
+}
+
+function calculateAge($birthDate) {
+    if (!$birthDate) {
+        return 0; // 如果生日无效，返回0或其他默认值
+    }
+    
+    try {
+        $birth = new DateTime($birthDate);
+        $today = new DateTime();
+        $age = $today->diff($birth);
+        return $age->y;
+    } catch (Exception $e) {
+        return 0; // 如果出现异常，返回0或其他默认值
+    }
+}
+
 // 获取会员信息
 $sql_member = "SELECT m.*, 
                mh.homeAddress, mh.homePostcode, mh.homeState,
@@ -23,6 +61,13 @@ $stmt_member = mysqli_prepare($conn, $sql_member);
 mysqli_stmt_bind_param($stmt_member, 's', $employeeID);
 mysqli_stmt_execute($stmt_member);
 $member = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_member));
+
+// 计算生日和年龄
+$birthDate = getBirthDateFromIC($member['ic']);
+$age = calculateAge($birthDate);
+
+// 格式化生日显示
+$formattedBirthDate = $birthDate ? date('d/m/Y', strtotime($birthDate)) : 'Invalid Date';
 
 // 检查是否已经提交过申请
 $check_sql = "SELECT * FROM tb_berhenti 
@@ -58,278 +103,325 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 ?>
 
 <div class="container mt-4">
-    <div class="card main-card">
-        <div class="card-header bg-primary text-white">
-            <h3 class="card-title mb-0">
-                <i class="fas fa-file-alt me-2"></i>
-                Borang Permohonan Berhenti
-            </h3>
-        </div>
-        <div class="card-body">
-            <form method="POST" action="">
-                <!-- Personal Information Section -->
-                <div class="section-card mb-4">
-                    <div class="section-header">
-                        <i class="fas fa-user-circle"></i>
-                        <h5>Maklumat Peribadi</h5>
-                    </div>
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label">Nama</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-user"></i></span>
-                                <input type="text" class="form-control" value="<?php echo htmlspecialchars($member['memberName']); ?>" readonly>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">No. Kad Pengenalan</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-id-card"></i></span>
-                                <input type="text" class="form-control" value="<?php echo htmlspecialchars($member['ic']); ?>" readonly>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Jantina</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-venus-mars"></i></span>
-                                <input type="text" class="form-control" value="<?php echo htmlspecialchars($member['sex']); ?>" readonly>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Agama</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-pray"></i></span>
-                                <input type="text" class="form-control" value="<?php echo htmlspecialchars($member['religion']); ?>" readonly>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Bangsa</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-users"></i></span>
-                                <input type="text" class="form-control" value="<?php echo htmlspecialchars($member['nation']); ?>" readonly>
-                            </div>
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label">Alamat Rumah</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-home"></i></span>
-                                <textarea class="form-control" rows="2" readonly><?php echo htmlspecialchars($member['homeAddress']); ?></textarea>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Poskod (Rumah)</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-mail-bulk"></i></span>
-                                <input type="text" class="form-control" value="<?php echo htmlspecialchars($member['homePostcode']); ?>" readonly>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Negeri (Rumah)</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-map-marker-alt"></i></span>
-                                <input type="text" class="form-control" value="<?php echo htmlspecialchars($member['homeState']); ?>" readonly>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Permohonan Berhenti</h2>
+        <a href="dashboard.php" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Kembali
+        </a>
+    </div>
 
-                <!-- Employment Information Section -->
-                <div class="section-card mb-4">
-                    <div class="section-header">
-                        <i class="fas fa-briefcase"></i>
-                        <h5>Maklumat Pekerjaan</h5>
+    <div class="application-card">
+        <div class="card-header">
+            <div class="header-icon">
+                <i class="fas fa-file-alt"></i>
+            </div>
+            <h3>Borang Permohonan Berhenti</h3>
+        </div>
+
+        <form method="POST" action="">
+            <!-- Personal Information Section -->
+            <div class="form-section">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <i class="fas fa-user"></i>
                     </div>
-                    <div class="row g-3">
+                    <h4>Maklumat Peribadi</h4>
+                </div>
+                <div class="row g-4">
                     <div class="col-md-6">
-                            <label class="form-label">No. Anggota</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-id-badge"></i></span>
-                                <input type="text" class="form-control" value="<?php echo htmlspecialchars($member['employeeID']); ?>" readonly>
-                            </div>
+                        <div class="form-group">
+                            <label>Nama</label>
+                            <input type="text" class="form-control" value="<?php echo htmlspecialchars($member['memberName']); ?>" readonly>
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label">No. PF</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-id-badge"></i></span>
-                                <input type="text" class="form-control" value="<?php echo htmlspecialchars($member['no_pf']); ?>" readonly>
-                            </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>No. Kad Pengenalan</label>
+                            <input type="text" class="form-control" value="<?php echo htmlspecialchars($member['ic']); ?>" readonly>
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Jawatan</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-user-tie"></i></span>
-                                <input type="text" class="form-control" value="<?php echo htmlspecialchars($member['position']); ?>" readonly>
-                            </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label>Tarikh Lahir</label>
+                            <input type="text" class="form-control" value="<?php echo $formattedBirthDate; ?>" readonly>
                         </div>
-                        <div class="col-12">
-                            <label class="form-label">Alamat Pejabat</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-building"></i></span>
-                                <textarea class="form-control" rows="2" readonly><?php echo htmlspecialchars($member['officeAddress']); ?></textarea>
-                            </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label>Umur</label>
+                            <input type="text" class="form-control" value="<?php echo $age; ?>" readonly>
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Poskod (Pejabat)</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-mail-bulk"></i></span>
-                                <input type="text" class="form-control" value="<?php echo htmlspecialchars($member['officePostcode']); ?>" readonly>
-                            </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label>Jantina</label>
+                            <input type="text" class="form-control" value="<?php echo htmlspecialchars($member['sex']); ?>" readonly>
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Negeri (Pejabat)</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-map-marker-alt"></i></span>
-                                <input type="text" class="form-control" value="<?php echo htmlspecialchars($member['officeState']); ?>" readonly>
-                            </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label>Agama</label>
+                            <input type="text" class="form-control" value="<?php echo htmlspecialchars($member['religion']); ?>" readonly>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label>Bangsa</label>
+                            <input type="text" class="form-control" value="<?php echo htmlspecialchars($member['nation']); ?>" readonly>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label>No. Telefon</label>
+                            <input type="text" class="form-control" value="<?php echo htmlspecialchars($member['phoneHome']); ?>" readonly>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>No. Telefon Bimbit</label>
+                            <input type="text" class="form-control" value="<?php echo htmlspecialchars($member['phoneNumber']); ?>" readonly>
+                        </div>
+                    </div>
+                    
+                    <!-- Home Address within Personal Information -->
+                    <div class="col-12 mt-4">
+                        <div class="form-group">
+                            <label>Alamat Rumah</label>
+                            <textarea class="form-control" rows="2" readonly><?php echo htmlspecialchars($member['homeAddress']); ?></textarea>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>Poskod</label>
+                            <input type="text" class="form-control" value="<?php echo htmlspecialchars($member['homePostcode']); ?>" readonly>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>Negeri</label>
+                            <input type="text" class="form-control" value="<?php echo htmlspecialchars($member['homeState']); ?>" readonly>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <!-- Reason Section -->
-                <div class="section-card">
-                    <div class="section-header">
-                        <i class="fas fa-clipboard-list"></i>
-                        <h5>Sebab Berhenti Menjadi Anggota</h5>
+            <!-- Employment Information Section -->
+            <div class="form-section">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <i class="fas fa-briefcase"></i>
                     </div>
-                    <div class="row g-3">
-                        <div class="col-12">
-                            <label class="form-label">Sebab-sebab</label>
-                            <textarea name="reasonDetail" class="form-control" rows="4" required></textarea>
+                    <h4>Maklumat Pekerjaan</h4>
+                </div>
+                <div class="row g-4">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label>No. Anggota</label>
+                            <input type="text" class="form-control" value="<?php echo htmlspecialchars($member['employeeID']); ?>" readonly>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label>No. PF</label>
+                            <input type="text" class="form-control" value="<?php echo htmlspecialchars($member['no_pf']); ?>" readonly>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label>Jawatan</label>
+                            <input type="text" class="form-control" value="<?php echo htmlspecialchars($member['position']); ?>" readonly>
+                        </div>
+                    </div>
+                    
+                    <!-- Office Address within Employment Information -->
+                    <div class="col-12 mt-4">
+                        <div class="form-group">
+                            <label>Alamat Pejabat</label>
+                            <textarea class="form-control" rows="2" readonly><?php echo htmlspecialchars($member['officeAddress']); ?></textarea>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>Poskod</label>
+                            <input type="text" class="form-control" value="<?php echo htmlspecialchars($member['officePostcode']); ?>" readonly>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>Negeri</label>
+                            <input type="text" class="form-control" value="<?php echo htmlspecialchars($member['officeState']); ?>" readonly>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <div class="mt-4 d-flex justify-content-end gap-2">
-                    <a href="dashboard.php" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left me-2"></i>Kembali
-                    </a>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-paper-plane me-2"></i>Hantar Permohonan
-                    </button>
+            <!-- Reason Section -->
+            <div class="form-section">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <i class="fas fa-comment"></i>
+                    </div>
+                    <h4>Sebab Berhenti</h4>
                 </div>
-            </form>
-        </div>
+                <div class="form-group">
+                    <label>Sila nyatakan sebab-sebab berhenti</label>
+                    <textarea name="reasonDetail" class="form-control" rows="4" required></textarea>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-paper-plane me-2"></i>Hantar Permohonan
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 
 <style>
-.main-card {
-    border: none;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-    border-radius: 8px;
+.application-card {
+    background: #fff;
+    border-radius: 15px;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+    margin-bottom: 30px;
 }
 
 .card-header {
-    background: #fff;
-    border-bottom: 1px solid #eaeaea;
-    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.header-icon {
+    width: 45px;
+    height: 45px;
+    background: #4CAF50;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.header-icon i {
+    font-size: 20px;
+    color: white;
 }
 
 .card-header h3 {
+    margin: 0;
     color: #2c3e50;
     font-size: 1.5rem;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
 }
 
-.section-card {
-    background: #fff;
-    padding: 1.75rem;
-    margin-bottom: 1.5rem;
-    border: 1px solid #eaeaea;
-    border-radius: 8px;
+.form-section {
+    padding: 25px;
+    border-bottom: 1px solid #eee;
 }
 
 .section-header {
     display: flex;
     align-items: center;
-    margin-bottom: 1.5rem;
-    gap: 0.75rem;
+    gap: 12px;
+    margin-bottom: 20px;
 }
 
-.section-header i {
-    font-size: 1.25rem;
-    color: #2c3e50;
-    width: 32px;
-    height: 32px;
+.section-icon {
+    width: 35px;
+    height: 35px;
+    background: #f8f9fa;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #f8f9fa;
-    border-radius: 6px;
 }
 
-.section-header h5 {
+.section-icon i {
+    font-size: 16px;
+    color: #4CAF50;
+}
+
+.section-header h4 {
     margin: 0;
     color: #2c3e50;
-    font-size: 1.1rem;
-    font-weight: 600;
+    font-size: 1.2rem;
 }
 
-.form-control[readonly] {
+.form-group {
+    margin-bottom: 0;
+}
+
+.form-group label {
+    font-weight: 500;
+    color: #2c3e50;
+    margin-bottom: 8px;
+}
+
+.form-control {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 10px 15px;
+}
+
+.form-control:read-only {
     background-color: #f8f9fa;
-    border: 1px solid #e9ecef;
     color: #495057;
 }
 
 .form-control:focus {
-    border-color: #80bdff;
-    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.15);
+    border-color: #4CAF50;
+    box-shadow: 0 0 0 0.2rem rgba(76, 175, 80, 0.25);
 }
 
-.input-group-text {
-    background-color: #f8f9fa;
-    border: 1px solid #e9ecef;
-    color: #6c757d;
-}
-
-.form-label {
-    font-weight: 500;
-    color: #495057;
-    margin-bottom: 0.5rem;
-}
-
-textarea {
+textarea.form-control {
     resize: none;
 }
 
+.form-actions {
+    padding: 25px;
+    display: flex;
+    justify-content: flex-end;
+}
+
 .btn {
-    padding: 0.6rem 1.5rem;
+    padding: 10px 20px;
+    border-radius: 8px;
     font-weight: 500;
-    border-radius: 6px;
-    transition: all 0.3s ease;
 }
 
 .btn-primary {
-    background: #4361ee;
+    background: #4CAF50;
     border: none;
 }
 
 .btn-primary:hover {
-    background: #3250e2;
-    transform: translateY(-1px);
+    background: #45a049;
 }
 
-.btn-secondary {
-    background: #fff;
-    color: #4361ee;
-    border: 1px solid #4361ee;
+.btn-outline-secondary {
+    color: #2c3e50;
+    border-color: #2c3e50;
 }
 
-.btn-secondary:hover {
-    background: #f8f9fa;
-    color: #3250e2;
-    border-color: #3250e2;
+.btn-outline-secondary:hover {
+    background: #2c3e50;
+    color: #fff;
 }
 
 @media (max-width: 768px) {
-    .section-card {
-        padding: 1.25rem;
+    .form-section {
+        padding: 20px;
     }
     
     .card-header {
-        padding: 1.25rem;
+        padding: 15px;
+    }
+    
+    .header-icon {
+        width: 40px;
+        height: 40px;
     }
 }
+</style>
 </style>

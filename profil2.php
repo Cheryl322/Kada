@@ -42,6 +42,38 @@ mysqli_stmt_bind_param($stmt, "s", $employeeId);
 mysqli_stmt_execute($stmt);
 $result = mysqli_stmt_get_result($stmt);
 $userData = mysqli_fetch_assoc($result);
+
+// 修改状态标签函数
+function getStatusLabel($status) {
+    switch ($status) {
+        case 'Aktif':
+            return 'AKTIF';
+        case 'Berhenti':
+            return 'BERHENTI';
+        case 'Pencen':
+            return 'PENCEN';
+        case 'Aktif/Pencen':
+            return 'AKTIF/PENCEN';
+        default:
+            return '-';
+    }
+}
+
+// 修改状态样式类函数
+function getStatusClass($status) {
+    switch ($status) {
+        case 'Aktif':
+            return 'bg-success text-white';
+        case 'Berhenti':
+            return 'bg-danger text-white';
+        case 'Pencen':
+            return 'bg-info text-white';
+        case 'Aktif/Pencen':
+            return 'bg-primary text-white';
+        default:
+            return 'bg-light text-dark';
+    }
+}
 ?>
 
 <div class="wrapper">
@@ -388,6 +420,43 @@ document.getElementById('profileForm').addEventListener('submit', function(e) {
 
 .profile-nav .btn {
     margin-bottom: 10px;
+}
+
+/* 更新状态样式 */
+.form-control[readonly] {
+    background-color: #f8f9fa;
+}
+
+.form-control.bg-success,
+.form-control.bg-danger,
+.form-control.bg-info,
+.form-control.bg-primary {
+    text-align: center;
+    font-weight: bold;
+}
+
+.form-control.bg-success {
+    background-color: #28a745 !important;
+    border-color: #28a745;
+}
+
+.form-control.bg-danger {
+    background-color: #dc3545 !important;
+    border-color: #dc3545;
+}
+
+.form-control.bg-info {
+    background-color: #17a2b8 !important;
+    border-color: #17a2b8;
+}
+
+.form-control.bg-primary {
+    background-color: #007bff !important;
+    border-color: #007bff;
+}
+
+.form-control[readonly].text-white {
+    color: white !important;
 }
 </style>
 

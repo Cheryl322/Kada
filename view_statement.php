@@ -494,7 +494,106 @@ $savings['deposit'] = $savings['deposit'] ?? 0;
 
     body {
         background: #fff;
-        line-height: 1.5;
+        line-height: 1.4;
+    }
+
+    /* 页面设置 - 减少上边距 */
+    @page {
+        size: A4;
+        margin: 1.5cm 2cm 2cm 2cm; /* 上右下左 - 减少上边距 */
+    }
+
+    /* 文档容器 - 移除额外padding */
+    .container {
+        width: 100%;
+        max-width: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    /* 文档卡片 - 移除额外空间 */
+    .statement-card {
+        box-shadow: none;
+        border: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    /* 文档头部 - 进一步压缩 */
+    .statement-header {
+        text-align: center;
+        margin-bottom: 15px;
+        padding: 5px 0;
+        border-bottom: 1px solid #000;
+    }
+
+    .statement-header img {
+        height: 55px;
+        margin-bottom: 8px;
+    }
+
+    .statement-header h2 {
+        font-size: 13pt;
+        font-weight: bold;
+        margin: 3px 0;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .statement-header h4 {
+        font-size: 12pt;
+        font-weight: bold;
+        margin: 3px 0;
+    }
+
+    .statement-header h5 {
+        font-size: 11pt;
+        margin-top: 2px;
+    }
+
+    /* 会员信息部分 - 减少间距 */
+    .member-info-section {
+        margin: 10px 0;
+        padding: 0;
+        background: none;
+    }
+
+    .info-table {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+
+    .info-table td {
+        padding: 2px 0;
+        font-size: 11pt;
+    }
+
+    /* 财务部分 - 优化间距 */
+    .financial-section {
+        margin: 15px 0;
+        page-break-inside: avoid;
+    }
+
+    .section-title {
+        font-size: 12pt;
+        font-weight: bold;
+        margin-bottom: 10px;
+        padding-bottom: 3px;
+        border-bottom: 1px solid #000;
+    }
+
+    /* 表格样式 - 压缩行高 */
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 15px;
+    }
+
+    .table th,
+    .table td {
+        border: 1px solid #000;
+        padding: 4px 6px;
+        font-size: 10pt;
     }
 
     /* 隐藏网页元素 */
@@ -505,156 +604,6 @@ $savings['deposit'] = $savings['deposit'] ?? 0;
     footer,
     .d-flex.justify-content-between {
         display: none !important;
-    }
-
-    /* 文档容器 */
-    .container {
-        width: 100%;
-        max-width: none;
-        margin: 0;
-        padding: 0;
-    }
-
-    /* 文档卡片 */
-    .statement-card {
-        box-shadow: none;
-        border: none;
-        padding: 0;
-        margin: 0;
-    }
-
-    /* 文档头部优化 */
-    .statement-header {
-        text-align: center;
-        margin-bottom: 20px;
-        padding: 10px 0;
-        border-bottom: 1px solid #000;
-    }
-
-    .statement-header img {
-        height: 60px;
-        margin-bottom: 10px;
-    }
-
-    .statement-header h2 {
-        font-size: 13pt;
-        font-weight: bold;
-        margin: 5px 0;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    .statement-header h4 {
-        font-size: 12pt;
-        font-weight: bold;
-        margin: 5px 0;
-    }
-
-    .statement-header h5 {
-        font-size: 11pt;
-        margin-top: 3px;
-    }
-
-    /* 会员信息部分调整 */
-    .member-info-section {
-        margin: 15px 0;
-        padding: 0;
-        background: none;
-    }
-
-    .info-table {
-        width: 100%;
-        margin-bottom: 15px;
-    }
-
-    .info-table td {
-        padding: 3px 0;
-        font-size: 11pt;
-    }
-
-    .label-column {
-        font-weight: bold;
-        width: 150px;
-    }
-
-    .separator {
-        width: 20px;
-        text-align: center;
-    }
-
-    /* 财务部分 */
-    .financial-section {
-        margin: 25px 0;
-        page-break-inside: avoid;
-    }
-
-    .section-title {
-        font-size: 12pt;
-        font-weight: bold;
-        margin-bottom: 15px;
-        padding-bottom: 5px;
-        border-bottom: 1px solid #000;
-    }
-
-    /* 表格样式 */
-    .table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-bottom: 20px;
-    }
-
-    .table th,
-    .table td {
-        border: 1px solid #000;
-        padding: 6px 8px;
-        font-size: 10pt;
-    }
-
-    .table th {
-        background-color: #f5f5f5 !important;
-        -webkit-print-color-adjust: exact;
-        font-weight: bold;
-        text-align: left;
-    }
-
-    .table td {
-        text-align: left;
-    }
-
-    .text-end {
-        text-align: right !important;
-    }
-
-    /* 文档编号和日期 */
-    .print-date {
-        font-size: 10pt;
-        text-align: right;
-        margin-bottom: 20px;
-    }
-
-    /* 页面设置 */
-    @page {
-        size: A4;
-        margin: 2cm;
-    }
-
-    /* 页脚 */
-    .statement-footer {
-        margin-top: 40px;
-        padding-top: 20px;
-        border-top: 1px solid #000;
-        text-align: center;
-        font-size: 9pt;
-        page-break-inside: avoid;
-    }
-
-    /* 确保表格不分页 */
-    table { 
-        page-break-inside: avoid; 
-    }
-
-    tr { 
-        page-break-inside: avoid; 
     }
 
     /* 金额样式 */

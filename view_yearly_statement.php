@@ -374,95 +374,172 @@ $malay_months = [
         margin: 0;
         padding: 0;
         box-sizing: border-box;
-        font-family: Arial, sans-serif;
+        font-family: 'Times New Roman', Times, serif;
+        color: #000 !important;
     }
 
-    /* 移除所有边框和背景 */
-    .card, 
-    .table,
-    .container,
-    .card-body {
-        border: none !important;
-        box-shadow: none !important;
-        background: none !important;
-        padding: 0 !important;
-        margin: 0 !important;
+    body {
+        background: #fff;
+        line-height: 1.4;
     }
 
-    /* 页面设置 */
+    /* 页面设置 - 减少上边距 */
     @page {
         size: A4;
-        margin: 2cm;
+        margin: 1.5cm 2cm 2cm 2cm; /* 上右下左 */
     }
 
-    /* 容器和内容设置 */
+    /* 文档容器 */
     .container {
-        width: 100% !重要;
-        max-width: none !important;
+        width: 100%;
+        max-width: none;
+        margin: 0;
+        padding: 0;
     }
 
-    /* 表格设置 */
+    /* 文档卡片 */
+    .statement-card {
+        box-shadow: none;
+        border: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    /* 文档头部 */
+    .statement-header {
+        text-align: center;
+        margin-bottom: 15px;
+        padding: 5px 0;
+        border-bottom: 1px solid #000;
+    }
+
+    .statement-header img {
+        height: 55px;
+        margin-bottom: 8px;
+    }
+
+    .statement-header h2 {
+        font-size: 13pt;
+        font-weight: bold;
+        margin: 3px 0;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .statement-header h4 {
+        font-size: 12pt;
+        font-weight: bold;
+        margin: 3px 0;
+    }
+
+    .statement-header h5 {
+        font-size: 11pt;
+        margin-top: 2px;
+    }
+
+    /* 会员信息部分 */
+    .member-info-section {
+        margin: 10px 0;
+        padding: 0;
+        background: none;
+    }
+
+    .info-table {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+
+    .info-table td {
+        padding: 2px 0;
+        font-size: 11pt;
+    }
+
+    /* 财务部分 */
+    .financial-section {
+        margin: 15px 0;
+        page-break-inside: avoid;
+    }
+
+    .section-title {
+        font-size: 12pt;
+        font-weight: bold;
+        margin-bottom: 10px;
+        padding-bottom: 3px;
+        border-bottom: 1px solid #000;
+    }
+
+    /* 表格样式 */
     .table {
-        width: 100% !important;
-        border-collapse: collapse !重要;
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 15px;
     }
 
-    /* 只保留必要的边框 */
-    .table-bordered,
-    .table-bordered th,
-    .table-bordered td {
-        border: 1px solid #000 !important;
+    .table th,
+    .table td {
+        border: 1px solid #000;
+        padding: 4px 6px;
+        font-size: 10pt;
     }
 
-    .table-borderless,
-    .table-borderless td,
-    .table-borderless th {
-        border: none !important;
+    .table th {
+        background-color: #f5f5f5 !important;
+        -webkit-print-color-adjust: exact;
+        font-weight: bold;
     }
 
-    /* 文字大小设置 */
-    body { font-size: 12pt; }
-    h2 { font-size: 16pt; }
-    h4 { font-size: 14pt; }
-    h5 { font-size: 12pt; }
-    td, th, p { font-size: 11pt; }
-
-    /* Logo 大小控制 */
-    img {
-        height: 60px !重要;
-        width: auto !important;
+    /* 年度总结表格特殊样式 */
+    .yearly-summary th {
+        white-space: nowrap;
+        font-size: 10pt;
+        text-align: center;
     }
 
-    /* 隐藏不需要的元素 */
+    .yearly-total td {
+        font-weight: bold;
+        border-top: 2px solid #000;
+    }
+
+    /* 金额样式 */
+    .detail-amount,
+    .transaction-amount {
+        font-family: 'Courier New', Courier, monospace;
+        text-align: right;
+    }
+
+    /* 隐藏网页元素 */
     .no-print,
-    .navbar,
-    .header-section,
     .btn,
-    header {
+    .navbar,
+    header,
+    footer,
+    .d-flex.justify-content-between {
         display: none !important;
     }
 
-    /* 确保打印时显示完整内容 */
-    .card {
-        position: static !important;
-        transform: none !重要;
+    /* 表格行样式 */
+    .table tr:nth-child(even) {
+        background-color: #fafafa !important;
+        -webkit-print-color-adjust: exact;
     }
 
-    /* 文本对齐 */
-    .text-end { text-align: right !重要; }
-    .text-center { text-align: center !重要; }
-
-    /* 表格间距 */
-    .table td,
-    .table th {
-        padding: 4px 8px !重要;
+    /* 页脚 */
+    .statement-footer {
+        margin-top: 20px;
+        padding-top: 10px;
+        border-top: 1px solid #000;
+        text-align: center;
+        font-size: 9pt;
+        page-break-inside: avoid;
     }
 
-    /* 移除 Bootstrap 的背景色 */
-    .table-light,
-    .table-light td,
-    .table-light th {
-        background-color: transparent !重要;
+    /* 确保表格不分页 */
+    table { 
+        page-break-inside: avoid; 
+    }
+
+    tr { 
+        page-break-inside: avoid; 
     }
 }
 </style>
