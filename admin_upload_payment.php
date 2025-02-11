@@ -107,60 +107,147 @@ while ($loan = mysqli_fetch_assoc($result_loan_repayments)) {
 
 // 表单处理部分
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // 检查数据库连接状态
+    echo "<div class='alert alert-info'>Checking database connection...</div>";
+    if (mysqli_ping($conn)) {
+        echo "<div class='alert alert-success'>Database connection is active</div>";
+    } else {
+        echo "<div class='alert alert-danger'>Database connection failed</div>";
+        die();
+    }
+
     if (isset($_POST['single_upload'])) {
         $employeeID = $_POST['single_upload'];
         $transDate = $_POST['transDate'];
         $payments = $_POST['payments'][$employeeID];
-        
+
+        echo "<div class='alert alert-info'>";
+        echo "Starting transaction for Employee ID: " . $employeeID . "<br>";
+        echo "Transaction Date: " . $transDate . "<br>";
+        echo "</div>";
+
+        // 验证数据
+        if (empty($employeeID) || empty($transDate) || empty($payments)) {
+            echo "<div class='alert alert-danger'>Missing required data</div>";
+            die();
+        }
+
         mysqli_begin_transaction($conn);
         try {
+            $successCount = 0; // 追踪成功插入的记录数
+
+            // 处理常规付款
             foreach ($payments as $type => $amount) {
-                if ($type !== 'upfront_type' && $type !== 'upfront_amount' && $type !== 'entry_fee_type' && $type !== 'entry_fee_amount' && $amount > 0) {
-                    if ($type === 'loanRepayment' && is_array($amount)) {
-                        foreach ($amount as $loanType => $loanAmount) {
-                            if ($loanAmount > 0) {
-                                $sql = "INSERT INTO tb_deduction (employeeID, DeducType_ID, Deduct_Amt, Deduct_date) 
-                                        VALUES (?, 6, ?, ?)";
-                                $stmt = mysqli_prepare($conn, $sql);
-                                mysqli_stmt_bind_param($stmt, "ids", $employeeID, $loanAmount, $transDate);
-                                mysqli_stmt_execute($stmt);
-                            }
+                if ($type !== 'upfront_type' && $type !== 'upfront_amount' && 
+                    !is_array($amount) && $amount > 0) {
+                    
+                    if (isset($payment_type_mapping[$type])) {
+                        $deducTypeID = $payment_type_mapping[$type];
+                        
+                        // 显示将要执行的插入操作
+                        echo "<div class='alert alert-info'>";
+                        echo "Preparing to insert payment:<br>";
+                        echo "Employee ID: $employeeID<br>";
+                        echo "Type: $type (ID: $deducTypeID)<br>";
+                        echo "Amount: $amount<br>";
+                        echo "Date: $transDate<br>";
+                        echo "</div>";
+
+                        $sql = "INSERT INTO tb_deduction (employeeID, DeducType_ID, Deduct_Amt, Deduct_date) 
+                                VALUES (?, ?, ?, ?)";
+                        
+                        $stmt = mysqli_prepare($conn, $sql);
+                        if (!$stmt) {
+                            throw new Exception("Prepare failed: " . mysqli_error($conn));
                         }
-                    } else {
-                        if (isset($payment_type_mapping[$type])) {
-                            $deducTypeID = $payment_type_mapping[$type];
-                            $sql = "INSERT INTO tb_deduction (employeeID, DeducType_ID, Deduct_Amt, Deduct_date) 
-                                    VALUES (?, ?, ?, ?)";
-                            $stmt = mysqli_prepare($conn, $sql);
-                            mysqli_stmt_bind_param($stmt, "iids", $employeeID, $deducTypeID, $amount, $transDate);
-                            mysqli_stmt_execute($stmt);
+
+                        // 绑定参数并检查是否成功
+                        $bindResult = mysqli_stmt_bind_param($stmt, "sids", $employeeID, $deducTypeID, $amount, $transDate);
+                        if (!$bindResult) {
+                            throw new Exception("Parameter binding failed: " . mysqli_stmt_error($stmt));
                         }
+
+                        // 执行语句并检查是否成功
+                        $executeResult = mysqli_stmt_execute($stmt);
+                        if (!$executeResult) {
+                            throw new Exception("Execute failed: " . mysqli_stmt_error($stmt));
+                        }
+
+                        // 检查影响的行数
+                        $affectedRows = mysqli_stmt_affected_rows($stmt);
+                        if ($affectedRows > 0) {
+                            echo "<div class='alert alert-success'>Successfully inserted $type payment: $amount</div>";
+                            $successCount++;
+                        } else {
+                            echo "<div class='alert alert-warning'>No rows were inserted for $type payment</div>";
+                        }
+
+                        mysqli_stmt_close($stmt);
                     }
                 }
             }
             
-            // 处理预付款（现在包括 Entry Fee）
-            if (!empty($payments['upfront_type']) && $payments['upfront_amount'] > 0) {
-                $upfront_type = $payments['upfront_type'];
-                $upfront_amount = $payments['upfront_amount'];
-                
-                $sql = "INSERT INTO tb_deduction (employeeID, DeducType_ID, Deduct_Amt, Deduct_date) 
-                        VALUES (?, ?, ?, ?)";
-                $stmt = mysqli_prepare($conn, $sql);
-                mysqli_stmt_bind_param($stmt, "sids", $employeeID, $upfront_type, $upfront_amount, $transDate);
-                mysqli_stmt_execute($stmt);
+            // 处理贷款还款
+            if (isset($payments['loanRepayment']) && is_array($payments['loanRepayment'])) {
+                foreach ($payments['loanRepayment'] as $loanType => $loanAmount) {
+                    if ($loanAmount > 0) {
+                        echo "<div class='alert alert-info'>";
+                        echo "Preparing to insert loan payment:<br>";
+                        echo "Employee ID: $employeeID<br>";
+                        echo "Loan Type: $loanType<br>";
+                        echo "Amount: $loanAmount<br>";
+                        echo "Date: $transDate<br>";
+                        echo "</div>";
+
+                        $sql = "INSERT INTO tb_deduction (employeeID, DeducType_ID, Deduct_Amt, Deduct_date) 
+                                VALUES (?, 6, ?, ?)";
+                        
+                        $stmt = mysqli_prepare($conn, $sql);
+                        if (!$stmt) {
+                            throw new Exception("Prepare failed: " . mysqli_error($conn));
+                        }
+
+                        $bindResult = mysqli_stmt_bind_param($stmt, "sds", $employeeID, $loanAmount, $transDate);
+                        if (!$bindResult) {
+                            throw new Exception("Parameter binding failed: " . mysqli_stmt_error($stmt));
+                        }
+
+                        $executeResult = mysqli_stmt_execute($stmt);
+                        if (!$executeResult) {
+                            throw new Exception("Execute failed: " . mysqli_stmt_error($stmt));
+                        }
+
+                        $affectedRows = mysqli_stmt_affected_rows($stmt);
+                        if ($affectedRows > 0) {
+                            echo "<div class='alert alert-success'>Successfully inserted loan payment: $loanAmount for $loanType</div>";
+                            $successCount++;
+                        } else {
+                            echo "<div class='alert alert-warning'>No rows were inserted for loan payment</div>";
+                        }
+
+                        mysqli_stmt_close($stmt);
+                    }
+                }
             }
             
-            mysqli_commit($conn);
-            $_SESSION['success_message'] = "Payment record uploaded successfully!";
-            // 重定向到同一个页面
-            header("Location: " . $_SERVER['PHP_SELF']);
-            exit();
+            // 只有在实际插入了记录时才提交
+            if ($successCount > 0) {
+                mysqli_commit($conn);
+                echo "<div class='alert alert-success'>Successfully inserted $successCount records for employee ID: $employeeID</div>";
+                $_SESSION['success_message'] = "Successfully uploaded $successCount payment records for employee ID: $employeeID";
+                // 重定向到同一页面，但使用 GET 请求
+                header("Location: " . $_SERVER['PHP_SELF'] . "?success=true");
+                exit();
+            } else {
+                throw new Exception("No records were inserted");
+            }
             
         } catch (Exception $e) {
             mysqli_rollback($conn);
+            echo "<div class='alert alert-danger'>Error occurred: " . $e->getMessage() . "</div>";
             $_SESSION['error_message'] = "Error uploading payment record: " . $e->getMessage();
-            header("Location: " . $_SERVER['PHP_SELF']);
+            // 重定向到同一页面，但使用 GET 请求
+            header("Location: " . $_SERVER['PHP_SELF'] . "?error=true");
             exit();
         }
     }
@@ -171,6 +258,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // 重复上面的代码，处理每个选中的会员
         }
     }
+
+    // 在页面顶部添加调试信息显示
+    echo "<div class='alert alert-info'>";
+    echo "POST request detected<br>";
+    echo "POST data: <pre>" . print_r($_POST, true) . "</pre>";
+    echo "</div>";
 }
 
 // 获取扣款类型
@@ -187,15 +280,22 @@ print_r($_POST);
 echo " -->";
 
 // 显示消息（放在HTML部分的开始）
-if (isset($_SESSION['success_message'])) {
-    echo "<div class='alert alert-success'>" . $_SESSION['success_message'] . "</div>";
-    unset($_SESSION['success_message']); // 显示后立即删除消息
-}
-if (isset($_SESSION['error_message'])) {
-    echo "<div class='alert alert-danger'>" . $_SESSION['error_message'] . "</div>";
-    unset($_SESSION['error_message']); // 显示后立即删除消息
-}
-?>
+if (isset($_SESSION['success_message'])): ?>
+    <div class="toast-container position-fixed top-0 end-0 p-3">
+        <div class="toast show bg-success text-white" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header bg-success text-white">
+                <strong class="me-auto">Success</strong>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                <?php 
+                    echo $_SESSION['success_message'];
+                    unset($_SESSION['success_message']); 
+                ?>
+            </div>
+        </div>
+    </div>
+<?php endif; ?>
 
 <!DOCTYPE html>
 <html>
@@ -483,264 +583,330 @@ if (isset($_SESSION['error_message'])) {
         .payment-item:hover {
             background: var(--primary-light);
         }
+
+        .main-content {
+            padding: 0;
+            width: 100%;
+            margin-left: 0;
+        }
+
+        /* 修改为深绿色 header 样式 */
+        .page-header {
+            background-color: #00796b; /* 深绿色 */
+            color: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+
+        .page-header h2 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: normal;
+        }
+
+        .container {
+            padding: 0 20px;
+        }
+
+        /* 当 sidebar 打开时 */
+        body.sidebar-open .main-content {
+            padding-left: 250px;
+        }
+
+        /* 当 sidebar 关闭时 */
+        body:not(.sidebar-open) .main-content {
+            padding-left: 0;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                padding-left: 0 !important;
+            }
+        }
+
+        .toast-container {
+            z-index: 1050;
+        }
+
+        .toast {
+            opacity: 1 !important;
+        }
+
+        .toast.bg-success {
+            background-color: #009688 !important;
+        }
+
+        .toast .btn-close-white {
+            filter: brightness(0) invert(1);
+        }
     </style>
 </head>
 <body>
     <?php include "headeradmin.php"; ?>
     
-    <div class="container">
-        <div class="page-header">
-            <h2 class="page-title">Upload Payment Record</h2>
-        </div>
+    <div class="main-content" style="margin-top: 60px;">
+        <div class="container">
+            <!-- 绿色标题栏 -->
+            <div style="background-color: #009688; padding: 20px; margin-bottom: 20px; border-radius: 4px;">
+                <h2 style="color: white; margin: 0; font-size: 28px;">Upload Payment Record</h2>
+            </div>
 
-        <form method="POST" id="paymentForm">
-            <div class="top-nav">
-                <div class="control-panel-container">
-                    <div class="btn-group">
-                        <div class="select-all-wrapper">
-                            <input type="checkbox" id="selectAll" class="custom-checkbox">
-                            <label for="selectAll" class="checkbox-label"></label>
+            <!-- 显示消息区域 -->
+            <?php if (isset($_SESSION['error_message'])): ?>
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <?php 
+                        echo $_SESSION['error_message'];
+                        unset($_SESSION['error_message']); // 显示后立即删除消息
+                    ?>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            <?php endif; ?>
+
+            <!-- 表单开始 -->
+            <form method="POST" id="paymentForm">
+                <div class="card">
+                    <div class="card-body">
+                        <!-- 日期选择器 -->
+                        <div class="mb-3 d-flex justify-content-between align-items-center">
+                            <div>
+                                <label>Transaction Date:</label>
+                                <input type="date" name="transDate" class="form-control" 
+                                       value="<?php echo $transDate; ?>" required>
+                            </div>
                         </div>
-                        <button type="submit" name="update_payments" class="btn btn-primary" id="uploadBtn">
-                            Upload Selected
-                        </button>
-                    </div>
-                    <div class="date-picker">
-                        <label>Transaction Date:</label>
-                        <input type="date" name="transDate" class="form-control" 
-                               value="<?php echo $transDate; ?>" required>
+
+                        <div class="content-area">
+                            <?php foreach ($members_data as $member): ?>
+                                <div class="member-card">
+                                    <div class="member-header">
+                                        <div class="member-info">
+                                            <input type="checkbox" name="selected[]" 
+                                                   value="<?php echo $member['employeeID']; ?>" 
+                                                   class="member-checkbox">
+                                            <span class="member-id-badge"><?php echo $member['employeeID']; ?></span>
+                                            <span class="member-name"><?php echo $member['memberName']; ?></span>
+                                        </div>
+                                        <button type="submit" 
+                                                name="single_upload" 
+                                                value="<?php echo $member['employeeID']; ?>" 
+                                                class="btn btn-success upload-single">
+                                            Upload
+                                        </button>
+                                    </div>
+
+                                    <div class="payment-grid">
+                                        <!-- Modal Share -->
+                                        <div class="payment-item">
+                                            <div class="payment-label">
+                                                Modal Syer
+                                                <span class="minimum-amount">(Min: RM <?php echo number_format($member['modalShare'], 2); ?>)</span>
+                                            </div>
+                                            <div class="payment-amount">
+                                                RM <?php echo number_format($member['modalShare'], 2); ?>
+                                            </div>
+                                            <div class="payment-input">
+                                                <input type="number" 
+                                                       name="payments[<?php echo $member['employeeID']; ?>][modalShare]" 
+                                                       value="<?php echo $member['modalShare']; ?>"
+                                                       min="<?php echo $member['modalShare']; ?>"
+                                                       step="0.01"
+                                                       class="form-control payment-input-field"
+                                                       data-original-amount="<?php echo $member['modalShare']; ?>"
+                                                       oninput="validateAndUpdateTotal(this)">
+                                                <div class="validation-message"></div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Fee Capital -->
+                                        <div class="payment-item">
+                                            <div class="payment-label">
+                                                Modal Yuran
+                                                <span class="minimum-amount">(Min: RM <?php echo number_format($member['feeCapital'], 2); ?>)</span>
+                                            </div>
+                                            <div class="payment-amount">
+                                                RM <?php echo number_format($member['feeCapital'], 2); ?>
+                                            </div>
+                                            <div class="payment-input">
+                                                <input type="number" 
+                                                       name="payments[<?php echo $member['employeeID']; ?>][feeCapital]" 
+                                                       value="<?php echo $member['feeCapital']; ?>"
+                                                       min="<?php echo $member['feeCapital']; ?>"
+                                                       step="0.01"
+                                                       class="form-control payment-input-field"
+                                                       data-original-amount="<?php echo $member['feeCapital']; ?>"
+                                                       oninput="validateAndUpdateTotal(this)">
+                                                <div class="validation-message"></div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Fixed Deposit -->
+                                        <div class="payment-item">
+                                            <div class="payment-label">
+                                                Simpanan Tetap
+                                                <span class="minimum-amount">(Min: RM <?php echo number_format($member['fixedDeposit'], 2); ?>)</span>
+                                            </div>
+                                            <div class="payment-amount">
+                                                RM <?php echo number_format($member['fixedDeposit'], 2); ?>
+                                            </div>
+                                            <div class="payment-input">
+                                                <input type="number" 
+                                                       name="payments[<?php echo $member['employeeID']; ?>][fixedDeposit]" 
+                                                       value="<?php echo $member['fixedDeposit']; ?>"
+                                                       min="<?php echo $member['fixedDeposit']; ?>"
+                                                       step="0.01"
+                                                       class="form-control payment-input-field"
+                                                       data-original-amount="<?php echo $member['fixedDeposit']; ?>"
+                                                       oninput="validateAndUpdateTotal(this)">
+                                                <div class="validation-message"></div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Contribution -->
+                                        <div class="payment-item">
+                                            <div class="payment-label">
+                                                Sumbangan Tabung Kebajikan (AL-ABRAR)
+                                                <span class="minimum-amount">(Min: RM <?php echo number_format($member['contribution'], 2); ?>)</span>
+                                            </div>
+                                            <div class="payment-amount">
+                                                RM <?php echo number_format($member['contribution'], 2); ?>
+                                            </div>
+                                            <div class="payment-input">
+                                                <input type="number" 
+                                                       name="payments[<?php echo $member['employeeID']; ?>][contribution]" 
+                                                       value="<?php echo $member['contribution']; ?>"
+                                                       min="<?php echo $member['contribution']; ?>"
+                                                       step="0.01"
+                                                       class="form-control payment-input-field"
+                                                       data-original-amount="<?php echo $member['contribution']; ?>"
+                                                       oninput="validateAndUpdateTotal(this)">
+                                                <div class="validation-message"></div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Deposit -->
+                                        <div class="payment-item">
+                                            <div class="payment-label">
+                                                Wang Deposit Anggota
+                                                <span class="minimum-amount">(Min: RM <?php echo number_format($member['deposit'], 2); ?>)</span>
+                                            </div>
+                                            <div class="payment-amount">
+                                                RM <?php echo number_format($member['deposit'], 2); ?>
+                                            </div>
+                                            <div class="payment-input">
+                                                <input type="number" 
+                                                       name="payments[<?php echo $member['employeeID']; ?>][deposit]" 
+                                                       value="<?php echo $member['deposit']; ?>"
+                                                       min="<?php echo $member['deposit']; ?>"
+                                                       step="0.01"
+                                                       class="form-control payment-input-field"
+                                                       data-original-amount="<?php echo $member['deposit']; ?>"
+                                                       oninput="validateAndUpdateTotal(this)">
+                                                <div class="validation-message"></div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Loan Repayments -->
+                                        <?php if (!empty($member['loanRepayments'])): 
+                                            foreach ($member['loanRepayments'] as $loan): 
+                                                // 获取之前提交的值（如果存在）
+                                                $submittedValue = isset($_POST['payments'][$member['employeeID']]['loanRepayment'][$loan['loanType']]) 
+                                                    ? $_POST['payments'][$member['employeeID']]['loanRepayment'][$loan['loanType']] 
+                                                    : $loan['monthlyInstallments'];
+                                        ?>
+                                            <div class="payment-item">
+                                                <div class="payment-label">
+                                                    Bayaran Balik (<?php echo htmlspecialchars($loan['loanType']); ?>)
+                                                    <span class="minimum-amount">(Min: RM <?php echo number_format($loan['monthlyInstallments'], 2); ?>)</span>
+                                                </div>
+                                                <div class="payment-amount">
+                                                    RM <?php echo number_format($loan['monthlyInstallments'], 2); ?>
+                                                </div>
+                                                <div class="payment-input">
+                                                    <input type="number" 
+                                                           name="payments[<?php echo $member['employeeID']; ?>][loanRepayment][<?php echo $loan['loanType']; ?>]" 
+                                                           value="<?php echo $submittedValue; ?>"
+                                                           min="<?php echo $loan['monthlyInstallments']; ?>"
+                                                           step="0.01"
+                                                           class="form-control payment-input-field"
+                                                           data-original-amount="<?php echo $loan['monthlyInstallments']; ?>"
+                                                           oninput="validateAndUpdateTotal(this)">
+                                                    <div class="validation-message"></div>
+                                                </div>
+                                            </div>
+                                        <?php endforeach; endif; ?>
+
+                                        <!-- 修改 Upfront Payment section -->
+                                        <div class="payment-item">
+                                            <div class="payment-label">
+                                                Bayaran Tambahan
+                                                <span class="minimum-amount">(Optional)</span>
+                                            </div>
+                                            <div class="payment-amount">
+                                                <select class="form-select" 
+                                                        name="payments[<?php echo $member['employeeID']; ?>][upfront_type]"
+                                                        onchange="updateTotalAmount(this)">
+                                                    <option value="">Select payment type...</option>
+                                                    <?php
+                                                    $types_sql = "SELECT DeducType_ID, typeName FROM tb_deduction_type 
+                                                                  WHERE DeducType_ID IN (7)";  
+                                                    $types_result = mysqli_query($conn, $types_sql);
+                                                    while ($type = mysqli_fetch_assoc($types_result)) {
+                                                        // 替换显示文本，但保持原始值不变
+                                                        $displayName = ($type['typeName'] == 'Entry Fee') ? 'Fee Masuk' : $type['typeName'];
+                                                        echo "<option value='" . $type['DeducType_ID'] . "'>" . $displayName . "</option>";
+                                                    }
+                                                    ?>
+                                                </select>
+                                            </div>
+                                            <div class="payment-input">
+                                                <input type="number" 
+                                                       name="payments[<?php echo $member['employeeID']; ?>][upfront_amount]" 
+                                                       value="0"
+                                                       min="0"
+                                                       step="0.01"
+                                                       class="form-control payment-input-field"
+                                                       data-original-amount="0"
+                                                       oninput="updateTotalAmount(this)">
+                                            </div>
+                                        </div>
+
+                                        <!-- Total Section -->
+                                        <div class="total-section">
+                                            <span class="total-label">Total Amount</span>
+                                            <span class="total-amount" id="total_<?php echo $member['employeeID']; ?>">
+                                                RM <?php 
+                                                $total = floatval($member['modalShare']) + 
+                                                        floatval($member['feeCapital']) + 
+                                                        floatval($member['fixedDeposit']) + 
+                                                        floatval($member['contribution']) + 
+                                                        floatval($member['deposit']);
+                                                
+                                                // 添加贷款还款到总额
+                                                if (!empty($member['loanRepayments'])) {
+                                                    foreach ($member['loanRepayments'] as $loan) {
+                                                        $total += floatval($loan['monthlyInstallments']);
+                                                    }
+                                                }
+                                                
+                                                // 添加预付款初始值（如果有）
+                                                $upfront_value = isset($_POST['payments'][$member['employeeID']]['upfront_amount']) 
+                                                    ? floatval($_POST['payments'][$member['employeeID']]['upfront_amount']) 
+                                                    : 0;
+                                                $total += $upfront_value;
+                                                
+                                                echo number_format($total, 2);
+                                                ?>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
                     </div>
                 </div>
-            </div>
-
-            <div class="content-area">
-                <?php foreach ($members_data as $member): ?>
-                    <div class="member-card">
-                        <div class="member-header">
-                            <div class="member-info">
-                                <input type="checkbox" name="selected[]" 
-                                       value="<?php echo $member['employeeID']; ?>" 
-                                       class="member-checkbox">
-                                <span class="member-id-badge"><?php echo $member['employeeID']; ?></span>
-                                <span class="member-name"><?php echo $member['memberName']; ?></span>
-                            </div>
-                            <button type="submit" 
-                                    name="single_upload" 
-                                    value="<?php echo $member['employeeID']; ?>" 
-                                    class="upload-single">
-                                Upload
-                            </button>
-                        </div>
-
-                        <div class="payment-grid">
-                            <!-- Modal Share -->
-                            <div class="payment-item">
-                                <div class="payment-label">
-                                    Modal Syer
-                                    <span class="minimum-amount">(Min: RM <?php echo number_format($member['modalShare'], 2); ?>)</span>
-                                </div>
-                                <div class="payment-amount">
-                                    RM <?php echo number_format($member['modalShare'], 2); ?>
-                                </div>
-                                <div class="payment-input">
-                                    <input type="number" 
-                                           name="payments[<?php echo $member['employeeID']; ?>][modalShare]" 
-                                           value="<?php echo $member['modalShare']; ?>"
-                                           min="<?php echo $member['modalShare']; ?>"
-                                           step="0.01"
-                                           class="form-control payment-input-field"
-                                           data-original-amount="<?php echo $member['modalShare']; ?>"
-                                           oninput="validateAndUpdateTotal(this)">
-                                    <div class="validation-message"></div>
-                                </div>
-                            </div>
-
-                            <!-- Fee Capital -->
-                            <div class="payment-item">
-                                <div class="payment-label">
-                                    Modal Yuran
-                                    <span class="minimum-amount">(Min: RM <?php echo number_format($member['feeCapital'], 2); ?>)</span>
-                                </div>
-                                <div class="payment-amount">
-                                    RM <?php echo number_format($member['feeCapital'], 2); ?>
-                                </div>
-                                <div class="payment-input">
-                                    <input type="number" 
-                                           name="payments[<?php echo $member['employeeID']; ?>][feeCapital]" 
-                                           value="<?php echo $member['feeCapital']; ?>"
-                                           min="<?php echo $member['feeCapital']; ?>"
-                                           step="0.01"
-                                           class="form-control payment-input-field"
-                                           data-original-amount="<?php echo $member['feeCapital']; ?>"
-                                           oninput="validateAndUpdateTotal(this)">
-                                    <div class="validation-message"></div>
-                                </div>
-                            </div>
-
-                            <!-- Fixed Deposit -->
-                            <div class="payment-item">
-                                <div class="payment-label">
-                                    Simpanan Tetap
-                                    <span class="minimum-amount">(Min: RM <?php echo number_format($member['fixedDeposit'], 2); ?>)</span>
-                                </div>
-                                <div class="payment-amount">
-                                    RM <?php echo number_format($member['fixedDeposit'], 2); ?>
-                                </div>
-                                <div class="payment-input">
-                                    <input type="number" 
-                                           name="payments[<?php echo $member['employeeID']; ?>][fixedDeposit]" 
-                                           value="<?php echo $member['fixedDeposit']; ?>"
-                                           min="<?php echo $member['fixedDeposit']; ?>"
-                                           step="0.01"
-                                           class="form-control payment-input-field"
-                                           data-original-amount="<?php echo $member['fixedDeposit']; ?>"
-                                           oninput="validateAndUpdateTotal(this)">
-                                    <div class="validation-message"></div>
-                                </div>
-                            </div>
-
-                            <!-- Contribution -->
-                            <div class="payment-item">
-                                <div class="payment-label">
-                                    Sumbangan Tabung Kebajikan (AL-ABRAR)
-                                    <span class="minimum-amount">(Min: RM <?php echo number_format($member['contribution'], 2); ?>)</span>
-                                </div>
-                                <div class="payment-amount">
-                                    RM <?php echo number_format($member['contribution'], 2); ?>
-                                </div>
-                                <div class="payment-input">
-                                    <input type="number" 
-                                           name="payments[<?php echo $member['employeeID']; ?>][contribution]" 
-                                           value="<?php echo $member['contribution']; ?>"
-                                           min="<?php echo $member['contribution']; ?>"
-                                           step="0.01"
-                                           class="form-control payment-input-field"
-                                           data-original-amount="<?php echo $member['contribution']; ?>"
-                                           oninput="validateAndUpdateTotal(this)">
-                                    <div class="validation-message"></div>
-                                </div>
-                            </div>
-
-                            <!-- Deposit -->
-                            <div class="payment-item">
-                                <div class="payment-label">
-                                    Wang Deposit Anggota
-                                    <span class="minimum-amount">(Min: RM <?php echo number_format($member['deposit'], 2); ?>)</span>
-                                </div>
-                                <div class="payment-amount">
-                                    RM <?php echo number_format($member['deposit'], 2); ?>
-                                </div>
-                                <div class="payment-input">
-                                    <input type="number" 
-                                           name="payments[<?php echo $member['employeeID']; ?>][deposit]" 
-                                           value="<?php echo $member['deposit']; ?>"
-                                           min="<?php echo $member['deposit']; ?>"
-                                           step="0.01"
-                                           class="form-control payment-input-field"
-                                           data-original-amount="<?php echo $member['deposit']; ?>"
-                                           oninput="validateAndUpdateTotal(this)">
-                                    <div class="validation-message"></div>
-                                </div>
-                            </div>
-
-                            <!-- Loan Repayments -->
-                            <?php if (!empty($member['loanRepayments'])): 
-                                foreach ($member['loanRepayments'] as $loan): 
-                                    // 获取之前提交的值（如果存在）
-                                    $submittedValue = isset($_POST['payments'][$member['employeeID']]['loanRepayment'][$loan['loanType']]) 
-                                        ? $_POST['payments'][$member['employeeID']]['loanRepayment'][$loan['loanType']] 
-                                        : $loan['monthlyInstallments'];
-                            ?>
-                                <div class="payment-item">
-                                    <div class="payment-label">
-                                        Bayaran Balik (<?php echo htmlspecialchars($loan['loanType']); ?>)
-                                        <span class="minimum-amount">(Min: RM <?php echo number_format($loan['monthlyInstallments'], 2); ?>)</span>
-                                    </div>
-                                    <div class="payment-amount">
-                                        RM <?php echo number_format($loan['monthlyInstallments'], 2); ?>
-                                    </div>
-                                    <div class="payment-input">
-                                        <input type="number" 
-                                               name="payments[<?php echo $member['employeeID']; ?>][loanRepayment][<?php echo $loan['loanType']; ?>]" 
-                                               value="<?php echo $submittedValue; ?>"
-                                               min="<?php echo $loan['monthlyInstallments']; ?>"
-                                               step="0.01"
-                                               class="form-control payment-input-field"
-                                               data-original-amount="<?php echo $loan['monthlyInstallments']; ?>"
-                                               oninput="validateAndUpdateTotal(this)">
-                                        <div class="validation-message"></div>
-                                    </div>
-                                </div>
-                            <?php endforeach; endif; ?>
-
-                            <!-- 修改 Upfront Payment section -->
-                            <div class="payment-item">
-                                <div class="payment-label">
-                                    Bayaran Tambahan
-                                    <span class="minimum-amount">(Optional)</span>
-                                </div>
-                                <div class="payment-amount">
-                                    <select class="form-select" 
-                                            name="payments[<?php echo $member['employeeID']; ?>][upfront_type]"
-                                            onchange="updateTotalAmount(this)">
-                                        <option value="">Select payment type...</option>
-                                        <?php
-                                        $types_sql = "SELECT DeducType_ID, typeName FROM tb_deduction_type 
-                                                      WHERE DeducType_ID IN (7)";  
-                                        $types_result = mysqli_query($conn, $types_sql);
-                                        while ($type = mysqli_fetch_assoc($types_result)) {
-                                            // 替换显示文本，但保持原始值不变
-                                            $displayName = ($type['typeName'] == 'Entry Fee') ? 'Fee Masuk' : $type['typeName'];
-                                            echo "<option value='" . $type['DeducType_ID'] . "'>" . $displayName . "</option>";
-                                        }
-                                        ?>
-                                    </select>
-                                </div>
-                                <div class="payment-input">
-                                    <input type="number" 
-                                           name="payments[<?php echo $member['employeeID']; ?>][upfront_amount]" 
-                                           value="0"
-                                           min="0"
-                                           step="0.01"
-                                           class="form-control payment-input-field"
-                                           data-original-amount="0"
-                                           oninput="updateTotalAmount(this)">
-                                </div>
-                            </div>
-
-                            <!-- Total Section -->
-                            <div class="total-section">
-                                <span class="total-label">Total Amount</span>
-                                <span class="total-amount" id="total_<?php echo $member['employeeID']; ?>">
-                                    RM <?php 
-                                    $total = floatval($member['modalShare']) + 
-                                            floatval($member['feeCapital']) + 
-                                            floatval($member['fixedDeposit']) + 
-                                            floatval($member['contribution']) + 
-                                            floatval($member['deposit']);
-                                    
-                                    // 添加贷款还款到总额
-                                    if (!empty($member['loanRepayments'])) {
-                                        foreach ($member['loanRepayments'] as $loan) {
-                                            $total += floatval($loan['monthlyInstallments']);
-                                        }
-                                    }
-                                    
-                                    // 添加预付款初始值（如果有）
-                                    $upfront_value = isset($_POST['payments'][$member['employeeID']]['upfront_amount']) 
-                                        ? floatval($_POST['payments'][$member['employeeID']]['upfront_amount']) 
-                                        : 0;
-                                    $total += $upfront_value;
-                                    
-                                    echo number_format($total, 2);
-                                    ?>
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
-            </div>
-        </form>
+            </form>
+        </div>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -839,82 +1005,49 @@ if (isset($_SESSION['error_message'])) {
             }
         });
 
-        // 表单提交验证
-        function validateForm() {
-            let isValid = true;
-            const inputs = document.querySelectorAll('.payment-input-field');
-            
-            inputs.forEach(input => {
-                const originalAmount = parseFloat(input.dataset.originalAmount);
-                const currentValue = parseFloat(input.value) || 0;
-                
-                if (currentValue < originalAmount) {
-                    isValid = false;
-                    input.classList.add('is-invalid');
-                }
-            });
-
-            if (!isValid) {
-                alert('Please ensure all payment amounts are not less than their minimum values.');
-                return false;
-            }
-
-            return true;
-        }
-
-        // 添加到全局作用域以供表单使用
-        window.validateForm = validateForm;
-
-        // 添加 Select All 功能
-        const selectAllCheckbox = document.getElementById('selectAll');
-        const memberCheckboxes = document.querySelectorAll('.member-checkbox');
-        
-        if (selectAllCheckbox) {
-            selectAllCheckbox.addEventListener('change', function() {
-                memberCheckboxes.forEach(checkbox => {
-                    checkbox.checked = this.checked;
-                });
-            });
-
-            // 当个别复选框更改时，更新全选框状态
-            memberCheckboxes.forEach(checkbox => {
-                checkbox.addEventListener('change', function() {
-                    const allChecked = Array.from(memberCheckboxes).every(cb => cb.checked);
-                    const someChecked = Array.from(memberCheckboxes).some(cb => cb.checked);
-                    
-                    selectAllCheckbox.checked = allChecked;
-                    selectAllCheckbox.indeterminate = someChecked && !allChecked;
-                });
-            });
-        }
-
-        // 表单提交验证
+        // 修改表单提交验证
         const form = document.getElementById('paymentForm');
         if (form) {
             form.addEventListener('submit', function(e) {
-                // 检查是否有选中的会员
-                const selectedMembers = document.querySelectorAll('input[name="selected[]"]:checked');
-                if (selectedMembers.length === 0) {
-                    e.preventDefault();
-                    alert('Please select at least one member.');
-                    return false;
+                // 检查是否是单个上传按钮触发的提交
+                const submitter = e.submitter;
+                const isSingleUpload = submitter && submitter.name === 'single_upload';
+
+                // 如果不是单个上传，才检查是否有选中的会员
+                if (!isSingleUpload) {
+                    const selectedMembers = document.querySelectorAll('input[name="selected[]"]:checked');
+                    if (selectedMembers.length === 0) {
+                        e.preventDefault();
+                        alert('Please select at least one member.');
+                        return false;
+                    }
                 }
 
-                // 验证所有选中会员的输入值
+                // 验证所有相关会员的输入值
                 let isValid = true;
-                selectedMembers.forEach(member => {
-                    const memberCard = member.closest('.member-card');
-                    const inputs = memberCard.querySelectorAll('input[type="number"]');
+                let inputsToValidate;
+
+                if (isSingleUpload) {
+                    // 如果是单个上传，只验证该会员的输入
+                    const memberCard = submitter.closest('.member-card');
+                    inputsToValidate = memberCard.querySelectorAll('input[type="number"]');
+                } else {
+                    // 如果是批量上传，验证所有选中会员的输入
+                    const selectedMembers = document.querySelectorAll('input[name="selected[]"]:checked');
+                    inputsToValidate = Array.from(selectedMembers).reduce((inputs, member) => {
+                        const memberCard = member.closest('.member-card');
+                        return inputs.concat(Array.from(memberCard.querySelectorAll('input[type="number"]')));
+                    }, []);
+                }
+
+                inputsToValidate.forEach(input => {
+                    const originalAmount = parseFloat(input.dataset.originalAmount);
+                    const currentValue = parseFloat(input.value) || 0;
                     
-                    inputs.forEach(input => {
-                        const originalAmount = parseFloat(input.dataset.originalAmount);
-                        const currentValue = parseFloat(input.value) || 0;
-                        
-                        if (currentValue < originalAmount) {
-                            isValid = false;
-                            input.classList.add('is-invalid');
-                        }
-                    });
+                    if (currentValue < originalAmount) {
+                        isValid = false;
+                        input.classList.add('is-invalid');
+                    }
                 });
 
                 if (!isValid) {
@@ -924,7 +1057,7 @@ if (isset($_SESSION['error_message'])) {
                 }
 
                 // 显示加载状态
-                const uploadBtn = document.getElementById('uploadBtn');
+                const uploadBtn = submitter || document.getElementById('uploadBtn');
                 if (uploadBtn) {
                     uploadBtn.disabled = true;
                     uploadBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Uploading...';
@@ -940,8 +1073,38 @@ if (isset($_SESSION['error_message'])) {
             setTimeout(() => {
                 const bsAlert = new bootstrap.Alert(alert);
                 bsAlert.close();
-            }, 10000); // 10秒后自动关闭
+            }, 5000); // 5秒后自动关闭
         });
+
+        // 添加表单提交事件监听器
+        const form = document.getElementById('paymentForm');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                console.log('Form submitted');
+                console.log('Submit button:', e.submitter);
+                console.log('Form data:', new FormData(form));
+            });
+        }
+
+        // 为每个上传按钮添加点击事件监听器
+        document.querySelectorAll('.upload-single').forEach(button => {
+            button.addEventListener('click', function(e) {
+                console.log('Upload button clicked');
+                console.log('Employee ID:', this.value);
+            });
+        });
+
+        // 初始化所有 toast
+        var toastElList = [].slice.call(document.querySelectorAll('.toast'));
+        var toastList = toastElList.map(function(toastEl) {
+            return new bootstrap.Toast(toastEl, {
+                autohide: true,
+                delay: 3000 // 3秒后自动消失
+            });
+        });
+
+        // 自动显示 toast
+        toastList.forEach(toast => toast.show());
     });
     </script>
 </body>

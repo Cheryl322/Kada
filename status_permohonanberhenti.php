@@ -192,40 +192,70 @@ $result = mysqli_stmt_get_result($stmt);
     font-weight: 500;
 }
 
-.card {
-    border-radius: 10px;
-}
-
 .card-title {
     color: #2c3e50;
     font-weight: 600;
 }
 
-.text-muted {
-    color: #6c757d !important;
+.card {
+    border: none;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+    margin-bottom: 1.5rem;
+    border-radius: 15px;
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 6px 30px rgba(0, 0, 0, 0.1);
+}
+
+/* 左侧栏样式优化 */
+.profile-sidebar .card {
+    background: linear-gradient(to bottom, #ffffff, #f8f9fa);
+}
+
+.profile-image img {
+    border: 4px solid #fff;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.profile-image img:hover {
+    transform: scale(1.02);
 }
 
 .profile-nav .btn {
+    background: linear-gradient(45deg, #75B798, #5a8f76);
+    border: none;
+    margin-bottom: 0.5rem;
     transition: all 0.3s ease;
 }
 
 .profile-nav .btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 12px rgba(117, 183, 152, 0.2);
+    background: linear-gradient(45deg, #5a8f76, #4d7a64);
 }
 
+/* 徽章样式 */
+.badge {
+    padding: 0.5em 1em;
+    border-radius: 30px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+/* 响应式优化 */
 @media (max-width: 768px) {
-    .container {
-        padding: 1rem;
-    }
-    
-    /* .profile-sidebar {
-        margin-bottom: 2rem;
-    } */
-    
     .profile-image img {
         width: 150px;
         height: 150px;
     }
+    
+    .profile-nav .btn {
+        padding: 0.5rem 1rem;
+    }
 }
+
+
 </style>

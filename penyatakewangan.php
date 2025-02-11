@@ -40,7 +40,13 @@ $totalSavings = array_sum($savings);
 $sql_loans = "SELECT 
     l.loanType,
     l.balance,
-    la.amountRequested
+    la.amountRequested,
+    COALESCE((
+        SELECT SUM(d.Deduct_Amt)
+        FROM tb_deduction d
+        WHERE d.employeeID = l.employeeID 
+        AND d.DeducType_ID = 6
+    ), 0) as total_repaid
 FROM tb_loan l
 JOIN tb_loanapplication la ON l.employeeID = la.employeeID 
 WHERE l.employeeID = ?
@@ -183,11 +189,12 @@ while ($loan = mysqli_fetch_assoc($loans_result)) {
                 <?php 
                 mysqli_data_seek($loans_result, 0);
                 while ($loan = mysqli_fetch_assoc($loans_result)): 
+                    $remaining_amount = $loan['amountRequested'] - $loan['total_repaid'];
                 ?>
                 <div class="detail-item">
                     <span class="detail-label"><?php echo $loan['loanType']; ?></span>
                     <span class="detail-amount">
-                        RM <?php echo number_format($loan['balance'], 2); ?> / 
+                        RM <?php echo number_format($remaining_amount, 2); ?> / 
                         RM <?php echo number_format($loan['amountRequested'], 2); ?>
                     </span>
                 </div>

@@ -442,6 +442,9 @@ body {
         <a class="nav-link" href="admin_update_payment.php">Rekod Bayaran</a>
       </li>
       <li class="nav-item">
+        <a class="nav-link" href="manage_member_status.php">Pengurusan Status Anggota</a>
+      </li>
+      <li class="nav-item">
         <a class="nav-link" href="logout.php">Log Keluar</a>
       </li>
     </ul>
