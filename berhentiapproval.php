@@ -186,7 +186,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['resignID'])) {
                             <th>Sebab</th>
                             <th>Tarikh Mohon</th>
                             <th>Status</th>
-                            <th>Tindakan</th>
+
                         </tr>
                     </thead>
                     <tbody>
