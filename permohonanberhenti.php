@@ -8,6 +8,28 @@ if (!isset($_SESSION['employeeID'])) {
     exit();
 }
 
+
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $employeeID = $_SESSION['employeeID'];
+    $reason = $_POST['reasonDetail'];
+    
+    $sql = "INSERT INTO tb_berhenti (employeeID, reason, applyDate) 
+            VALUES (?, ?, CURRENT_DATE)";
+    $stmt = mysqli_prepare($conn, $sql);
+    mysqli_stmt_bind_param($stmt, 'is', $employeeID, $reason);
+    
+    if (mysqli_stmt_execute($stmt)) {
+        $_SESSION['success_message'] = "Permohonan anda telah dihantar.";
+        header("Location: status_permohonanberhenti.php");
+        exit();
+    } else {
+        $error_message = "Ralat: " . mysqli_error($conn);
+    }
+}
+
+// Now include the header which contains HTML output
+include "headermember.php";
+
 $employeeID = $_SESSION['employeeID'];
 
 // 从IC提取生日和计算年龄
@@ -56,28 +78,6 @@ $stmt = mysqli_prepare($conn, $check_sql);
 mysqli_stmt_bind_param($stmt, 's', $employeeID);
 mysqli_stmt_execute($stmt);
 $result = mysqli_stmt_get_result($stmt);
-
-// 处理表单提交
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $reason = $_POST['reasonDetail'];
-    
-    $sql = "INSERT INTO tb_berhenti (employeeID, reason, applyDate) 
-            VALUES (?, ?, CURRENT_DATE)";
-    $stmt = mysqli_prepare($conn, $sql);
-    mysqli_stmt_bind_param($stmt, 'is', $employeeID, $reason);
-    
-    if (mysqli_stmt_execute($stmt)) {
-        $_SESSION['success_message'] = "Permohonan anda telah dihantar.";
-        // 确保重定向到状态页面
-        header("Location: status_permohonanberhenti.php");
-        exit();
-    } else {
-        $error_message = "Ralat: " . mysqli_error($conn);
-    }
-}
-
-// 现在才包含header
-include "headermember.php";
 
 // 如果已经有待处理的申请，显示警告并退出
 if (mysqli_num_rows($result) > 0) {
@@ -433,7 +433,7 @@ textarea.form-control {
 }
 
 .btn {
-    position: relative;
+    /* position: relative;
     z-index: 9999;
     padding: 8px 20px;
     border: none !important;
@@ -442,11 +442,15 @@ textarea.form-control {
     text-decoration: none;
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: 8px; */
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 500;
 }
 
 .btn-primary {
     background-color: #4CAF50;
+    border: none;
 }
 
 .btn-primary:hover {
@@ -475,10 +479,7 @@ textarea.form-control {
     gap: 1rem !important;
 }
 
-/* 确保图标显示 */
-.fas {
-    display: inline-block !important;
-}
+
 
 /* 确保按钮容器正确显示 */
 .d-flex {
@@ -493,11 +494,12 @@ textarea.form-control {
     .form-section {
         padding: 20px;
     }
-    
+
     .card-header {
+        padding: 1.25rem;
         padding: 15px;
     }
-    
+
     .header-icon {
         width: 40px;
         height: 40px;
@@ -571,7 +573,7 @@ textarea.form-control {
     background-color: rgba(255, 255, 255, 0.4) !important;
 }
 
-/* 移除任何可能的背景图片 */
+/* 移除任何可能的背景图片
 body::before,
 body::after,
 .container::before,
@@ -581,13 +583,13 @@ body::after,
     display: none !important;
 }
 
-/* 确保按钮容器在最上层 */
+
 .mt-4 {
     position: relative !important;
     z-index: 9999 !important;
 }
 
-/* 移除任何背景和边框 */
+
 .container, .row, .col-md-8 {
     background: none !important;
     border: none !important;
@@ -629,7 +631,7 @@ body::after,
     text-decoration: none;
 }
 
-/* 移除背景图片对按钮的影响 */
+
 .button-container::before,
 .button-container::after,
 .solid-btn::before,
@@ -637,7 +639,7 @@ body::after,
     display: none !important;
 }
 
-/* 确保按钮在最上层 */
+
 .solid-btn {
     isolation: isolate;
 }
@@ -654,8 +656,6 @@ a:hover {
 
 .fas {
     margin-right: 5px;
-}
+} */
 </style>
 
-<!-- 确保 Font Awesome 正确加载 -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
