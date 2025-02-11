@@ -132,7 +132,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['resignID'])) {
                             <td><?php echo date('d/m/Y', strtotime($row['applyDate'])); ?></td>
                             <td><?php echo $row['approvalStatus']; ?></td>
                             <td>
-                                <?php if ($row['approvalStatus'] == 'Pending'): ?>
+                                <?php if ($row['approvalStatus'] == 'Belum Selesai'): ?>
                                     <button onclick="showModal(<?php echo $row['berhentiID']; ?>)" 
                                             class="btn btn-primary btn-sm">
                                         Tindakan
