@@ -34,26 +34,34 @@ $result = mysqli_stmt_get_result($stmt);
 <div class="container mt-5">
     <div class="row">
         <!-- Left Sidebar -->
-        <div class="col-md-3">
-            <div class="profile-sidebar text-center mb-4">
-                <div class="profile-image mb-4">
-                    <img src="img/profile.jpeg" class="rounded-circle img-fluid" alt="Profile Picture" style="width: 200px; height: 200px; object-fit: cover;">
-                    <h3 class="mt-3"><?php echo isset($userData['memberName']) ? $userData['memberName'] : (isset($userData['name']) ? $userData['name'] : 'User'); ?></h3>
-                </div>
+        div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="profile-sidebar">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <div class="profile-image mb-4">
+                                    <img src="img/profile.jpeg" class="rounded-circle img-fluid" alt="Profile Picture" style="width: 200px; height: 200px; object-fit: cover;">
+                                    <h3 class="mt-3"><?php echo $userData['memberName'] !== '-' ? $userData['memberName'] : 'User'; ?></h3>
+                                </div>
 
-                <div class="profile-nav d-flex flex-column gap-3">
-                    <a href="profil.php" class="btn w-75 mx-auto" style="background-color: #75B798; color: white;">
-                        Profil
-                    </a>
-                    <a href="status.php" class="btn w-75 mx-auto" style="background-color: #8CD9B5; color: white;">
-                        Status Permohonan
-                    </a>
-                    <a href="penyatakewangan.php" class="btn w-75 mx-auto" style="background-color: #75B798; color: white;">
-                        Penyata Kewangan
-                    </a>
-                    <a href="logout.php" class="btn w-75 mx-auto" style="background-color: #75B798; color: white;">
-                        Daftar Keluar
-                    </a>
+                                <div class="profile-nav d-flex flex-column gap-1">
+                                    <a href="profil.php" class="btn w-75 mx-auto" style="background-color: #75B798; color: white;">
+                                        Profil
+                                    </a>
+                                    <a href="status.php" class="btn w-75 mx-auto" style="background-color: #75B798; color: white;">
+                                        Status Permohonan
+                                    </a>
+                                    <a href="penyatakewangan.php" class="btn w-75 mx-auto" style="background-color: #75B798; color: white;">
+                                        Penyata Kewangan
+                                    </a>
+                                    <a href="logout.php" class="btn w-75 mx-auto" style="background-color: #75B798; color: white;">
+                                        Log Keluar
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

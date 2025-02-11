@@ -141,13 +141,16 @@ $months_in_malay = [
     <div class="transaction-card">
         <div class="transaction-header">
             <h3>Transaksi <?php echo $months_in_malay[$month] . ' ' . $year; ?></h3>
-            <div class="total-amount">
-                Jumlah: <span>RM <?php echo number_format($totalAmount, 2); ?></span>
-            </div>
         </div>
         <div class="transaction-body">
-            <?php if (mysqli_num_rows($result) > 0): ?>
-                <?php while ($row = mysqli_fetch_assoc($result)): ?>
+            <?php 
+            $totalAmount = 0; // 初始化总额
+            
+            if (mysqli_num_rows($result) > 0): 
+                while ($row = mysqli_fetch_assoc($result)): 
+                    // 累加交易金额
+                    $totalAmount += $row['transAmt'];
+            ?>
                     <div class="transaction-item">
                         <div class="transaction-icon">
                             <i class="fas fa-receipt"></i>
@@ -161,6 +164,16 @@ $months_in_malay = [
                         </div>
                     </div>
                 <?php endwhile; ?>
+                
+                <!-- 在所有交易显示后显示总额 -->
+                <div class="total-amount mt-3 p-3 border-top">
+                    <h4 class="text-end">
+                        Jumlah: <span class="<?php echo ($totalAmount > 0) ? 'text-success' : ''; ?>">
+                            RM <?php echo number_format($totalAmount, 2); ?>
+                        </span>
+                    </h4>
+                </div>
+                
             <?php else: ?>
                 <div class="no-transactions">
                     <i class="fas fa-receipt fa-3x mb-3"></i>
@@ -214,13 +227,16 @@ $months_in_malay = [
 }
 
 .total-amount {
-    font-weight: 500;
-    color: #2c3e50;
+    background-color: #f8f9fa;
 }
 
-.total-amount span {
-    color: #4CAF50;
-    font-weight: 600;
+.total-amount h4 {
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+.text-success {
+    color: #28a745 !important;
 }
 
 .transaction-body {

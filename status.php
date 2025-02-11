@@ -1,48 +1,65 @@
 <?php
 session_start();
+include "dbconnect.php";
 
 if (!isset($_SESSION['employeeID'])) {
-    header('Location: login.php');
+    header("Location: login.php");
     exit();
 }
 
-include "headermember.php";
-include "dbconnect.php";
-
 $employeeID = $_SESSION['employeeID'];
 
-// Get member data
-$sql = "SELECT memberName FROM tb_member WHERE employeeID = ?";
-$stmt = mysqli_prepare($conn, $sql);
-mysqli_stmt_bind_param($stmt, "i", $employeeID);
-mysqli_stmt_execute($stmt);
-$result = mysqli_stmt_get_result($stmt);
-$memberData = mysqli_fetch_assoc($result);
+// 获取会员数据
+$sql_member = "SELECT * FROM tb_member WHERE employeeID = ?";   
+$stmt_member = mysqli_prepare($conn, $sql_member);
+mysqli_stmt_bind_param($stmt_member, 's', $employeeID);
+mysqli_stmt_execute($stmt_member);
+$result_member = mysqli_stmt_get_result($stmt_member);
+$userData = mysqli_fetch_assoc($result_member);
+
+// 如果没有找到会员数据，设置默认值
+if (!$userData) {
+    $userData = [
+        'memberName' => 'User',
+        'membershipNo' => '-',
+        // 其他需要的默认值
+    ];
+}
+
+include "headermember.php";
 ?>
 
 <div class="container mt-5">
     <div class="row">
         <!-- Left Sidebar -->
         <div class="col-md-3">
-            <div class="profile-sidebar text-center">
-                <div class="profile-image mb-4">
-                    <img src="img/profile.jpeg" class="rounded-circle img-fluid" alt="Profile Picture" style="width: 200px; height: 200px; object-fit: cover;">
-                    <h3 class="mt-3"><?php echo isset($memberData['memberName']) ? htmlspecialchars($memberData['memberName']) : 'Member'; ?></h3>
-                </div>
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="profile-sidebar">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <div class="profile-image mb-4">
+                                    <img src="img/profile.jpeg" class="rounded-circle img-fluid" alt="Profile Picture" style="width: 200px; height: 200px; object-fit: cover;">
+                                    <h3 class="mt-3"><?php echo $userData['memberName'] !== '-' ? $userData['memberName'] : 'User'; ?></h3>
+                                </div>
 
-                <div class="profile-nav d-flex flex-column gap-3">
-                    <a href="profil.php" class="btn w-75 mx-auto" style="background-color: #75B798; color: white;">
-                        Profil
-                    </a>
-                    <a href="status.php" class="btn w-75 mx-auto" style="background-color: #8CD9B5; color: white;">
-                        Status Permohonan
-                    </a>
-                    <a href="penyatakewangan.php" class="btn w-75 mx-auto" style="background-color: #75B798; color: white;">
-                        Penyata Kewangan
-                    </a>
-                    <a href="logout.php" class="btn w-75 mx-auto" style="background-color: #75B798; color: white;">
-                        Daftar Keluar
-                    </a>
+                                <div class="profile-nav d-flex flex-column gap-1">
+                                    <a href="profil.php" class="btn w-75 mx-auto" style="background-color: #75B798; color: white;">
+                                        Profil
+                                    </a>
+                                    <a href="status.php" class="btn w-75 mx-auto" style="background-color: #75B798; color: white;">
+                                        Status Permohonan
+                                    </a>
+                                    <a href="penyatakewangan.php" class="btn w-75 mx-auto" style="background-color: #75B798; color: white;">
+                                        Penyata Kewangan
+                                    </a>
+                                    <a href="logout.php" class="btn w-75 mx-auto" style="background-color: #75B798; color: white;">
+                                        Log Keluar
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -170,6 +187,67 @@ $memberData = mysqli_fetch_assoc($result);
     background-color: #5CBA9B !important;
     border-radius: 10px 10px 0 0 !important;
     padding: 15px 20px;
+}
+
+/* 卡片样式优化 */
+.card {
+    border: none;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+    margin-bottom: 1.5rem;
+    border-radius: 15px;
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 6px 30px rgba(0, 0, 0, 0.1);
+}
+
+/* 左侧栏样式优化 */
+.profile-sidebar .card {
+    background: linear-gradient(to bottom, #ffffff, #f8f9fa);
+}
+
+.profile-image img {
+    border: 4px solid #fff;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.profile-image img:hover {
+    transform: scale(1.02);
+}
+
+.profile-nav .btn {
+    background: linear-gradient(45deg, #75B798, #5a8f76);
+    border: none;
+    margin-bottom: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.profile-nav .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(117, 183, 152, 0.2);
+    background: linear-gradient(45deg, #5a8f76, #4d7a64);
+}
+
+/* 徽章样式 */
+.badge {
+    padding: 0.5em 1em;
+    border-radius: 30px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+/* 响应式优化 */
+@media (max-width: 768px) {
+    .profile-image img {
+        width: 150px;
+        height: 150px;
+    }
+    
+    .profile-nav .btn {
+        padding: 0.5rem 1rem;
+    }
 }
 </style>
 

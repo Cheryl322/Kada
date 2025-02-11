@@ -1,8 +1,8 @@
 <?php
 session_start();
 include "dbconnect.php";
-include "headermember.php";
 
+// 检查用户是否登录
 if (!isset($_SESSION['employeeID'])) {
     header("Location: login.php");
     exit();
@@ -48,6 +48,59 @@ function calculateAge($birthDate) {
     }
 }
 
+// 检查是否已经提交过申请
+$check_sql = "SELECT * FROM tb_berhenti 
+              WHERE employeeID = ? 
+              AND approvalStatus = 'Pending'";
+$stmt = mysqli_prepare($conn, $check_sql);
+mysqli_stmt_bind_param($stmt, 's', $employeeID);
+mysqli_stmt_execute($stmt);
+$result = mysqli_stmt_get_result($stmt);
+
+// 处理表单提交
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $reason = $_POST['reasonDetail'];
+    
+    $sql = "INSERT INTO tb_berhenti (employeeID, reason, applyDate) 
+            VALUES (?, ?, CURRENT_DATE)";
+    $stmt = mysqli_prepare($conn, $sql);
+    mysqli_stmt_bind_param($stmt, 'is', $employeeID, $reason);
+    
+    if (mysqli_stmt_execute($stmt)) {
+        $_SESSION['success_message'] = "Permohonan anda telah dihantar.";
+        // 确保重定向到状态页面
+        header("Location: status_permohonanberhenti.php");
+        exit();
+    } else {
+        $error_message = "Ralat: " . mysqli_error($conn);
+    }
+}
+
+// 现在才包含header
+include "headermember.php";
+
+// 如果已经有待处理的申请，显示警告并退出
+if (mysqli_num_rows($result) > 0) {
+    ?>
+    <div class="container mt-4">
+        <div class="text-center">
+            <i class="fas fa-exclamation-triangle fa-3x" style="color: #856404;"></i>
+            <h2 class="mt-3" style="color: #856404;">Perhatian!</h2>
+            <p style="color: #856404;">Anda telah menghantar permohonan berhenti. Sila tunggu kelulusan.</p>
+            <div class="mt-4">
+                <a href="status_permohonanberhenti.php" style="color: #75B798; text-decoration: none; margin-right: 15px;">
+                    <i class="fas fa-eye"></i> Semak Status
+                </a>
+                <a href="mainpage.php" style="color: #75B798; text-decoration: none;">
+                    <i class="fas fa-home"></i> Kembali ke Mainpage
+                </a>
+            </div>
+        </div>
+    </div>
+    <?php
+    exit();
+}
+
 // 获取会员信息
 $sql_member = "SELECT m.*, 
                mh.homeAddress, mh.homePostcode, mh.homeState,
@@ -65,40 +118,11 @@ $member = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_member));
 // 计算生日和年龄
 $birthDate = getBirthDateFromIC($member['ic']);
 $age = calculateAge($birthDate);
-
-// 格式化生日显示
 $formattedBirthDate = $birthDate ? date('d/m/Y', strtotime($birthDate)) : 'Invalid Date';
 
-// 检查是否已经提交过申请
-$check_sql = "SELECT * FROM tb_berhenti 
-              WHERE employeeID = ? 
-              AND approvalStatus = 'Pending'";
-$stmt = mysqli_prepare($conn, $check_sql);
-mysqli_stmt_bind_param($stmt, 's', $employeeID);
-mysqli_stmt_execute($stmt);
-$result = mysqli_stmt_get_result($stmt);
-
-if (mysqli_num_rows($result) > 0) {
-    echo "<div class='alert alert-warning'>Anda telah menghantar permohonan berhenti. Sila tunggu kelulusan.</div>";
-    exit();
-}
-
-// Update form submission for tb_berhenti
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $reason = $_POST['reasonDetail'];
-    
-    $sql = "INSERT INTO tb_berhenti (employeeID, reason, applyDate) 
-            VALUES (?, ?, CURRENT_DATE)";
-    $stmt = mysqli_prepare($conn, $sql);
-    mysqli_stmt_bind_param($stmt, 'is', $employeeID, $reason);
-    
-    if (mysqli_stmt_execute($stmt)) {
-        $_SESSION['success_message'] = "Permohonan anda telah dihantar.";
-        header("Location: status_permohonanberhenti.php");
-        exit();
-    } else {
-        echo "<div class='alert alert-danger'>Ralat: " . mysqli_error($conn) . "</div>";
-    }
+// 如果有错误消息，显示它
+if (isset($error_message)) {
+    echo "<div class='alert alert-danger'>$error_message</div>";
 }
 ?>
 
@@ -270,13 +294,37 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             </div>
 
             <div class="form-actions">
-                <button type="submit" class="btn btn-primary">
+                <button type="button" class="btn btn-primary" onclick="confirmSubmission()">
                     <i class="fas fa-paper-plane me-2"></i>Hantar Permohonan
                 </button>
             </div>
         </form>
     </div>
 </div>
+
+<!-- 添加确认对话框的 JavaScript -->
+<script>
+function confirmSubmission() {
+    Swal.fire({
+        title: 'Pengesahan',
+        text: 'Adakah anda pasti untuk menghantar permohonan berhenti?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Ya, Hantar',
+        cancelButtonText: 'Batal'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // 如果用户确认，提交表单
+            document.querySelector('form').submit();
+        }
+    });
+}
+</script>
+
+<!-- 添加 SweetAlert2 库 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <style>
 .application-card {
@@ -385,18 +433,24 @@ textarea.form-control {
 }
 
 .btn {
-    padding: 10px 20px;
-    border-radius: 8px;
-    font-weight: 500;
+    position: relative;
+    z-index: 9999;
+    padding: 8px 20px;
+    border: none !important;
+    border-radius: 25px;
+    color: white !important;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .btn-primary {
-    background: #4CAF50;
-    border: none;
+    background-color: #4CAF50;
 }
 
 .btn-primary:hover {
-    background: #45a049;
+    background-color: #45a049;
 }
 
 .btn-outline-secondary {
@@ -405,8 +459,34 @@ textarea.form-control {
 }
 
 .btn-outline-secondary:hover {
-    background: #2c3e50;
+    background-color: #6c757d;
     color: #fff;
+}
+
+.btn-status {
+    background-color: #FFB84C !important;
+}
+
+.btn-mainpage {
+    background-color: #FD8A8A !important;
+}
+
+.gap-3 {
+    gap: 1rem !important;
+}
+
+/* 确保图标显示 */
+.fas {
+    display: inline-block !important;
+}
+
+/* 确保按钮容器正确显示 */
+.d-flex {
+    display: flex !important;
+}
+
+.justify-content-center {
+    justify-content: center !important;
 }
 
 @media (max-width: 768px) {
@@ -423,5 +503,159 @@ textarea.form-control {
         height: 40px;
     }
 }
+
+/* 可以自定义 SweetAlert 样式 */
+.swal2-popup {
+    font-size: 1rem;
+}
+
+.swal2-title {
+    font-size: 1.4rem;
+}
+
+.swal2-confirm {
+    background-color: #75B798 !important;
+}
+
+.swal2-cancel {
+    background-color: #dc3545 !important;
+}
+
+.alert {
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    background-color: #fff3cd;
+}
+
+.alert-warning {
+    background-color: #fff3cd;
+    border-color: #ffeeba;
+}
+
+.alert i {
+    display: block;
+    color: #856404;
+}
+
+.alert-heading {
+    color: #856404;
+    margin-bottom: 1rem;
+}
+
+.btn-warning {
+    background-color: #ffc107;
+    border-color: #ffc107;
+    color: #000;
+}
+
+.btn-warning:hover {
+    background-color: #e0a800;
+    border-color: #d39e00;
+    color: #000;
+}
+
+.custom-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 8px 20px !important;
+    border-radius: 25px !important;
+    background-color: rgba(255, 255, 255, 0.3) !important;
+    color: white !important;
+    text-decoration: none !important;
+    backdrop-filter: blur(5px) !important;
+    transition: all 0.3s ease !important;
+}
+
+.custom-btn:hover {
+    background-color: rgba(255, 255, 255, 0.4) !important;
+}
+
+/* 移除任何可能的背景图片 */
+body::before,
+body::after,
+.container::before,
+.container::after,
+.alert::before,
+.alert::after {
+    display: none !important;
+}
+
+/* 确保按钮容器在最上层 */
+.mt-4 {
+    position: relative !important;
+    z-index: 9999 !important;
+}
+
+/* 移除任何背景和边框 */
+.container, .row, .col-md-8 {
+    background: none !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.warning-box {
+    background-color: rgba(255, 248, 240, 0.9);
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+    position: relative;
+    z-index: 1;
+}
+
+.button-container {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    position: relative;
+    z-index: 1000;
+}
+
+.solid-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 20px;
+    border-radius: 25px;
+    color: white;
+    text-decoration: none;
+    border: none;
+    position: relative;
+    z-index: 1000;
+    font-weight: 500;
+}
+
+.solid-btn:hover {
+    color: white;
+    text-decoration: none;
+}
+
+/* 移除背景图片对按钮的影响 */
+.button-container::before,
+.button-container::after,
+.solid-btn::before,
+.solid-btn::after {
+    display: none !important;
+}
+
+/* 确保按钮在最上层 */
+.solid-btn {
+    isolation: isolate;
+}
+
+a {
+    color: #75B798 !important;
+    text-decoration: none !important;
+}
+
+a:hover {
+    color: #5a8f75 !important;
+    text-decoration: none !important;
+}
+
+.fas {
+    margin-right: 5px;
+}
 </style>
-</style>
+
+<!-- 确保 Font Awesome 正确加载 -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
