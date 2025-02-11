@@ -50,7 +50,7 @@ include "footer.php";
 <div class="container mt-5">
     <div class="row">
         <!-- Left Sidebar -->
-        div class="col-md-3">
+        <div class="col-md-3">
             <div class="card shadow-sm">
                 <div class="card-body">
                     <div class="profile-sidebar">
