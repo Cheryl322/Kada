@@ -7,6 +7,11 @@ if (!isset($_SESSION['employeeID'])) {
     exit();
 }
 
+if (isset($_SESSION['formData'])) {
+    $formData = $_SESSION['formData'];
+    unset($_SESSION['formData']); // Clear the stored form data
+}
+
 include 'dbconnect.php';
 
 // Check registration status
@@ -212,7 +217,15 @@ $interestRate = $rateRow['rate'] ?? 2.00; // Default to 2% if no rate found
                     </div>
                 </div>
 
-                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="fieldName" class="form-label">Field Name</label>
+                        <input type="text" 
+                               name="fieldName" 
+                               value="<?php echo isset($formData['fieldName']) ? htmlspecialchars($formData['fieldName']) : ''; ?>"
+                               class="form-control">
+                    </div>
+                </div>
 
                 <div class="mt-3">
                     <button type="button" class="btn btn-primary next-step">Seterusnya</button>
@@ -337,15 +350,16 @@ $interestRate = $rateRow['rate'] ?? 2.00; // Default to 2% if no rate found
 
                         <div class="form-grid">
                             <div class="form-row">
+                            <div class="form-group col-md-6">
+                                    <label>No. Kad Pengenalan (eg. XXXXXXXXXXXX)</label>
+                                    <input type="text" class="form-control" name="guarantorIC1" id="guarantorIC1" required>
+                                    <div id="guarantor1Feedback" class="invalid-feedback"></div>
+                                </div>
                                 <div class="form-group col-md-6">
                                     <label>Nama (Seperti Dalam K/P)</label>
                                     <input type="text" class="form-control" name="guarantorName1" required>
                                 </div>
-                                <div class="form-group col-md-6">
-                                    <label>No. Kad Pengenalan</label>
-                                    <input type="text" class="form-control" name="guarantorIC1" id="guarantorIC1" required>
-                                    <div id="guarantor1Feedback" class="invalid-feedback"></div>
-                                </div>
+                                
                             </div>
 
                             <div class="form-row">
@@ -379,15 +393,16 @@ $interestRate = $rateRow['rate'] ?? 2.00; // Default to 2% if no rate found
 
                         <div class="form-grid">
                             <div class="form-row">
+                            <div class="form-group col-md-6">
+                                    <label>No. Kad Pengenalan (eg. XXXXXXXXXXXX)</label>
+                                    <input type="text" class="form-control" name="guarantorIC2" id="guarantorIC2" required>
+                                    <div id="guarantor2Feedback" class="invalid-feedback"></div>
+                                </div>
                                 <div class="form-group col-md-6">
                                     <label>Nama (Seperti Dalam K/P)</label>
                                     <input type="text" class="form-control" name="guarantorName2" required>
                                 </div>
-                                <div class="form-group col-md-6">
-                                    <label>No. Kad Pengenalan</label>
-                                    <input type="text" class="form-control" name="guarantorIC2" id="guarantorIC2" required>
-                                    <div id="guarantor2Feedback" class="invalid-feedback"></div>
-                                </div>
+                                
                             </div>
 
                             <div class="form-row">
@@ -1245,19 +1260,71 @@ $(document).ready(function() {
     }
 
     // Next button click
-    $('.next-step').click(function() {
-        if(currentStep < totalSteps) {
-            currentStep++;
-            updateSteps(currentStep);
+    $('.next-step').click(function(e) {
+        e.preventDefault();
+        
+        // Get current step
+        const currentStep = $(this).closest('.form-step');
+        const stepNumber = parseInt(currentStep.attr('id').replace('step', ''));
+        
+        // Check required fields
+        let canProceed = true;
+        currentStep.find('[required]').each(function() {
+            if (!$(this).val()) {
+                canProceed = false;
+                $(this).addClass('is-invalid');
+            } else {
+                $(this).removeClass('is-invalid');
+            }
+        });
+        
+        // Show error if fields are empty
+        if (!canProceed) {
+            Swal.fire({
+                title: 'Ralat!',
+                text: 'Sila lengkapkan semua maklumat yang diperlukan.',
+                icon: 'error',
+                confirmButtonText: 'OK',
+                confirmButtonColor: '#5CBA9B'
+            });
+            return false; // Stop here and don't proceed
+        }
+        
+        // Additional validation for guarantor step (step 3)
+        if (stepNumber === 3) {
+            const ic1Valid = $('#guarantorIC1').hasClass('is-valid');
+            const ic2Valid = $('#guarantorIC2').hasClass('is-valid');
+            
+            if (!ic1Valid || !ic2Valid) {
+                Swal.fire({
+                    title: 'Ralat!',
+                    text: 'Penjamin ini bukan ahli Koperasi KADA yang sah.',
+                    icon: 'error',
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#5CBA9B'
+                });
+                return false; // Stop here and don't proceed
+            }
+        }
+        
+        // Only if all validations pass, proceed to next step
+        if (canProceed) {
+            currentStep.hide();
+            $(`#step${stepNumber + 1}`).show();
+            updateProgressBar(stepNumber + 1);
         }
     });
 
     // Previous button click
-    $('.prev-step').click(function() {
-        if(currentStep > 1) {
-            currentStep--;
-            updateSteps(currentStep);
-        }
+    $('.prev-step').click(function(e) {
+        e.preventDefault();
+        const currentStep = $(this).closest('.form-step');
+        const stepNumber = parseInt(currentStep.attr('id').replace('step', ''));
+        
+        // Go to previous step
+        currentStep.hide();
+        $(`#step${stepNumber - 1}`).show();
+        updateProgressBar(stepNumber - 1);
     });
 
     // Initialize first step
@@ -1361,22 +1428,57 @@ $(document).ready(function() {
 
 <script>
 $(document).ready(function() {
-    // Function to calculate monthly payment
+    // Function to calculate monthly payment with interest
     function calculateMonthlyPayment() {
         const loanAmount = parseFloat($('#jumlah_pinjaman').val()) || 0;
         const loanTerm = parseFloat($('#tempoh_pembayaran').val()) || 0;
+        const annualInterestRate = parseFloat($('#kadar_faedah_value').val()) || 0;
         
-        // Simple calculation: loan amount divided by number of months
-        // You can modify this formula based on your interest rate requirements
         if (loanAmount > 0 && loanTerm > 0) {
-            const monthlyPayment = loanAmount / loanTerm;
+            // Convert annual rate to monthly rate (divide by 12 months and 100 for percentage)
+            const monthlyRate = (annualInterestRate / 100) / 12;
+            
+            // Calculate monthly payment using loan amortization formula
+            // Formula: PMT = P * (r * (1 + r)^n) / ((1 + r)^n - 1)
+            // Where: P = Principal, r = Monthly Interest Rate, n = Number of Payments
+            
+            const numerator = monthlyRate * Math.pow(1 + monthlyRate, loanTerm);
+            const denominator = Math.pow(1 + monthlyRate, loanTerm) - 1;
+            
+            let monthlyPayment;
+            if (monthlyRate === 0) {
+                // If no interest, simple division
+                monthlyPayment = loanAmount / loanTerm;
+            } else {
+                // With interest calculation
+                monthlyPayment = loanAmount * (numerator / denominator);
+            }
+            
+            // Round to 2 decimal places
+            monthlyPayment = Math.round(monthlyPayment * 100) / 100;
+            
+            // Update the monthly payment field
             $('#ansuran_bulanan').val(monthlyPayment.toFixed(2));
+            
+            // Optionally show total interest and total payment
+            const totalPayment = monthlyPayment * loanTerm;
+            const totalInterest = totalPayment - loanAmount;
+            
+            // If you want to display total interest and payment somewhere
+            if ($('#total_interest').length) {
+                $('#total_interest').text('RM ' + totalInterest.toFixed(2));
+                $('#total_payment').text('RM ' + totalPayment.toFixed(2));
+            }
         } else {
             $('#ansuran_bulanan').val('');
+            if ($('#total_interest').length) {
+                $('#total_interest').text('RM 0.00');
+                $('#total_payment').text('RM 0.00');
+            }
         }
     }
 
-    // Add event listeners to trigger calculation
+    // Add event listeners to recalculate when amount or period changes
     $('#jumlah_pinjaman, #tempoh_pembayaran').on('input', calculateMonthlyPayment);
 });
 </script>
@@ -1393,15 +1495,30 @@ $(document).ready(function() {
                 try {
                     const result = JSON.parse(response);
                     const inputField = $(`#guarantorIC${guarantorNum}`);
-                    const feedbackDiv = $(`#guarantor${guarantorNum}Feedback`);
+                    const nameField = $(`input[name="guarantorName${guarantorNum}"]`);
                     
                     if (result.valid) {
                         inputField.removeClass('is-invalid').addClass('is-valid');
-                        $(`#guarantorName${guarantorNum}`).val(result.name);
+                        nameField.val(result.name);
+                        nameField.prop('readonly', true);
+                        
+                        // Enable Seterusnya button if both ICs are valid
+                        if ($('#guarantorIC1').hasClass('is-valid') && $('#guarantorIC2').hasClass('is-valid')) {
+                            $('.btn-success').prop('disabled', false);
+                        }
                     } else {
                         inputField.removeClass('is-valid').addClass('is-invalid');
-                        feedbackDiv.text('Penjamin ini bukan ahli Koperasi KADA yang sah.');
-                        $(`#guarantorName${guarantorNum}`).val('');
+                        nameField.val('');
+                        nameField.prop('readonly', false);
+                        $('.btn-success').prop('disabled', true);
+                        
+                        Swal.fire({
+                            title: 'Ralat!',
+                            text: 'Penjamin ini bukan ahli Koperasi KADA yang sah.',
+                            icon: 'error',
+                            confirmButtonText: 'OK',
+                            confirmButtonColor: '#5CBA9B'
+                        });
                     }
                 } catch (e) {
                     console.error('Error:', e);
@@ -1410,34 +1527,10 @@ $(document).ready(function() {
         });
     }
 
-    // Add blur event listeners to IC input fields
-    $('#guarantorIC1').on('blur', function() {
-        validateGuarantor($(this).val(), 1);
-    });
-
-    $('#guarantorIC2').on('blur', function() {
-        validateGuarantor($(this).val(), 2);
-    });
-
-    // Modify the next-step button click for step 3
-    $('.next-step').click(function() {
-        if ($('#step3').is(':visible')) {
-            // Check if both guarantors are valid
-            if ($('#guarantorIC1').hasClass('is-invalid') || $('#guarantorIC2').hasClass('is-invalid')) {
-                Swal.fire({
-                    title: 'Ralat!',
-                    text: 'Sila pastikan kedua-dua penjamin adalah ahli Koperasi KADA yang sah.',
-                    icon: 'error',
-                    confirmButtonText: 'OK'
-                });
-                return false;
-            }
-        }
-        // Continue with normal next step logic
-        if(currentStep < totalSteps) {
-            currentStep++;
-            updateSteps(currentStep);
-        }
+    // Add event listeners for IC input fields
+    $('#guarantorIC1, #guarantorIC2').on('change', function() {
+        const guarantorNum = this.id.slice(-1);
+        validateGuarantor($(this).val(), guarantorNum);
     });
 });
 </script>
@@ -1500,31 +1593,136 @@ document.getElementById('submitBtn').addEventListener('click', function(e) {
 </script>
 
 <script>
-function submitForm() {
-    console.log('Form submission started'); // Debug line
+// Add this validation function
+function validateStep(stepNumber) {
+    const currentStep = document.getElementById(`step${stepNumber}`);
+    const requiredFields = currentStep.querySelectorAll('[required]');
+    let isValid = true;
+
+    // Check each required field
+    requiredFields.forEach(field => {
+        if (!field.value || field.value.trim() === '') {
+            isValid = false;
+            field.classList.add('is-invalid');
+            
+            // Add error message if not exists
+            if (!field.nextElementSibling?.classList.contains('invalid-feedback')) {
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'invalid-feedback';
+                errorDiv.textContent = 'Sila isi ruangan ini';
+                field.parentNode.appendChild(errorDiv);
+            }
+        }
+    });
+
+    if (!isValid) {
+        Swal.fire({
+            // title: 'Ralat!',
+            text: 'Sila lengkapkan semua maklumat yang diperlukan.',
+            // icon: 'error',
+            confirmButtonText: 'OK',
+            confirmButtonColor: '#5CBA9B'
+        });
+        return false;
+    }
+
+    return true;
+}
+
+// Replace your existing next-step button click handler
+$('.next-step').click(function(e) {
+    e.preventDefault();
+    const currentStep = $(this).closest('.form-step');
+    const stepNumber = parseInt(currentStep.attr('id').replace('step', ''));
     
-    // Get the form element
-    var form = document.getElementById('loanForm');
+    if (validateStep(stepNumber)) {
+        currentStep.hide();
+        $(`#step${stepNumber + 1}`).show();
+        updateProgressBar(stepNumber + 1);
+    }
+});
+</script>
+
+<script>
+function updateProgressBar(stepNumber) {
+    // Remove all active and completed classes first
+    $('.step-item').removeClass('active completed');
     
-    // Submit the form
-    if (form) {
-        form.submit();
-    } else {
-        console.log('Form not found'); // Debug line
+    // Update all steps up to current
+    for(let i = 1; i <= 4; i++) {
+        if(i < stepNumber) {
+            // Previous steps should be marked as completed
+            $(`.step-item:nth-child(${i})`).addClass('completed');
+        } else if(i === stepNumber) {
+            // Current step should be marked as active
+            $(`.step-item:nth-child(${i})`).addClass('active');
+        }
     }
 }
 
-// Add form submission event listener
-document.getElementById('loanForm').addEventListener('submit', function(e) {
-    console.log('Form submitted via event listener'); // Debug line
+// Add this to your existing click handlers
+$('.next-step').click(function(e) {
+    e.preventDefault();
+    const currentStep = $(this).closest('.form-step');
+    const stepNumber = parseInt(currentStep.attr('id').replace('step', ''));
     
-    // Prevent default only if validation fails
-    if (!this.checkValidity()) {
-        e.preventDefault();
+    // Check if all required fields in current step are filled
+    const requiredFields = currentStep.find('[required]');
+    let isValid = true;
+    
+    requiredFields.each(function() {
+        if (!$(this).val()) {
+            isValid = false;
+            $(this).addClass('is-invalid');
+        } else {
+            $(this).removeClass('is-invalid');
+        }
+    });
+
+    if (!isValid) {
+        Swal.fire({
+            title: 'Ralat!',
+            text: 'Sila lengkapkan semua maklumat yang diperlukan.',
+            icon: 'error',
+            confirmButtonText: 'OK',
+            confirmButtonColor: '#5CBA9B'
+        });
         return false;
     }
     
-    // If validation passes, let the form submit
-    return true;
+    // Additional validation for guarantor step
+    if (stepNumber === 3) {
+        const ic1Valid = $('#guarantorIC1').hasClass('is-valid');
+        const ic2Valid = $('#guarantorIC2').hasClass('is-valid');
+        
+        if (!ic1Valid || !ic2Valid) {
+            Swal.fire({
+                // title: 'Ralat!',
+                text: 'Penjamin ini bukan ahli Koperasi KADA yang sah.',
+                icon: 'error',
+                confirmButtonText: 'OK',
+                confirmButtonColor: '#5CBA9B'
+            });
+            return false;
+        }
+    }
+    
+    // If all validations pass, proceed to next step
+    if (isValid) {
+        currentStep.hide();
+        $(`#step${stepNumber + 1}`).show();
+        updateProgressBar(stepNumber + 1);
+    }
+});
+
+$('.prev-step').click(function(e) {
+    e.preventDefault();
+    const currentStep = $(this).closest('.form-step');
+    const stepNumber = parseInt(currentStep.attr('id').replace('step', ''));
+    
+    // Go to previous step
+    currentStep.hide();
+    $(`#step${stepNumber - 1}`).show();
+    updateProgressBar(stepNumber - 1);
 });
 </script>

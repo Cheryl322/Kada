@@ -32,4 +32,4 @@ if(isset($_POST['ic'])) {
 }
 
 $conn->close();
-?> 
+?>

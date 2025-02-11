@@ -158,7 +158,6 @@
     justify-content: space-between;
     max-width: 100%;
     flex-wrap: nowrap;
-    transition: all 0.3s ease-in-out;
 }
 
 .table-wrapper {
@@ -324,7 +323,6 @@
 .sidebar-open .content-wrapper {
     margin-left: 250px;
     width: calc(100% - 270px);
-    transition: all 0.3s ease-in-out;
 }
 
 /* Header styles */
@@ -380,11 +378,11 @@
 .sidebar-open .content-wrapper {
     margin-left: 250px;
     width: calc(100% - 270px);
-    transition: all 0.3s ease-in-out;
 }
 
 body {
-    transition: all 0.3s ease-in-out;
+    /* Remove this line */
+    /* transition: all 0.3s ease-in-out; */
 }
 </style>
 </head>
