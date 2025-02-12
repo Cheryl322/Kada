@@ -384,6 +384,40 @@ body {
     /* Remove this line */
     /* transition: all 0.3s ease-in-out; */
 }
+
+/* Update these dropdown styles */
+.dropdown-menu {
+    padding: 8px 0;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    border: 1px solid #eee;
+}
+
+.dropdown-item {
+    padding: 8px 20px;
+    color: #333;
+    transition: background-color 0.3s;
+}
+
+.dropdown-item:hover {
+    background-color: transparent; /* Remove white background on hover */
+    color: #333; /* Keep text color consistent */
+}
+
+.dropdown-item i {
+    color: #666;
+    width: 20px;
+}
+
+/* Make profile pic clickable */
+.icon-button {
+    cursor: pointer;
+}
+
+/* Add hover effect to profile pic */
+.profile-pic:hover {
+    opacity: 0.8;
+    transition: opacity 0.3s;
+}
 </style>
 </head>
 
@@ -399,15 +433,13 @@ body {
         </a>
     </div>
     <div class="top-right-icons">
-        <div class="icon-button">
-            <i class="fas fa-envelope"></i>
-        </div>
-        <div class="icon-button">
-            <i class="fas fa-bell"></i>
-            <span class="notification-badge">3</span>
-        </div>
-        <div class="icon-button">
-            <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Profile" class="profile-pic">
+        <div class="dropdown">
+            <div class="icon-button" id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Profile" class="profile-pic">
+            </div>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
+                <li><a class="dropdown-item" href="logout.php"><i class="fas fa-sign-out-alt me-2"></i>Log Keluar</a></li>
+            </ul>
         </div>
     </div>
 </div>
