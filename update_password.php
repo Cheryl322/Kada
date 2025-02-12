@@ -10,7 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $newPassword = $_POST['newPassword'];
     
     try {
-        // 验证当前密码
+        // Get the current hashed password
         $checkPassword = "SELECT password FROM tb_employee WHERE employeeID = ?";
         $stmt = mysqli_prepare($conn, $checkPassword);
         mysqli_stmt_bind_param($stmt, "s", $employeeID);
@@ -22,15 +22,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             throw new Exception('Pengguna tidak dijumpai');
         }
         
-        // 直接比较密码
-        if ($currentPassword !== $user['password']) {
+        // Verify the current password using password_verify
+        if (!password_verify($currentPassword, $user['password'])) {
             throw new Exception('Kata laluan semasa tidak tepat');
         }
         
-        // 更新密码 - 不使用 password_hash
+        // Hash the new password before saving
+        $hashedNewPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+        
+        // Update with the new hashed password
         $updatePassword = "UPDATE tb_employee SET password = ? WHERE employeeID = ?";
         $stmt = mysqli_prepare($conn, $updatePassword);
-        mysqli_stmt_bind_param($stmt, "ss", $newPassword, $employeeID);
+        mysqli_stmt_bind_param($stmt, "ss", $hashedNewPassword, $employeeID);
         
         if (mysqli_stmt_execute($stmt)) {
             echo json_encode([
