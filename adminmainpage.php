@@ -207,21 +207,26 @@ if (!isset($_SESSION['employeeID']) || $_SESSION['role'] !== 'admin') {
 /* Ensure consistent column widths across both tables */
 .custom-table th:nth-child(1),
 .custom-table td:nth-child(1) {
-    width: 10%;
+    width: 8%;
 }
 
 .custom-table th:nth-child(2),
 .custom-table td:nth-child(2) {
-    width: 20%;
+    width: 15%;
 }
 
 .custom-table th:nth-child(3),
 .custom-table td:nth-child(3) {
-    width: 45%;
+    width: 35%;
 }
 
 .custom-table th:nth-child(4),
 .custom-table td:nth-child(4) {
+    width: 17%;
+}
+
+.custom-table th:nth-child(5),
+.custom-table td:nth-child(5) {
     width: 25%;
 }
 
@@ -690,6 +695,29 @@ if (!isset($_SESSION['employeeID']) || $_SESSION['role'] !== 'admin') {
 .navbar {
     z-index: 999 !important; /* Higher z-index for sidebar */
 }
+
+.status-container {
+    padding: 6px 12px;
+    border-radius: 20px;
+    text-align: center;
+    display: inline-block;
+    font-weight: 500;
+}
+
+.status-ditolak {
+    background-color: #ffebee;
+    color: #c62828;
+}
+
+.status-diluluskan {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+}
+
+.status-belum-selesai {
+    background-color: #fff3e0;
+    color: #ef6c00;
+}
 </style>
 </head>
 
@@ -753,7 +781,7 @@ if (!isset($_SESSION['employeeID']) || $_SESSION['role'] !== 'admin') {
             <div class="table-wrapper">
                 <div class="table-header">
                     <h3>Senarai Ahli Semasa</h3>
-                    <a href="senaraiahli.php" class="see-more-link">
+                    <a href="senaraiPermohonanAhli.php" class="see-more-link">
                         Lihat Semua <i class="fas fa-arrow-right"></i>
                     </a>
                 </div>
@@ -763,6 +791,7 @@ if (!isset($_SESSION['employeeID']) || $_SESSION['role'] !== 'admin') {
                             <th>No.</th>
                             <th>ID</th>
                             <th>Nama</th>
+                            <th>Status</th>
                             <th>Tarikh Daftar</th>
                         </tr>
                     </thead>
@@ -770,22 +799,51 @@ if (!isset($_SESSION['employeeID']) || $_SESSION['role'] !== 'admin') {
                         <?php
                         include 'dbconnect.php';
                         
-                        $sql = "SELECT employeeID,memberName, created_at FROM tb_member ORDER BY created_at DESC LIMIT 5";
+                        $sql = "SELECT 
+                                    m.employeeID,
+                                    m.memberName,
+                                    m.created_at,
+                                    COALESCE(
+                                        REPLACE(
+                                            (SELECT regisStatus 
+                                             FROM tb_memberregistration_memberapplicationdetails 
+                                             WHERE memberRegistrationID = m.employeeID 
+                                             ORDER BY regisDate DESC 
+                                             LIMIT 1),
+                                            'Pending',
+                                            'Belum Selesai'
+                                        ), 
+                                        'Belum Selesai'
+                                    ) as regisStatus
+                                FROM tb_member m
+                                ORDER BY m.created_at DESC 
+                                LIMIT 5";
+                        
                         $result = $conn->query($sql);
                         
                         if ($result->num_rows > 0) {
                             $count = 1;
                             while($row = $result->fetch_assoc()) {
+                                $statusClass = '';
+                                if ($row['regisStatus'] == 'Belum Selesai') {
+                                    $statusClass = 'status-belum-selesai';
+                                } elseif ($row['regisStatus'] == 'Diluluskan') {
+                                    $statusClass = 'status-diluluskan';
+                                } elseif ($row['regisStatus'] == 'Ditolak') {
+                                    $statusClass = 'status-ditolak';
+                                }
+                                
                                 echo "<tr>";
                                 echo "<td>" . $count . "</td>";
                                 echo "<td>" . $row['employeeID'] . "</td>";
                                 echo "<td>" . $row['memberName'] . "</td>";
+                                echo "<td><div class='status-container " . $statusClass . "'>" . $row['regisStatus'] . "</div></td>";
                                 echo "<td>" . date('d/m/Y', strtotime($row['created_at'])) . "</td>";
                                 echo "</tr>";
                                 $count++;
                             }
                         } else {
-                            echo "<tr><td colspan='3'>Tiada rekod ditemui</td></tr>";
+                            echo "<tr><td colspan='5'>Tiada rekod ditemui</td></tr>";
                         }
                         $conn->close();
                         ?>
@@ -796,7 +854,7 @@ if (!isset($_SESSION['employeeID']) || $_SESSION['role'] !== 'admin') {
             <div class="table-wrapper">
                 <div class="table-header">
                     <h3>Senarai Pinjaman Terkini</h3>
-                    <a href="senaraipembiayaan.php" class="see-more-link">
+                    <a href="senaraiPermohonanPinjaman.php" class="see-more-link">
                         Lihat Semua <i class="fas fa-arrow-right"></i>
                     </a>
                 </div>
@@ -806,6 +864,7 @@ if (!isset($_SESSION['employeeID']) || $_SESSION['role'] !== 'admin') {
                             <th>No.</th>
                             <th>ID</th>
                             <th>Nama</th>
+                            <th>Status</th>
                             <th>Tarikh Daftar</th>
                         </tr>
                     </thead>
@@ -813,25 +872,44 @@ if (!isset($_SESSION['employeeID']) || $_SESSION['role'] !== 'admin') {
                         <?php
                         include 'dbconnect.php';
                         
-                        $sql = "SELECT l.loanApplicationID, m.memberName, l.created_at 
-                               FROM tb_loan l
-                               JOIN tb_member m ON l.employeeID = m.employeeID
-                               ORDER BY l.loanApplicationID DESC LIMIT 5";
+                        $sql = "SELECT 
+                                    l.loanApplicationID, 
+                                    m.memberName, 
+                                    l.loanApplicationDate,
+                                    COALESCE(
+                                        REPLACE(l.loanStatus, 'Pending', 'Belum Selesai'),
+                                        'Belum Selesai'
+                                    ) as loanStatus
+                                FROM tb_loanapplication l
+                                JOIN tb_member m ON l.employeeID = m.employeeID
+                                ORDER BY l.loanApplicationID DESC 
+                                LIMIT 5";
+                        
                         $result = $conn->query($sql);
                         
                         if ($result->num_rows > 0) {
                             $count = 1;
                             while($row = $result->fetch_assoc()) {
+                                $statusClass = '';
+                                if ($row['loanStatus'] == 'Belum Selesai') {
+                                    $statusClass = 'status-belum-selesai';
+                                } elseif ($row['loanStatus'] == 'Diluluskan') {
+                                    $statusClass = 'status-diluluskan';
+                                } elseif ($row['loanStatus'] == 'Ditolak') {
+                                    $statusClass = 'status-ditolak';
+                                }
+                                
                                 echo "<tr>";
                                 echo "<td>" . $count . "</td>";
                                 echo "<td>" . $row['loanApplicationID'] . "</td>";
                                 echo "<td>" . $row['memberName'] . "</td>";
-                                echo "<td>" . date('d/m/Y', strtotime($row['created_at'])) . "</td>";
+                                echo "<td><div class='status-container " . $statusClass . "'>" . $row['loanStatus'] . "</div></td>";
+                                echo "<td>" . date('d/m/Y', strtotime($row['loanApplicationDate'])) . "</td>";
                                 echo "</tr>";
                                 $count++;
                             }
                         } else {
-                            echo "<tr><td colspan='4'>Tiada rekod ditemui</td></tr>";
+                            echo "<tr><td colspan='5'>Tiada rekod ditemui</td></tr>";
                         }
                         ?>
                     </tbody>
