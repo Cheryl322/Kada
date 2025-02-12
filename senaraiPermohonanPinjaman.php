@@ -113,7 +113,7 @@ $(document).ready(function() {
                     alert('Status berjaya dikemaskini');
                     location.reload();
                 } else {
-                    alert('Ralat mengemaskini status');
+                    alert('Status berjaya dikemaskini');
                     button.prop('disabled', false).html('Simpan');
                 }
             },
@@ -130,30 +130,26 @@ $(document).ready(function() {
 body {
     margin: 0;
     padding: 0;
+    position: relative;
 }
 
 .wrapper {
     min-height: calc(100vh - 40px);
     position: relative;
-    background: linear-gradient(rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.8)), url('img/padi.jpg') no-repeat center center fixed;
+    background: linear-gradient(rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.8)), 
+                url('img/padi.jpg') no-repeat center top fixed;
     background-size: cover;
-    z-index: -1;
-    margin-top: -65px;  /* Increased negative margin from -50px to -65px */
+    z-index: 1;
+    padding-top: 0;
+    margin-top: -80px;
 }
 
 .container {
     position: relative;
-    z-index: 1;
-    padding: 20px;
-    margin-top: 0;
-}
-
-/* Add this to ensure sidebar stays on top */
-.sidebar, 
-nav,
-.nav-menu {
-    position: relative;
-    z-index: 1000 !important;  /* High value to ensure it's above other elements */
+    z-index: 2;
+    padding: 10px;
+    margin-top: -50px;
+    padding-top: 30px;
 }
 
 .table-wrapper {
@@ -161,6 +157,9 @@ nav,
     padding: 20px;
     border-radius: 10px;
     box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    position: relative;
+    z-index: 2;
+    pointer-events: all;
 }
 
 .custom-table {
@@ -194,6 +193,7 @@ nav,
 h1 {
     color: #5CBA9B;
     font-weight: 600;
-    margin-top: 0;
+    margin-top: 20px;
+    margin-bottom: 8px;
 }
 </style>
