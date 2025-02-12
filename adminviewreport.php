@@ -1,6 +1,124 @@
-<?php 
+<?php
 session_start();
+
+// Add this near the top of the file, after session_start()
+include 'dbconnect.php';
+
+// Yearly query
+$yearlyQuery = "SELECT 
+    YEAR(created_at) as year,
+    COUNT(DISTINCT CASE WHEN type = 'member' THEN employeeID END) as new_members,
+    COUNT(DISTINCT CASE WHEN type = 'loan' THEN loanApplicationID END) as loan_applications,
+    SUM(CASE WHEN type = 'loan' THEN amountRequested ELSE 0 END) as total_loan_amount
+FROM (
+    SELECT employeeID, NULL as loanApplicationID, created_at, 'member' as type, 0 as amountRequested 
+    FROM tb_member
+    UNION ALL
+    SELECT employeeID, loanApplicationID, created_at, 'loan' as type, amountRequested 
+    FROM tb_loan
+) combined_data
+GROUP BY YEAR(created_at)
+ORDER BY year DESC";
+
+$yearlyResult = mysqli_query($conn, $yearlyQuery);
+
+// Summary query (monthly/yearly based on report type)
+$reportType = isset($_POST['reportType']) ? $_POST['reportType'] : 'yearly';
+
+if ($reportType === 'monthly') {
+    $summaryQuery = "SELECT 
+        DATE_FORMAT(created_at, '%Y-%m') as period,
+        COUNT(DISTINCT CASE WHEN type = 'member' THEN employeeID END) as new_members,
+        COUNT(DISTINCT CASE WHEN type = 'loan' THEN loanApplicationID END) as loan_applications,
+        SUM(CASE WHEN type = 'loan' THEN amountRequested ELSE 0 END) as total_loan_amount
+    FROM (
+        SELECT employeeID, NULL as loanApplicationID, created_at, 'member' as type, 0 as amountRequested 
+        FROM tb_member
+        UNION ALL
+        SELECT employeeID, loanApplicationID, created_at, 'loan' as type, amountRequested 
+        FROM tb_loan
+    ) combined_data
+    WHERE YEAR(created_at) = YEAR(CURRENT_DATE)
+    GROUP BY DATE_FORMAT(created_at, '%Y-%m')
+    ORDER BY period ASC";
+} else {
+    $summaryQuery = $yearlyQuery;
+}
+
+$summaryResult = mysqli_query($conn, $summaryQuery);
+
+// Add error checking
+if (!$summaryResult) {
+    error_log("MySQL Error: " . mysqli_error($conn));
+}
+
+// Update the delete handling code at the top of the file
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_employeeID'])) {
+    include 'dbconnect.php';  // Make sure we have database connection
+    
+    $employeeIDToDelete = $_POST['delete_employeeID'];
+    $loanApplicationIDToDelete = isset($_POST['delete_loanApplicationID']) ? $_POST['delete_loanApplicationID'] : null;
+    
+    try {
+        // Start transaction
+        mysqli_begin_transaction($conn);
+        
+        if ($loanApplicationIDToDelete) {
+            // Delete loan entry
+            $stmt = mysqli_prepare($conn, "DELETE FROM tb_loan WHERE employeeID = ? AND loanApplicationID = ?");
+            mysqli_stmt_bind_param($stmt, "ss", $employeeIDToDelete, $loanApplicationIDToDelete);
+            mysqli_stmt_execute($stmt);
+        } else {
+            // Delete member entry
+            $stmt = mysqli_prepare($conn, "DELETE FROM tb_member WHERE employeeID = ?");
+            mysqli_stmt_bind_param($stmt, "s", $employeeIDToDelete);
+            mysqli_stmt_execute($stmt);
+        }
+        
+        // If we get here, database update was successful
+        // Now update session data
+        if (isset($_SESSION['reportData']) && is_array($_SESSION['reportData'])) {
+            $tempData = [];
+            
+            foreach ($_SESSION['reportData'] as $entry) {
+                if ($loanApplicationIDToDelete) {
+                    // For loan entries
+                    if ($entry['employeeID'] !== $employeeIDToDelete || 
+                        $entry['loanApplicationID'] !== $loanApplicationIDToDelete) {
+                        $tempData[] = $entry;
+                    }
+                } else {
+                    // For member entries
+                    if ($entry['employeeID'] !== $employeeIDToDelete) {
+                        $tempData[] = $entry;
+                    }
+                }
+            }
+            
+            $_SESSION['reportData'] = $tempData;
+        }
+        
+        // Commit transaction
+        mysqli_commit($conn);
+        
+        // Send success response
+        header('Content-Type: application/json');
+        echo json_encode(['success' => true]);
+        
+    } catch (Exception $e) {
+        // Rollback transaction on error
+        mysqli_rollback($conn);
+        
+        header('Content-Type: application/json');
+        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+    }
+    
+    exit();
+}
+
+// Include header after handling redirects
 include 'headeradmin.php';
+echo '<title>Cek Laporan</title>';
 
 // Add delete period functionality
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['period']) && isset($_POST['reportType'])) {
@@ -31,9 +149,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['period']) && isset($_
     exit();
 }
 
-// Add title tag right after header inclusion
-echo '<title>Cek Laporan</title>';
-
 // Initialize reportData array and reportType if not exists
 if (!isset($_SESSION['reportData'])) {
     $_SESSION['reportData'] = [];
@@ -47,48 +162,53 @@ $isLoanReport = $_SESSION['reportType'] === 'pembiayaan';
 
 // Process new selections from hasilreport.php
 if (isset($_POST['selected_members']) && is_array($_POST['selected_members'])) {
-    include 'dbconnect.php';
-    
-    // Debug output
-    error_log("Selected members: " . print_r($_POST['selected_members'], true));
-    error_log("Report type: " . $_POST['reportType']);
-    
     try {
-        $selectedMembers = $_POST['selected_members'];
-        $_SESSION['reportType'] = isset($_POST['reportType']) ? $_POST['reportType'] : 'member';
-        $isLoanReport = $_SESSION['reportType'] === 'pembiayaan';
+        // Include database connection
+        require_once 'dbconnect.php';
         
-        // Debug output
-        error_log("Is loan report: " . ($isLoanReport ? 'true' : 'false'));
+        if (!isset($conn) || !$conn) {
+            throw new Exception("Database connection failed");
+        }
         
-        if (!empty($selectedMembers)) {
-            // Create a set of existing IDs to avoid duplicates
-            $existingIds = array();
+        // Initialize reportType if not set
+        if (!isset($_SESSION['reportType'])) {
+            $_SESSION['reportType'] = 'member';
+        }
+        
+        // Safely get reportType from POST or use session value
+        $reportType = isset($_POST['reportType']) ? $_POST['reportType'] : $_SESSION['reportType'];
+        $_SESSION['reportType'] = $reportType;
+        
+        $selectedMembers = array_filter($_POST['selected_members']); // Remove empty values
+        $isLoanReport = $reportType === 'pembiayaan';
+        
+        // Initialize reportData if not set
+        if (!isset($_SESSION['reportData'])) {
+            $_SESSION['reportData'] = array();
+        }
+        
+        // Create existingIds array
+        $existingIds = array();
+        if (!empty($_SESSION['reportData']) && is_array($_SESSION['reportData'])) {
             foreach ($_SESSION['reportData'] as $item) {
-                if ($isLoanReport) {
-                    // For loan reports, use combination of employeeID and loanApplicationID
-                    $existingIds[] = $item['employeeID'] . '_' . $item['loanApplicationID'];
-                } else {
-                    // For member reports, just use employeeID
-                    $existingIds[] = $item['employeeID'];
+                if (is_array($item)) {  // Add check to ensure $item is an array
+                    if ($isLoanReport && isset($item['employeeID'], $item['loanApplicationID'])) {
+                        $existingIds[] = $item['employeeID'] . '_' . $item['loanApplicationID'];
+                    } elseif (isset($item['employeeID'])) {
+                        $existingIds[] = $item['employeeID'];
+                    }
                 }
             }
-            
+        }
+        
+        if (!empty($selectedMembers)) {
             // Filter out already existing members/loans
-            $newMembers = array_filter($selectedMembers, function($id) use ($existingIds, $isLoanReport, $conn) {
+            $newMembers = array_filter($selectedMembers, function($id) use ($existingIds, $isLoanReport) {
                 if ($isLoanReport) {
-                    // For loan reports, get both employeeID and loanApplicationID
-                    $query = "SELECT employeeID, loanApplicationID FROM tb_loan WHERE loanApplicationID = ?";
-                    $stmt = mysqli_prepare($conn, $query);
-                    mysqli_stmt_bind_param($stmt, 's', $id);
-                    mysqli_stmt_execute($stmt);
-                    $result = mysqli_stmt_get_result($stmt);
-                    $row = mysqli_fetch_assoc($result);
-                    
-                    // Check if this combination already exists
-                    return !in_array($row['employeeID'] . '_' . $row['loanApplicationID'], $existingIds);
+                    // For loan reports, check the combined ID
+                    return !in_array($id, $existingIds);
                 } else {
-                    // For member reports, just check employeeID
+                    // For member reports, check just the ID
                     return !in_array($id, $existingIds);
                 }
             });
@@ -195,6 +315,7 @@ if (isset($_POST['selected_members']) && is_array($_POST['selected_members'])) {
         }
     } catch (Exception $e) {
         error_log("Error in processing: " . $e->getMessage());
+        $_SESSION['error_message'] = "Error processing data: " . $e->getMessage();
     }
 }
 
@@ -221,24 +342,23 @@ if (!empty($_SESSION['reportData'])) {
 
 $reportData = $_SESSION['reportData'];
 
-// Handle delete requests
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_index'])) {
-    $indexToDelete = (int)$_POST['delete_index'];
-    if (isset($_SESSION['reportData'][$indexToDelete])) {
-        array_splice($_SESSION['reportData'], $indexToDelete, 1);
-    }
-}
-
 // Use the session data for display
 $reportData = $_SESSION['reportData'];
+
+// Add this function at the top of the file
+function convertMonthToMalay($date) {
+    $english_months = array('January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December');
+    $malay_months = array('Januari', 'Februari', 'Mac', 'April', 'Mei', 'Jun', 'Julai', 'Ogos', 'September', 'Oktober', 'November', 'Disember');
+    
+    return str_replace($english_months, $malay_months, $date);
+}
+
 ?>
 
 <!-- Update the Cek Laporan section with container styling -->
-<div class="report-container" style="margin: 20px; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-    <h3 style="color: rgb(34, 119, 210); margin-bottom: 20px;">Cek Laporan</h3>
-    
-    <!-- Search bar -->
-    <div class="d-flex justify-content-end align-items-center mb-3">
+<div class="report-container" style="margin: 20px; margin-top: 100px; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 style="color: rgb(34, 119, 210); margin-bottom: 0;">Cek Laporan</h3>
         <div style="width: 300px;">
             <input type="text" id="searchInput" class="form-control" placeholder="Cari...">
         </div>
@@ -276,7 +396,7 @@ $reportData = $_SESSION['reportData'];
                     foreach ($pageItems as $index => $data): 
                         $displayIndex = $startIndex + $index + 1;
                 ?>
-                    <tr>
+                    <tr id="row_<?php echo $data['employeeID'] . '_' . ($data['reportType'] === 'pembiayaan' ? $data['loanApplicationID'] : ''); ?>">
                         <td><?php echo $displayIndex; ?></td>
                         <td><?php echo htmlspecialchars($data['memberName']); ?></td>
                         <td><?php echo htmlspecialchars($data['employeeID']); ?></td>
@@ -296,12 +416,10 @@ $reportData = $_SESSION['reportData'];
                         <td class="text-center">
                             <div class="btn-group" role="group">
                                 <?php if ($data['reportType'] === 'pembiayaan'): ?>
-                                    <button class="btn btn-primary view-statement-btn" 
-                                            data-period="<?php echo date('Y-m', strtotime($data['tarikh_pembiayaan'])); ?>" 
-                                            data-type="monthly">
+                                    <button class="btn btn-primary" onclick="viewFinancialStatement('<?php echo $data['loanApplicationID']; ?>', '<?php echo $data['reportType']; ?>')">
                                         Lihat Penyata
                                     </button>
-                                    <button class="btn btn-success" onclick="downloadFinancialStatement('<?php echo $data['loanApplicationID']; ?>', '<?php echo isset($data['reportType']) ? $data['reportType'] : 'member'; ?>')">
+                                    <button class="btn btn-success" onclick="downloadFinancialStatement('<?php echo $data['loanApplicationID']; ?>', '<?php echo $data['reportType']; ?>')">
                                         <i class="fas fa-download"></i>
                                     </button>
                                 <?php else: ?>
@@ -310,9 +428,13 @@ $reportData = $_SESSION['reportData'];
                             </div>
                         </td>
                         <td class="text-center">
-                            <button class="btn btn-danger btn-sm" onclick="deleteEntry(<?php echo $startIndex + $index; ?>)">
-                                Padam
-                            </button>
+                            <form method="POST" style="display: inline;" onsubmit="return handleDelete(this, '<?php echo $data['employeeID']; ?>', '<?php echo ($data['reportType'] === 'pembiayaan' ? $data['loanApplicationID'] : ''); ?>')">
+                                <input type="hidden" name="delete_employeeID" value="<?php echo htmlspecialchars($data['employeeID']); ?>">
+                                <?php if ($data['reportType'] === 'pembiayaan'): ?>
+                                    <input type="hidden" name="delete_loanApplicationID" value="<?php echo htmlspecialchars($data['loanApplicationID']); ?>">
+                                <?php endif; ?>
+                                <button type="submit" class="btn btn-danger">Padam</button>
+                            </form>
                         </td>
                     </tr>
                 <?php 
@@ -320,7 +442,7 @@ $reportData = $_SESSION['reportData'];
                 else: 
                 ?>
                     <tr>
-                        <td colspan="9" class="text-center">Tiada data</td>
+                        <td colspan="9" class="text-center">Tiada rekod ditemui</td>
                     </tr>
                 <?php endif; ?>
             </tbody>
@@ -362,140 +484,173 @@ $reportData = $_SESSION['reportData'];
     </div>
 </div>
 
-<!-- Ringkasan Laporan container (already styled correctly) -->
+<!-- Ringkasan Laporan container -->
 <div class="report-summary" style="margin: 20px; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
     <h3 style="color: rgb(34, 119, 210); margin-bottom: 20px;">Ringkasan Laporan</h3>
     
-    <?php
-    if ($_SESSION['reportType'] === 'monthly' || $_SESSION['reportType'] === 'yearly') {
-        include 'dbconnect.php';
-        
-        $period = $_SESSION['reportType'] === 'monthly' ? 'MONTH' : 'YEAR';
-        $format = $_SESSION['reportType'] === 'monthly' ? '%Y-%m' : '%Y';
-        
-        // Query for member registrations
-        $memberQuery = "SELECT 
-            DATE_FORMAT(created_at, '$format') as period,
-            COUNT(*) as count
-        FROM tb_member
-        GROUP BY period
-        ORDER BY period DESC";
-        
-        // Query for loan applications
-        $loanQuery = "SELECT 
-            DATE_FORMAT(created_at, '$format') as period,
-            COUNT(*) as count,
-            SUM(amountRequested) as total_amount
-        FROM tb_loan
-        GROUP BY period
-        ORDER BY period DESC";
-        
-        $memberResult = $conn->query($memberQuery);
-        $loanResult = $conn->query($loanQuery);
-        ?>
-        
-        <div class="table-responsive">
-            <table class="table table-bordered table-hover">
-                <thead class="table-light">
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover">
+            <thead class="table-light">
+                <tr>
+                    <th>Bulan</th>
+                    <th>Jumlah Ahli Baru</th>
+                    <th>Jumlah Pembiayaan</th>
+                    <th>Nilai Pembiayaan (RM)</th>
+                    <th>Laporan</th>
+                    <th>Tindakan</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php 
+                $months = array(
+                    '01' => 'Januari', '02' => 'Februari', '03' => 'Mac',
+                    '04' => 'April', '05' => 'Mei', '06' => 'Jun',
+                    '07' => 'Julai', '08' => 'Ogos', '09' => 'September',
+                    '10' => 'Oktober', '11' => 'November', '12' => 'Disember'
+                );
+
+                if ($summaryResult && mysqli_num_rows($summaryResult) > 0): 
+                    $monthlyData = array();
+                    while ($row = mysqli_fetch_assoc($summaryResult)) {
+                        $month = date('m', strtotime($row['period']));
+                        $monthlyData[$month] = $row;
+                    }
+
+                    $total_members = 0;
+                    $total_loans = 0;
+                    $total_amount = 0;
+
+                    foreach ($months as $monthNum => $monthName):
+                        $row = isset($monthlyData[$monthNum]) ? $monthlyData[$monthNum] : array(
+                            'new_members' => 0,
+                            'loan_applications' => 0,
+                            'total_loan_amount' => 0
+                        );
+
+                        $total_members += $row['new_members'];
+                        $total_loans += $row['loan_applications'];
+                        $total_amount += $row['total_loan_amount'];
+                        
+                        $period = date('Y') . '-' . $monthNum;
+                ?>
                     <tr>
-                        <th><?php echo $_SESSION['reportType'] === 'monthly' ? 'Bulan' : 'Tahun'; ?></th>
-                        <th>Jumlah Ahli Baru</th>
-                        <th>Jumlah Pembiayaan</th>
-                        <th>Nilai Pembiayaan (RM)</th>
-                        <th>Laporan</th>
-                        <th>Tindakan</th>
+                        <td><?php echo $monthName . ' ' . date('Y'); ?></td>
+                        <td class="text-center"><?php echo number_format($row['new_members']); ?></td>
+                        <td class="text-center"><?php echo number_format($row['loan_applications']); ?></td>
+                        <td class="text-end"><?php echo number_format($row['total_loan_amount'], 2); ?></td>
+                        <td class="text-center">
+                            <div class="btn-group">
+                                <button class="btn btn-success" onclick="viewPeriodStatement('<?php echo $period; ?>', 'monthly')">
+                                    Lihat Penyata
+                                </button>
+                                <button class="btn btn-success" onclick="window.location.href='download_report_monthly.php?period=<?php echo $period; ?>'">
+                                    <i class="fas fa-download"></i>
+                                </button>
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            <button class="btn btn-danger" onclick="deletePeriodStatement('<?php echo $period; ?>')">
+                                Padam
+                            </button>
+                        </td>
                     </tr>
-                </thead>
-                <tbody>
-                    <?php
-                    $periods = array();
-                    $memberData = array();
-                    $loanData = array();
-                    
-                    // Process member data
-                    while ($row = $memberResult->fetch_assoc()) {
-                        $periods[$row['period']] = true;
-                        $memberData[$row['period']] = $row['count'];
-                    }
-                    
-                    // Process loan data
-                    while ($row = $loanResult->fetch_assoc()) {
-                        $periods[$row['period']] = true;
-                        $loanData[$row['period']] = [
-                            'count' => $row['count'],
-                            'amount' => $row['total_amount']
-                        ];
-                    }
-                    
-                    // Sort periods in descending order
-                    krsort($periods);
-                    
-                    foreach (array_keys($periods) as $period) {
-                        $displayPeriod = $_SESSION['reportType'] === 'monthly' 
-                            ? date('F Y', strtotime($period . '-01'))
-                            : $period;
-                            
-                        echo "<tr>";
-                        echo "<td>" . htmlspecialchars($displayPeriod) . "</td>";
-                        echo "<td>" . (isset($memberData[$period]) ? $memberData[$period] : 0) . "</td>";
-                        echo "<td>" . (isset($loanData[$period]) ? $loanData[$period]['count'] : 0) . "</td>";
-                        echo "<td>" . (isset($loanData[$period]) ? number_format($loanData[$period]['amount'], 2) : '0.00') . "</td>";
-                        echo "<td class='text-center'>";
-                        echo "<div class='btn-group' role='group'>";
-                        echo "<button class='btn btn-primary' onclick='viewPeriodStatement(\"$period\", \"" . $_SESSION['reportType'] . "\")'>Lihat Penyata</button>";
-                        echo "<button class='btn btn-success' onclick='downloadPeriodStatement(\"$period\", \"" . $_SESSION['reportType'] . "\")'><i class='fas fa-download'></i></button>";
-                        echo "</div>";
-                        echo "</td>";
-                        echo "<td class='text-center'>";
-                        echo "<button class='btn btn-danger btn-sm' onclick='deletePeriodEntry(\"$period\")'>";
-                        echo "Padam";
-                        echo "</button>";
-                        echo "</td>";
-                        echo "</tr>";
-                    }
-                    ?>
-                </tbody>
-                <tfoot class="table-light">
+                <?php 
+                    endforeach;
+                ?>
+                    <tr style="background-color: #f0f0f0; font-weight: bold;">
+                        <td>Jumlah Keseluruhan</td>
+                        <td class="text-center"><?php echo number_format($total_members); ?></td>
+                        <td class="text-center"><?php echo number_format($total_loans); ?></td>
+                        <td class="text-end"><?php echo number_format($total_amount, 2); ?></td>
+                        <td colspan="2"></td>
+                    </tr>
+                <?php else: ?>
                     <tr>
-                        <th>Jumlah</th>
-                        <th><?php echo array_sum($memberData); ?></th>
-                        <th><?php echo array_sum(array_column($loanData, 'count')); ?></th>
-                        <th><?php echo number_format(array_sum(array_column($loanData, 'amount')), 2); ?></th>
-                        <th></th>
-                        <th></th>
+                        <td colspan="6" class="text-center">Tiada rekod ditemui</td>
                     </tr>
-                </tfoot>
-            </table>
-        </div>
-        <?php
-    }
-    ?>
+                <?php endif; ?>
+            </tbody>
+        </table>
+    </div>
 </div>
 
-<!-- Add this button at the bottom -->
+<!-- Perincian Tahunan container -->
+<div class="report-summary" style="margin: 20px; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+    <h3 style="color: rgb(34, 119, 210); margin-bottom: 20px;">Perincian Tahunan</h3>
+    
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover">
+            <thead class="table-light">
+                <tr>
+                    <th>Tahun</th>
+                    <th>Jumlah Ahli Baru</th>
+                    <th>Jumlah Pembiayaan</th>
+                    <th>Nilai Pembiayaan (RM)</th>
+                    <th>Laporan</th>
+                    <th>Tindakan</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php 
+                if ($yearlyResult && mysqli_num_rows($yearlyResult) > 0): 
+                    while ($row = mysqli_fetch_assoc($yearlyResult)): 
+                ?>
+                    <tr>
+                        <td><?php echo $row['year']; ?></td>
+                        <td><?php echo number_format($row['new_members']); ?></td>
+                        <td><?php echo number_format($row['loan_applications']); ?></td>
+                        <td><?php echo number_format($row['total_loan_amount'], 2); ?></td>
+                        <td>
+                            <div class="btn-group">
+                                <button class="btn btn-success" onclick="viewPeriodStatement('<?php echo $row['year']; ?>', 'yearly')">
+                                    Lihat Penyata
+                                </button>
+                                <button class="btn btn-success" onclick="window.location.href='download_report_yearly.php?period=<?php echo $row['year']; ?>-01'">
+                                    <i class="fas fa-download"></i>
+                                </button>
+                            </div>
+                        </td>
+                        <td>
+                            <button class="btn btn-danger" onclick="deletePeriodStatement('<?php echo $row['year']; ?>-01')">
+                                Padam
+                            </button>
+                        </td>
+                    </tr>
+                <?php 
+                    endwhile;
+                    // Reset pointer for totals
+                    mysqli_data_seek($yearlyResult, 0);
+                    $total_members = 0;
+                    $total_loans = 0;
+                    $total_amount = 0;
+                    while ($row = mysqli_fetch_assoc($yearlyResult)) {
+                        $total_members += $row['new_members'];
+                        $total_loans += $row['loan_applications'];
+                        $total_amount += $row['total_loan_amount'];
+                    }
+                ?>
+                    <tr style="background-color: #f0f0f0; font-weight: bold;">
+                        <td>Jumlah Keseluruhan</td>
+                        <td><?php echo number_format($total_members); ?></td>
+                        <td><?php echo number_format($total_loans); ?></td>
+                        <td><?php echo number_format($total_amount, 2); ?></td>
+                        <td colspan="2"></td>
+                    </tr>
+                <?php else: ?>
+                    <tr>
+                        <td colspan="6" class="text-center">Tiada rekod ditemui</td>
+                    </tr>
+                <?php endif; ?>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Move the back button here -->
 <div class="d-flex justify-content-start mt-4 mb-5" style="margin-left: 20px;">
-    <button type="button" class="btn btn-primary" onclick="showBackConfirmation()">
+    <button type="button" class="btn btn-primary" onclick="confirmBack()">
         <i class="fas fa-arrow-left me-2"></i>Kembali
     </button>
-</div>
-
-<!-- Add this new modal -->
-<div class="modal fade" id="backConfirmationModal" tabindex="-1" aria-labelledby="backConfirmationModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="backConfirmationModalLabel">Pengesahan</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                Adakah anda pasti untuk membuat laporan baru?
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tidak</button>
-                <button type="button" class="btn btn-primary" onclick="confirmBack()">Ya</button>
-            </div>
-        </div>
-    </div>
 </div>
 
 <!-- Modal for viewing statements -->
@@ -582,57 +737,59 @@ $reportData = $_SESSION['reportData'];
     </div>
 </div>
 
+<!-- Update the custom modal for back confirmation -->
+<div class="modal fade" id="backConfirmationModal" tabindex="-1" aria-labelledby="backConfirmationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Pengesahan Hasil Laporan</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-start">
+                <p>Adakah anda pasti untuk menghasilkan laporan ini?</p>
+            </div>
+            <div class="modal-footer justify-content-end">
+                <button type="button" class="btn rounded-2" style="background-color: #E9969E; color: white; border: none; padding: 6px 20px;" data-bs-dismiss="modal">Tidak</button>
+                <button type="button" class="btn rounded-2" style="background-color: #8CD3C5; color: white; border: none; padding: 6px 20px;" onclick="proceedBack()">Ya</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 function viewMemberStatement(employeeID) {
     const modal = new bootstrap.Modal(document.getElementById('statementModal'));
     const frame = document.getElementById('statementFrame');
     
-    // Set the source first
     frame.src = `view_report_member.php?id=${employeeID}`;
     document.getElementById('statementModalLabel').textContent = 'Penyata Ahli';
     
-    // Show modal after setting source
+    frame.dataset.employeeId = employeeID;
     modal.show();
-    
-    // Add error handling for iframe
-    frame.onerror = function() {
-        console.error('Failed to load member statement');
-        alert('Gagal memuat penyata. Sila cuba lagi.');
-    };
 }
 
 function viewFinancialStatement(id, reportType) {
     const modal = new bootstrap.Modal(document.getElementById('statementModal'));
     const frame = document.getElementById('statementFrame');
     
-    // Use the specific report type for each entry
-    const url = reportType === 'pembiayaan' ? 
-        `view_report_loan.php?id=${id}&type=loan` : 
-        `view_report_loan.php?id=${id}&type=member`;
+    // Set the source URL for the iframe
+    frame.src = `view_report_loan.php?id=${id}`;
     
-    frame.src = url;
+    // Update modal title
     document.getElementById('statementModalLabel').textContent = 'Penyata Kewangan';
     
+    // Show the modal
     modal.show();
     
+    // Add error handling
     frame.onerror = function() {
         console.error('Failed to load financial statement');
         alert('Gagal memuat penyata. Sila cuba lagi.');
     };
 }
 
-function deleteEntry(index) {
+function confirmDeleteEntry(form) {
     if (confirm('Adakah anda pasti mahu memadamkan entri ini?')) {
-        const form = document.createElement('form');
-        form.method = 'POST';
-        
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = 'delete_index';
-        input.value = index;
-        
-        form.appendChild(input);
-        document.body.appendChild(form);
         form.submit();
     }
 }
@@ -670,5 +827,291 @@ function deletePeriodEntry(period) {
         form.submit();
     }
 }
+
+function confirmBack() {
+    const modal = new bootstrap.Modal(document.getElementById('backConfirmationModal'));
+    modal.show();
+}
+
+function proceedBack() {
+    window.location.href = 'hasilreport.php';
+}
+
+function closeModal() {
+    const modal = bootstrap.Modal.getInstance(document.getElementById('statementModal'));
+    if (modal) {
+        modal.hide();
+    }
+}
+
+// Add this new function to handle the download from within the modal
+function downloadCurrentStatement() {
+    const frame = document.getElementById('statementFrame');
+    const employeeID = frame.dataset.employeeId;
+    
+    if (employeeID) {
+        downloadMemberStatement(employeeID);
+    } else {
+        alert('Ralat semasa memuat turun penyata. Sila cuba lagi.');
+    }
+}
+
+function handleDelete(form, employeeID, loanApplicationID) {
+    if (!confirm('Adakah anda pasti mahu memadamkan entri ini?')) {
+        return false;
+    }
+    
+    const formData = new FormData(form);
+    
+    fetch(window.location.href, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Remove the row
+            const rowId = `row_${employeeID}${loanApplicationID ? '_' + loanApplicationID : ''}`;
+            const row = document.getElementById(rowId);
+            if (row) {
+                row.remove();
+                updateRowNumbers();
+            }
+            // Reload the page to ensure everything is in sync
+            window.location.reload();
+        } else {
+            alert('Ralat semasa memadamkan entri. Sila cuba lagi.');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Ralat semasa memadamkan entri. Sila cuba lagi.');
+    });
+    
+    return false;
+}
+
+function updateRowNumbers() {
+    const tbody = document.querySelector('#dataTable tbody');
+    const rows = tbody.querySelectorAll('tr');
+    rows.forEach((row, index) => {
+        const firstCell = row.querySelector('td:first-child');
+        if (firstCell) {
+            firstCell.textContent = index + 1;
+        }
+    });
+}
+
+function viewPeriodStatement(period, reportType) {
+    // Check if period contains only year (for yearly reports)
+    if (period.length === 7) { // Format: "2024-01" (monthly)
+        window.location.href = 'view_report_monthly.php?period=' + period;
+    } else { // Format: "2024" (yearly)
+        window.location.href = 'view_report_yearly.php?period=' + period;
+    }
+}
+
+function downloadPeriodStatement(period, reportType) {
+    window.location.href = 'download_report_monthly.php?period=' + period;
+}
 </script>
+
+<style>
+.modal-content {
+    border-radius: 8px;
+    border: none;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.modal-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.modal-header .btn-close {
+    font-size: 10px;
+    opacity: 0.7;
+    padding: 8px;
+}
+
+.modal-body {
+    padding: 15px 20px;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.modal-body p {
+    margin: 0;
+    color: #666;
+    font-size: 0.95rem;
+}
+
+.modal-footer {
+    padding: 15px 20px;
+    border-top: none;
+}
+
+.modal-title {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #333;
+}
+
+.btn {
+    font-size: 0.9rem;
+}
+
+/* Make modal background slightly darker */
+.modal-backdrop.show {
+    opacity: 0.3;
+}
+
+/* Adjust modal width */
+.modal-dialog {
+    max-width: 600px;
+}
+
+/* Add gap between buttons */
+.modal-footer .btn + .btn {
+    margin-left: 8px;
+}
+
+/* Add these styles to your existing <style> section */
+.table {
+    color: black !important;
+}
+
+.table tbody tr,
+.table tbody td,
+.table tbody th {
+    color: black !important;
+    opacity: 1 !important;
+    font-weight: 400 !important;
+}
+
+/* Reset any Bootstrap text utilities that might be affecting the table */
+.table .text-muted,
+.table .text-secondary,
+.table .text-black-50 {
+    color: black !important;
+}
+
+/* Ensure the table-light class doesn't affect text opacity */
+.table-light,
+.table-light td,
+.table-light th {
+    color: black !important;
+    opacity: 1 !important;
+}
+
+.table > :not(caption) > * > * {
+    border-bottom-width: 1px;
+    border-bottom-color: #dee2e6;
+}
+
+.table-light {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    border-top: 1px solid #dee2e6;
+}
+
+.card {
+    border-radius: 8px;
+    border: none;
+}
+
+.card-header {
+    border-top-left-radius: 8px !important;
+    border-top-right-radius: 8px !important;
+}
+
+.table {
+    margin-bottom: 0;
+}
+
+.table th {
+    border-top: none;
+    background-color: white;
+    font-weight: 500;
+}
+
+.table td, .table th {
+    padding: 12px;
+    border: 1px solid #dee2e6;
+}
+
+.table tr:last-child td {
+    border-bottom: none;
+}
+
+.btn-success {
+    background-color: #8BC4A9;
+    border-color: #8BC4A9;
+    color: white;
+    padding: 0.375rem 0.75rem;
+}
+
+.btn-success:hover {
+    background-color: #7ab396;
+    border-color: #7ab396;
+}
+
+/* Add specific styling for download button */
+.btn-success i {
+    font-size: 14px;
+}
+
+.me-2 {
+    margin-right: 0.5rem;
+}
+
+.btn-danger {
+    background-color: #ff7675;
+    border-color: #ff7675;
+}
+
+.btn-danger:hover {
+    background-color: #e66767;
+    border-color: #e66767;
+}
+
+.btn-group {
+    display: inline-flex;
+}
+
+.btn-group .btn:first-child {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.btn-group .btn:last-child {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-left: 1px solid rgba(255,255,255,0.3);
+}
+
+/* Update the table header styles */
+.table thead th {
+    background-color: #f2f2f2 !important;  /* Light gray background */
+    color: black !important;
+    font-weight: 500;
+    border: 1px solid #dee2e6;
+}
+
+/* Ensure the table-light class in thead maintains the gray background */
+.table thead.table-light th {
+    background-color: #f2f2f2 !important;
+}
+
+/* Add styles for the total rows in summary sections */
+.report-summary .table tr:last-child {
+    background-color: #f2f2f2 !important;
+}
+
+.report-summary .table tr:last-child td {
+    font-weight: bold !important;
+    border: 1px solid #dee2e6;
+}
+</style>
+
+<?php include 'footer.php'; ?>
 </rewritten_file>
