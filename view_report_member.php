@@ -17,15 +17,95 @@ if (!isset($_GET['download'])) {
     <head>
         <title>Penyata Ahli</title>
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+        <style>
+            .logo-container {
+                text-align: center;
+                margin-bottom: 10px;
+            }
+            .logo-placeholder {
+                max-width: 150px;
+                margin: 0 auto;
+            }
+            .statement-container {
+                max-width: 800px;
+                margin: 0 auto;
+                padding: 20px;
+                box-shadow: 0 0 10px rgba(0,0,0,0.1);
+                border-radius: 8px;
+                background: white;
+            }
+            .title-section {
+                text-align: center;
+                color: rgb(0, 48, 135);
+                margin-bottom: 30px;
+                padding: 10px 0;
+                border-bottom: 2px solid rgb(0, 48, 135);
+            }
+            .section-header {
+                background-color: rgb(0, 48, 135);
+                color: white;
+                padding: 10px;
+                margin-bottom: 15px;
+            }
+            .table {
+                border-color: rgb(0, 48, 135);
+            }
+            .table th {
+                background-color: rgb(240, 240, 250);
+                width: 30%;
+                border-color: rgb(0, 48, 135);
+            }
+            .table td {
+                border-color: rgb(0, 48, 135);
+            }
+            .timestamp {
+                font-style: italic;
+                color: #888;
+                margin-top: 20px;
+            }
+            .action-buttons {
+                margin-top: 20px;
+                text-align: center;
+                padding-top: 20px;
+                border-top: 2px solid rgb(0, 48, 135);
+            }
+            .btn-primary {
+                background-color: rgb(0, 48, 135);
+                border-color: rgb(0, 48, 135);
+            }
+            .btn-primary:hover {
+                background-color: rgb(0, 38, 115);
+                border-color: rgb(0, 38, 115);
+            }
+            .btn-danger {
+                background-color: #dc3545;
+                border-color: #dc3545;
+                color: white;
+            }
+            .btn-danger:hover {
+                background-color: #bb2d3b;
+                border-color: #b02a37;
+            }
+        </style>
     </head>
-    <body class="p-4">
-        <h3 class="text-center mb-5">Pengesahan Penyata Ahli Koperasi Kakitangan KADA Kelantan Berhad</h3>
-        
-        <div class="container">
-            <h5 class="mb-3">Maklumat Peribadi</h5>
+    <body class="bg-light">
+        <div class="statement-container">
+            <div class="logo-container">
+                <img src="img/kadalogo.jpg" alt="KADA Logo" class="logo-placeholder">
+            </div>
+            
+            <div class="title-section">
+                <h3 class="mb-0">Pengesahan Penyata Ahli Koperasi</h3>
+                <h3 class="mb-0">Kakitangan KADA Kelantan Berhad</h3>
+            </div>
+            
+            <div class="section-header">
+                <h5 class="mb-0">Maklumat Peribadi</h5>
+            </div>
+
             <table class="table table-bordered">
                 <tr>
-                    <th style="width: 30%">Nama</th>
+                    <th>Nama</th>
                     <td><?php echo htmlspecialchars($member['memberName']); ?></td>
                 </tr>
                 <tr>
@@ -41,11 +121,23 @@ if (!isset($_GET['download'])) {
                     <td><?php echo htmlspecialchars($member['no_pf']); ?></td>
                 </tr>
             </table>
-            
-            <div class="text-muted mt-3">
-                <small>Laporan dijana pada: <?php echo date('d/m/Y H:i:s'); ?></small>
+
+            <div class="timestamp">
+                Laporan dijana pada: <?php echo date('d/m/Y H:i:s'); ?>
+            </div>
+
+            <div class="action-buttons">
+                <a href="download_report_ahli.php?employeeID=<?php echo htmlspecialchars($id); ?>" class="btn btn-primary">
+                    <i class="bi bi-download"></i> Muat Turun PDF
+                </a>
+                <button type="button" class="btn btn-danger" onclick="window.parent.closeModal()">
+                    Kembali
+                </button>
             </div>
         </div>
+
+        <!-- Add Bootstrap Icons -->
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
     </body>
     </html>
     <?php
