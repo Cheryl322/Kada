@@ -139,20 +139,60 @@ include 'headeradmin.php';
         z-index: 1000;  /* Very high z-index to ensure it's always on top */
         background-color: #fff;  /* Or whatever your footer's background color is */
     }
+
+    /* Add these styles to your existing CSS */
+    .btn-secondary {
+        background-color: #6c757d;
+        border: none;
+        padding: 8px 20px;
+        border-radius: 5px;
+        color: white;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 16px;
+    }
+
+    .btn-secondary:hover {
+        background-color: #5a6268;
+    }
+
+    .fa-arrow-left {
+        margin-right: 5px;
+    }
+
+    /* Add these styles to your existing CSS */
+    .header-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .hasil-title {
+        margin: 0;
+    }
   </style>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 </head>
 
 <body>
     <!-- Remove the duplicate header div since it's already in headeradmin.php -->
     
     <div class="content-container">
+        <div class="header-container">
+            <h1 class="hasil-title">Hasil Laporan</h1>
+            <a href="adminmainpage.php" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Kembali
+            </a>
+        </div>
+
         <!-- Update form to submit to adminviewreport.php -->
         <form id="reportForm" method="POST" action="adminviewreport.php">
             <input type="hidden" name="reportType" id="reportTypeInput">
             <!-- Add hidden input for selected members -->
             <input type="hidden" name="selected_members" id="selectedMembersInput">
             
-            <h2 style="color: rgb(34, 119, 210);">Hasil Laporan</h2>
             <hr style="border: 1px solid #ddd; margin-top: 10px; margin-bottom: 20px;">
             
             <div class="report-boxes">
@@ -188,33 +228,91 @@ include 'headeradmin.php';
                 </div>
                 <div class="report-box">
                     <h4>2. Pilih Julat Tarikh</h4>
-                    <div class="row mt-3">
-                        <div class="col-12">
-                            <div class="d-flex align-items-center">
-                                <label class="me-2">Dalam:</label>
-                                <select class="form-select btn btn-success" id="dateRangeSelect" style="width: auto; background-color: MediumAquamarine; color: white; border-color: MediumAquamarine;">
-                                    <option value="7">Past 7 days</option>
-                                    <option value="30" selected>Past 30 days</option>
-                                </select>
+                    
+                    <!-- Regular date range selector (shown for Ahli and Pembiayaan) -->
+                    <div id="regularDateRange">
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <div class="d-flex align-items-center">
+                                    <label class="me-2">Dalam:</label>
+                                    <select class="form-select btn btn-success" id="dateRangeSelect" style="width: auto; background-color: MediumAquamarine; color: white; border-color: MediumAquamarine;">
+                                        <option value="7">Past 7 days</option>
+                                        <option value="30" selected>Past 30 days</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center">
+                                    <label class="me-2">Dari:</label>
+                                    <input type="date" class="form-control" id="fromDate">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center">
+                                    <label class="me-2">Hingga:</label>
+                                    <input type="date" class="form-control" id="toDate">
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <div class="row mt-3">
-                        <div class="col-md-6">
-                            <div class="d-flex align-items-center">
-                                <label class="me-2">Dari:</label>
-                                <input type="date" class="form-control" id="fromDate">
+
+                    <!-- Monthly selector (shown only for Bulanan) -->
+                    <div id="monthlySelector" style="display: none;">
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center">
+                                    <label class="me-2">Bulan:</label>
+                                    <select class="form-select" id="monthSelect">
+                                        <option value="1">Januari</option>
+                                        <option value="2">Februari</option>
+                                        <option value="3">Mac</option>
+                                        <option value="4">April</option>
+                                        <option value="5">Mei</option>
+                                        <option value="6">Jun</option>
+                                        <option value="7">Julai</option>
+                                        <option value="8">Ogos</option>
+                                        <option value="9">September</option>
+                                        <option value="10">Oktober</option>
+                                        <option value="11">November</option>
+                                        <option value="12">Disember</option>
+                                    </select>
+                                </div>
                             </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="d-flex align-items-center">
-                                <label class="me-2">Hingga:</label>
-                                <input type="date" class="form-control" id="toDate">
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center">
+                                    <label class="me-2">Tahun:</label>
+                                    <select class="form-select" id="yearSelect">
+                                        <?php
+                                        $currentYear = date('Y');
+                                        for ($year = $currentYear; $year >= $currentYear - 5; $year--) {
+                                            echo "<option value=\"$year\">$year</option>";
+                                        }
+                                        ?>
+                                    </select>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <div class="invalid-feedback">
-                        Sila pilih tarikh
+
+                    <!-- Yearly selector (shown only for Yearly) -->
+                    <div id="yearlySelector" style="display: none;">
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center">
+                                    <label class="me-2">Tahun:</label>
+                                    <select class="form-select" id="yearOnlySelect">
+                                        <?php
+                                        $currentYear = date('Y');
+                                        for ($year = $currentYear; $year >= $currentYear - 5; $year--) {
+                                            echo "<option value=\"$year\">$year</option>";
+                                        }
+                                        ?>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="report-box">
@@ -462,23 +560,51 @@ include 'headeradmin.php';
         const memberCheckboxes = document.getElementsByClassName('member-checkbox');
         
         selectAll.addEventListener('change', function() {
-            Array.from(memberCheckboxes).forEach(checkbox => {
-                checkbox.checked = this.checked;
-                if (this.checked) {
-                    selectedItems.add(checkbox.value);
-                } else {
-                    selectedItems.delete(checkbox.value);
-                }
-            });
-            updateSelectedCount();
+            const type = document.querySelector('input[name="reportType"]:checked').value;
+            const fromDate = document.getElementById('fromDate').value;
+            const toDate = document.getElementById('toDate').value;
+            const search = document.getElementById('searchInput').value;
+
+            if (this.checked) {
+                // Fetch all available IDs when "Select All" is checked
+                fetch(`get_report_data.php?type=${type}&fromDate=${fromDate}&toDate=${toDate}&search=${search}&getAllIds=true`)
+                    .then(response => response.json())
+                    .then(data => {
+                        // Clear existing selections and add all IDs
+                        selectedItems.clear();
+                        data.allIds.forEach(id => {
+                            selectedItems.add(id.toString());
+                        });
+
+                        // Check all visible checkboxes
+                        Array.from(memberCheckboxes).forEach(checkbox => {
+                            checkbox.checked = true;
+                        });
+
+                        updateSelectedCount();
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+            } else {
+                // Clear all selections when unchecked
+                selectedItems.clear();
+                Array.from(memberCheckboxes).forEach(checkbox => {
+                    checkbox.checked = false;
+                });
+                updateSelectedCount();
+            }
         });
 
+        // Individual checkbox listeners
         Array.from(memberCheckboxes).forEach(checkbox => {
             checkbox.addEventListener('change', function() {
                 if (this.checked) {
                     selectedItems.add(this.value);
                 } else {
                     selectedItems.delete(this.value);
+                    // Uncheck "Select All" if any individual checkbox is unchecked
+                    document.getElementById('selectAll').checked = false;
                 }
                 updateSelectAllCheckbox();
                 updateSelectedCount();
@@ -507,11 +633,52 @@ include 'headeradmin.php';
     }
 
     function validateAndSubmit() {
+        const reportType = document.querySelector('input[name="reportType"]:checked').value;
+        
+        // For monthly and yearly reports, skip member validation
+        if (reportType === 'monthly' || reportType === 'yearly') {
+            // Set the report type
+            document.getElementById('reportTypeInput').value = reportType;
+            
+            if (reportType === 'monthly') {
+                // Add month and year to form
+                const month = document.getElementById('monthSelect').value;
+                const year = document.getElementById('yearSelect').value;
+                
+                const monthInput = document.createElement('input');
+                monthInput.type = 'hidden';
+                monthInput.name = 'selected_month';
+                monthInput.value = month;
+                document.getElementById('reportForm').appendChild(monthInput);
+
+                const yearInput = document.createElement('input');
+                yearInput.type = 'hidden';
+                yearInput.name = 'selected_year';
+                yearInput.value = year;
+                document.getElementById('reportForm').appendChild(yearInput);
+            } else {
+                // Add year only for yearly reports
+                const year = document.getElementById('yearOnlySelect').value;
+                
+                const yearInput = document.createElement('input');
+                yearInput.type = 'hidden';
+                yearInput.name = 'selected_year';
+                yearInput.value = year;
+                document.getElementById('reportForm').appendChild(yearInput);
+            }
+            
+            // Submit form directly without showing confirmation
+            document.getElementById('reportForm').submit();
+            return;
+        }
+        
+        // For member-based reports (ahli and pembiayaan), check member selection
         if (selectedItems.size === 0) {
             alert('Sila pilih sekurang-kurangnya seorang ahli');
             return;
         }
         
+        // Show confirmation modal for member-based reports only
         const confirmationModal = new bootstrap.Modal(document.getElementById('confirmationModal'));
         confirmationModal.show();
     }
@@ -647,6 +814,90 @@ include 'headeradmin.php';
             selectedItems.clear();
             updateSelectedCount();
             fetchMembers(1, document.getElementById('searchInput').value);
+        });
+    });
+
+    // Add this JavaScript after your existing scripts
+    document.addEventListener('DOMContentLoaded', function() {
+        const reportTypeRadios = document.querySelectorAll('input[name="reportType"]');
+        const regularDateRange = document.getElementById('regularDateRange');
+        const monthlySelector = document.getElementById('monthlySelector');
+        const yearlySelector = document.getElementById('yearlySelector');
+        const memberSelectionBox = document.querySelector('.report-box:nth-child(3)'); // Third container
+
+        function updateDateSelectors(reportType) {
+            switch(reportType) {
+                case 'monthly':
+                    regularDateRange.style.display = 'none';
+                    monthlySelector.style.display = 'block';
+                    yearlySelector.style.display = 'none';
+                    memberSelectionBox.style.display = 'none';
+                    // Clear selected members for monthly reports
+                    selectedItems.clear();
+                    updateSelectedCount();
+                    break;
+                case 'yearly':
+                    regularDateRange.style.display = 'none';
+                    monthlySelector.style.display = 'none';
+                    yearlySelector.style.display = 'block';
+                    memberSelectionBox.style.display = 'none';
+                    // Clear selected members for yearly reports
+                    selectedItems.clear();
+                    updateSelectedCount();
+                    break;
+                default: // 'ahli' or 'pembiayaan'
+                    regularDateRange.style.display = 'block';
+                    monthlySelector.style.display = 'none';
+                    yearlySelector.style.display = 'none';
+                    memberSelectionBox.style.display = 'block';
+                    break;
+            }
+        }
+
+        // Add event listeners to radio buttons
+        reportTypeRadios.forEach(radio => {
+            radio.addEventListener('change', function() {
+                updateDateSelectors(this.value);
+            });
+        });
+
+        // Initialize with the current selection
+        const initialSelection = document.querySelector('input[name="reportType"]:checked');
+        if (initialSelection) {
+            updateDateSelectors(initialSelection.value);
+        }
+
+        // Update form submission to include monthly/yearly data
+        const reportForm = document.getElementById('reportForm');
+        reportForm.addEventListener('submit', function(e) {
+            const reportType = document.querySelector('input[name="reportType"]:checked').value;
+            
+            if (reportType === 'monthly') {
+                const month = document.getElementById('monthSelect').value;
+                const year = document.getElementById('yearSelect').value;
+                
+                // Add hidden inputs for month and year
+                const monthInput = document.createElement('input');
+                monthInput.type = 'hidden';
+                monthInput.name = 'selected_month';
+                monthInput.value = month;
+                this.appendChild(monthInput);
+
+                const yearInput = document.createElement('input');
+                yearInput.type = 'hidden';
+                yearInput.name = 'selected_year';
+                yearInput.value = year;
+                this.appendChild(yearInput);
+            } else if (reportType === 'yearly') {
+                const year = document.getElementById('yearOnlySelect').value;
+                
+                // Add hidden input for year
+                const yearInput = document.createElement('input');
+                yearInput.type = 'hidden';
+                yearInput.name = 'selected_year';
+                yearInput.value = year;
+                this.appendChild(yearInput);
+            }
         });
     });
     </script>
