@@ -148,27 +148,14 @@ body {
     background: linear-gradient(rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.8)), 
                 url('img/padi.jpg') no-repeat center top fixed;
     background-size: cover;
-<<<<<<< HEAD
-    z-index: 1;
-    padding-top: 0;
-    margin-top: -80px;
-=======
     padding-top: 20px;
->>>>>>> b1bdddc34d852616f388c0ad17e1eafa1990272f
 }
 
 .container {
     position: relative;
-<<<<<<< HEAD
-    z-index: 2;
-    padding: 10px;
-    margin-top: -50px;
-    padding-top: 30px;
-=======
     z-index: 1;
     padding: 20px;
     margin-top: 0;
->>>>>>> b1bdddc34d852616f388c0ad17e1eafa1990272f
 }
 
 .table-wrapper {
@@ -212,10 +199,6 @@ body {
 h1 {
     color: #5CBA9B;
     font-weight: 600;
-<<<<<<< HEAD
-    margin-top: 20px;
-    margin-bottom: 8px;
-=======
 }
 
 .btn-secondary {
@@ -237,14 +220,5 @@ h1 {
 /* Make sure Font Awesome is included */
 .fa-arrow-left {
     margin-right: 5px;
-}
-
-/* Adjust container spacing */
-.container {
-    position: relative;
-    z-index: 1;
-    padding: 20px;
-    margin-top: 0;
->>>>>>> b1bdddc34d852616f388c0ad17e1eafa1990272f
 }
 </style>
