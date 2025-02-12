@@ -522,7 +522,7 @@ $interestRate = $rateRow['rate'] ?? 2.00; // Default to 2% if no rate found
                     <!-- Navigation Buttons -->
                     <div class="button-group mt-3">
                         <button type="button" class="btn btn-secondary prev-step">Kembali</button>
-                        <button type="submit" class="btn btn-success" id="submitBtn">Hantar Permohonan</button>
+                        <button type="submit" class="btn btn-primary">Hantar Permohonan</button>
                     </div>
                 </div>
             </div>
@@ -1797,5 +1797,46 @@ document.getElementById('loanForm').addEventListener('submit', function(e) {
             confirmButtonColor: '#5CBA9B'
         });
     }
+});
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Get the form and button
+    const form = document.getElementById('loanForm');
+    const submitButton = document.querySelector('button[type="submit"]');
+
+    // Add click event listener to the submit button
+    submitButton.addEventListener('click', function(e) {
+        e.preventDefault(); // Prevent default form submission
+
+        // Show confirmation dialog
+        Swal.fire({
+            title: 'Pengesahan',
+            text: 'Adakah anda pasti untuk menghantar permohonan ini?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#5CBA9B',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Ya, Hantar',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Show loading state
+                Swal.fire({
+                    title: 'Sila Tunggu',
+                    text: 'Sedang memproses permohonan anda...',
+                    allowOutsideClick: false,
+                    showConfirmButton: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+                
+                // Submit the form
+                form.submit();
+            }
+        });
+    });
 });
 </script>
