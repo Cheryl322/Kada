@@ -102,20 +102,45 @@ $result = mysqli_query($conn, $sql);
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
 $(document).ready(function() {
+    // Add event listener for status change
+    $('.status-select').change(function() {
+        const statusSelect = $(this);
+        const explanationBox = statusSelect.closest('div').find('.explanation-box');
+        
+        if (statusSelect.val() === 'Ditolak') {
+            // If explanation box doesn't exist, create it
+            if (explanationBox.length === 0) {
+                statusSelect.after('<textarea class="form-control mt-2 mb-2 explanation-box" placeholder="Sila masukkan penjelasan penolakan"></textarea>');
+            }
+        } else {
+            // Remove explanation box if status is not 'Ditolak'
+            explanationBox.remove();
+        }
+    });
+
     $('.save-status').click(function() {
         const loanId = $(this).data('id');
         const statusSelect = $(this).closest('div').find('.status-select');
         const status = statusSelect.val();
+        const explanation = status === 'Ditolak' ? 
+            $(this).closest('div').find('.explanation-box').val() : '';
         const button = $(this);
+        
+        // Validate explanation if status is 'Ditolak'
+        if (status === 'Ditolak' && !explanation.trim()) {
+            alert('Sila masukkan penjelasan untuk penolakan');
+            return;
+        }
         
         button.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...');
         
         $.ajax({
-            url: 'update_loan_status.php',  // Create this file for handling loan status updates
+            url: 'update_loan_status.php',
             method: 'POST',
             data: {
                 loanId: loanId,
-                status: status
+                status: status,
+                explanation: explanation
             },
             success: function(response) {
                 if (response === 'Success') {
@@ -148,14 +173,17 @@ body {
     background: linear-gradient(rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.8)), 
                 url('img/padi.jpg') no-repeat center top fixed;
     background-size: cover;
-    padding-top: 20px;
+    z-index: 1;
+    padding-top: 0;
+    margin-top: -80px;
 }
 
 .container {
     position: relative;
-    z-index: 1;
-    padding: 20px;
-    margin-top: 0;
+    z-index: 2;
+    padding: 10px;
+    margin-top: -50px;
+    padding-top: 30px;
 }
 
 .table-wrapper {
@@ -199,6 +227,8 @@ body {
 h1 {
     color: #5CBA9B;
     font-weight: 600;
+    margin-top: 20px;
+    margin-bottom: 8px;
 }
 
 .btn-secondary {
@@ -220,5 +250,23 @@ h1 {
 /* Make sure Font Awesome is included */
 .fa-arrow-left {
     margin-right: 5px;
+}
+
+/* Adjust container spacing */
+.container {
+    position: relative;
+    z-index: 1;
+    padding: 20px;
+    margin-top: 0;
+}
+
+.explanation-box {
+    width: 100%;
+    min-height: 80px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    padding: 8px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
 }
 </style>
