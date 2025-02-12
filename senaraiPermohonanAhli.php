@@ -189,6 +189,16 @@ h1 {
     background-color: #5a6268;
     transform: translateY(-1px);
 }
+
+.explanation-box {
+    width: 100%;
+    min-height: 80px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    padding: 8px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+}
 </style>
 
 <?php
@@ -198,12 +208,35 @@ h1 {
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
 $(document).ready(function() {
+    // Add event listener for status change
+    $('.status-select').change(function() {
+        const statusSelect = $(this);
+        const explanationBox = statusSelect.closest('div').find('.explanation-box');
+        
+        if (statusSelect.val() === 'Ditolak') {
+            // If explanation box doesn't exist, create it
+            if (explanationBox.length === 0) {
+                statusSelect.after('<textarea class="form-control mt-2 mb-2 explanation-box" placeholder="Sila masukkan penjelasan penolakan"></textarea>');
+            }
+        } else {
+            // Remove explanation box if status is not 'Ditolak'
+            explanationBox.remove();
+        }
+    });
+
     $('.save-status').click(function() {
         const memberId = $(this).data('id');
         const statusSelect = $(this).closest('div').find('.status-select');
         const status = statusSelect.val();
+        const explanation = status === 'Ditolak' ? 
+            $(this).closest('div').find('.explanation-box').val() : '';
         const button = $(this);
-        const row = button.closest('tr');
+        
+        // Validate explanation if status is 'Ditolak'
+        if (status === 'Ditolak' && !explanation.trim()) {
+            alert('Sila masukkan penjelasan untuk penolakan');
+            return;
+        }
         
         // Disable button and show loading state
         button.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...');
@@ -213,27 +246,14 @@ $(document).ready(function() {
             method: 'POST',
             data: {
                 memberId: memberId,
-                status: status
+                status: status,
+                explanation: explanation
             },
             success: function(response) {
                 if (response === 'Success') {
-                    // Show success message
                     alert('Status berjaya dikemaskini');
-                    
-                    // Update the status in the dropdown
-                    statusSelect.val(status);
-                    
-                    // Refresh the page to show updated data
                     location.reload();
-                    
-                    // Visual feedback
-                    button.removeClass('btn-primary').addClass('btn-success');
-                    setTimeout(() => {
-                        button.removeClass('btn-success').addClass('btn-primary');
-                        button.prop('disabled', false).html('Simpan');
-                    }, 2000);
                 } else {
-                    // Show error message
                     alert('Status berjaya dikemaskini');
                     button.prop('disabled', false).html('Simpan');
                 }
