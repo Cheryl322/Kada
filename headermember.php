@@ -87,15 +87,11 @@ body::before {
           </div>
         </li>
 
-        <li class="nav-item">
-          <a class="nav-link" href="infokada.php">Info Kada</a>
+        
+   
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="#">Media</a>
-        </li>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="hubungikami.php">Hubungi Kami</a>
+          <a class="nav-link" href="hubungikamimember.php">Hubungi Kami</a>
         </li>
         
         </ul>

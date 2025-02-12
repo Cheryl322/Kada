@@ -3,9 +3,12 @@ use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\SMTP;
 use PHPMailer\PHPMailer\Exception;
 
-require 'phpmailer/src/Exception.php';
-require 'phpmailer/src/PHPMailer.php';
-require 'phpmailer/src/SMTP.php';
+// Only include PHPMailer if it hasn't been included yet
+if (!class_exists('PHPMailer\PHPMailer\PHPMailer')) {
+    require_once 'phpmailer/src/Exception.php';
+    require_once 'phpmailer/src/PHPMailer.php';
+    require_once 'phpmailer/src/SMTP.php';
+}
 
 class EmailHelper {
     private $mail;
@@ -15,15 +18,15 @@ class EmailHelper {
         
         // Server settings
         $this->mail->isSMTP();
-        $this->mail->Host       = 'smtp.gmail.com'; // Replace with your SMTP host
+        $this->mail->Host       = 'smtp.gmail.com';
         $this->mail->SMTPAuth   = true;
-        $this->mail->Username   = 'lauyeewen@graduate.utm.my'; // Replace with your email
-        $this->mail->Password   = 'tjkf rzqm rbar rzee';    // Replace with your password
+        $this->mail->Username   = 'koperasikada.site@gmail.com'; // Updated email
+        $this->mail->Password   = 'rtmh vdnc mozb lion';    // Your app password
         $this->mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
         $this->mail->Port       = 465;
         
         // Default sender
-        $this->mail->setFrom('lauyeewen@graduate.utm.my', 'Koperasi KADA Online System');
+        $this->mail->setFrom('koperasikada.site@gmail.com', 'Koperasi KADA Online System'); // Updated sender email
 
 
     }
@@ -203,5 +206,95 @@ class EmailHelper {
      */
     public function clearAttachments() {
         $this->mail->clearAttachments();
+    }
+
+    function sendLoanApplicationEmail($to, $name, $loanID, $loanAmount) {
+        $mail = new PHPMailer(true);
+        
+        try {
+            // Server settings
+            $mail->isSMTP();
+            $mail->Host = 'smtp.gmail.com';
+            $mail->SMTPAuth = true;
+            $mail->Username = 'koperasikada.site@gmail.com';
+            $mail->Password = 'your_app_password'; // Make sure to use your actual app password
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+            $mail->Port = 587;
+            $mail->CharSet = 'UTF-8';
+
+            // Recipients
+            $mail->setFrom('koperasikada.site@gmail.com', 'Koperasi KADA');
+            $mail->addAddress($to, $name);
+
+            // Content
+            $mail->isHTML(true);
+            $mail->Subject = 'Permohonan Pembiayaan KADA Berjaya';
+
+            // Email template
+            $body = "
+            <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
+                <div style='background-color: #5CBA9B; color: white; padding: 20px; text-align: center; border-radius: 10px 10px 0 0;'>
+                    <img src='https://kada.gov.my/wp-content/uploads/2021/12/Logo-KADA.png' alt='KADA Logo' style='max-width: 150px; margin-bottom: 15px;'>
+                    <h2 style='margin: 0;'>Pengesahan Permohonan Pembiayaan</h2>
+                </div>
+                
+                <div style='padding: 30px; background-color: #f9f9f9; border-radius: 0 0 10px 10px;'>
+                    <p style='color: #333;'>Assalamualaikum dan Salam Sejahtera,</p>
+                    <p style='color: #333;'><strong>{$name}</strong>,</p>
+                    
+                    <p style='color: #333;'>Tahniah! Permohonan pembiayaan anda telah berjaya dihantar. Berikut adalah butiran permohonan:</p>
+                    
+                    <div style='background-color: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #5CBA9B;'>
+                        <table style='width: 100%; border-collapse: collapse;'>
+                            <tr>
+                                <td style='padding: 8px 0; color: #666;'>ID Permohonan</td>
+                                <td style='padding: 8px 0; color: #333; font-weight: bold;'>{$loanID}</td>
+                            </tr>
+                            <tr>
+                                <td style='padding: 8px 0; color: #666;'>Jumlah Pembiayaan</td>
+                                <td style='padding: 8px 0; color: #333; font-weight: bold;'>RM " . number_format($loanAmount, 2) . "</td>
+                            </tr>
+                            <tr>
+                                <td style='padding: 8px 0; color: #666;'>Tarikh Permohonan</td>
+                                <td style='padding: 8px 0; color: #333; font-weight: bold;'>" . date('d/m/Y') . "</td>
+                            </tr>
+                            <tr>
+                                <td style='padding: 8px 0; color: #666;'>Status</td>
+                                <td style='padding: 8px 0; color: #5CBA9B; font-weight: bold;'>Dalam Proses</td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <p style='color: #333;'>Sila ambil perhatian:</p>
+                    <ul style='color: #333;'>
+                        <li>Permohonan anda akan diproses dalam tempoh 14 hari bekerja</li>
+                        <li>Anda boleh menyemak status permohonan melalui sistem KADA</li>
+                        <li>Pihak kami akan menghubungi anda sekiranya dokumen tambahan diperlukan</li>
+                    </ul>
+
+                    <div style='background-color: #f0f7f4; padding: 15px; border-radius: 8px; margin-top: 20px;'>
+                        <p style='margin: 0; color: #333;'><strong>Sebarang Pertanyaan:</strong></p>
+                        <p style='margin: 5px 0; color: #333;'>📞 09-7481101</p>
+                        <p style='margin: 5px 0; color: #333;'>✉️ koperasikada.site@gmail.com</p>
+                    </div>
+
+                    <p style='color: #333; margin-top: 30px;'>Terima kasih atas kepercayaan anda kepada Koperasi KADA.</p>
+                </div>
+                
+                <div style='text-align: center; padding: 20px; background-color: #f1f1f1; font-size: 12px; color: #666; border-radius: 0 0 10px 10px;'>
+                    <p style='margin: 0;'>Ini adalah email automatik. Sila jangan balas email ini.</p>
+                    <p style='margin: 5px 0;'>© " . date('Y') . " Koperasi KADA. Hak Cipta Terpelihara.</p>
+                </div>
+            </div>";
+
+            $mail->Body = $body;
+            $mail->AltBody = strip_tags(str_replace(['<br>', '</p>'], ["\n", "\n\n"], $body));
+
+            $mail->send();
+            return true;
+        } catch (Exception $e) {
+            error_log("Email sending failed: {$mail->ErrorInfo}");
+            return false;
+        }
     }
 } 

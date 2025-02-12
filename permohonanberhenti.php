@@ -129,7 +129,7 @@ if (isset($error_message)) {
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Permohonan Berhenti</h2>
-        <a href="dashboard.php" class="btn btn-outline-secondary">
+        <a href="mainpage.php" class="btn btn-outline-secondary">
             <i class="fas fa-arrow-left me-2"></i>Kembali
         </a>
     </div>

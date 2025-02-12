@@ -217,15 +217,6 @@ $interestRate = $rateRow['rate'] ?? 2.00; // Default to 2% if no rate found
                     </div>
                 </div>
 
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <label for="fieldName" class="form-label">Field Name</label>
-                        <input type="text" 
-                               name="fieldName" 
-                               value="<?php echo isset($formData['fieldName']) ? htmlspecialchars($formData['fieldName']) : ''; ?>"
-                               class="form-control">
-                    </div>
-                </div>
 
                 <div class="mt-3">
                     <button type="button" class="btn btn-primary next-step">Seterusnya</button>
@@ -1237,6 +1228,20 @@ $interestRate = $rateRow['rate'] ?? 2.00; // Default to 2% if no rate found
 .btn-success:hover {
     background-color: #4ea085;
 }
+
+.custom-popup-class {
+    border-radius: 10px !important;
+    padding: 20px !important;
+}
+
+.custom-confirm-button:hover {
+    background-color: #4BA98B !important;
+}
+
+/* Remove SweetAlert2 focus outline */
+.swal2-popup:focus {
+    outline: none !important;
+}
 </style>
 <script>
 $(document).ready(function() {
@@ -1377,50 +1382,53 @@ $(document).ready(function() {
         let formData = new FormData(this);
 
         // Submit form via AJAX with timeout
-        $.ajax({
-            url: 'loanApplicationProcess.php',
-            type: 'POST',
-            data: formData,
-            processData: false,
-            contentType: false,
-            timeout: 60000, // 60 second timeout
-            success: function(response) {
-                console.log('Response:', response);
-                try {
-                    const data = JSON.parse(response);
-                    if (data.status === 'success') {
-                        window.location.href = 'success2.php';
-                    } else {
-                        Swal.fire({
-                            title: 'Tidak Berjaya!',
-                            text: data.message || 'Terdapat masalah semasa menghantar permohonan.',
-                            icon: 'error',
-                            confirmButtonText: 'OK'
-                        });
-                    }
-                } catch (e) {
-                    console.error('Parse error:', e);
-                    Swal.fire({
-                        title: 'Ralat!',
-                        text: 'Terdapat masalah semasa memproses respons pelayan.',
-                        icon: 'error',
-                        confirmButtonText: 'OK'
-                    });
-                }
-            },
-            error: function(xhr, status, error) {
-                console.error('AJAX Error:', error);
-                let errorMessage = 'Terdapat masalah semasa menghantar permohonan.';
-                if (status === 'timeout') {
-                    errorMessage = 'Masa tamat. Sila cuba lagi.';
-                }
+        fetch('loanApplicationProcess.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Response:', data);
+            if (data.status === 'success') {
                 Swal.fire({
-                    title: 'Ralat!',
-                    text: errorMessage,
+                    html: `
+                        <div style="padding: 20px;">
+                            <div style="width: 60px; height: 60px; background-color: #F0F9F4; border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center;">
+                                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" fill="#5CBA9B"/>
+                                </svg>
+                            </div>
+                            <h2 style="color: #333; font-size: 24px; margin-bottom: 10px;">Berjaya!</h2>
+                            <p style="color: #666; font-size: 16px; margin-bottom: 20px;">Permohonan berjaya dihantar!</p>
+                            <button class="custom-confirm-button" style="background-color: #5CBA9B; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 14px;">Ke Status Permohonan</button>
+                        </div>
+                    `,
+                    showConfirmButton: false,
+                    width: 400,
+                    background: '#ffffff',
+                    customClass: {
+                        popup: 'custom-popup-class'
+                    }
+                }).then(() => {
+                    window.location.href = 'membermainpage.php';
+                });
+            } else {
+                Swal.fire({
                     icon: 'error',
-                    confirmButtonText: 'OK'
+                    title: 'Ralat!',
+                    text: data.message,
+                    confirmButtonColor: '#5CBA9B'
                 });
             }
+        })
+        .catch(error => {
+            console.error('Error:', error); // Debug log
+            Swal.fire({
+                icon: 'error',
+                title: 'Ralat!',
+                text: 'Ralat semasa memproses permohonan.',
+                confirmButtonColor: '#5CBA9B'
+            });
         });
     });
 });
@@ -1697,7 +1705,7 @@ $('.next-step').click(function(e) {
         
         if (!ic1Valid || !ic2Valid) {
             Swal.fire({
-                // title: 'Ralat!',
+                title: 'Ralat!',
                 text: 'Penjamin ini bukan ahli Koperasi KADA yang sah.',
                 icon: 'error',
                 confirmButtonText: 'OK',
@@ -1724,5 +1732,70 @@ $('.prev-step').click(function(e) {
     currentStep.hide();
     $(`#step${stepNumber - 1}`).show();
     updateProgressBar(stepNumber - 1);
+});
+</script>
+
+<script>
+document.getElementById('loanForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    if (this.checkValidity()) {
+        // Show loading state
+        Swal.fire({
+            title: 'Sila Tunggu',
+            text: 'Sedang memproses permohonan anda...',
+            allowOutsideClick: false,
+            showConfirmButton: false,
+            willOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        const formData = new FormData(this);
+        
+        fetch('loanApplicationProcess.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Response:', data);
+            if (data.status === 'success') {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berjaya!',
+                    text: data.message,
+                    confirmButtonColor: '#5CBA9B',
+                    allowOutsideClick: false
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = 'membermainpage.php';
+                    }
+                });
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Ralat!',
+                    text: data.message,
+                    confirmButtonColor: '#5CBA9B'
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error); // Debug log
+            Swal.fire({
+                icon: 'error',
+                title: 'Ralat!',
+                text: 'Ralat semasa memproses permohonan.',
+                confirmButtonColor: '#5CBA9B'
+            });
+        });
+    } else {
+        Swal.fire({
+            text: 'Sila lengkapkan semua maklumat yang diperlukan.',
+            confirmButtonText: 'OK',
+            confirmButtonColor: '#5CBA9B'
+        });
+    }
 });
 </script>
