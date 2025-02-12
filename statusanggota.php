@@ -94,6 +94,13 @@ echo "<script>
             <div class="status-text">Tiada Rekod Permohonan</div>
         </div>
     <?php endif; ?> -->
+
+    <!-- Add this button container -->
+    <div class="button-container text-center mt-4">
+        <a href="status.php" class="btn btn-kembali">
+            <i class="fas fa-arrow-left"></i> Kembali
+        </a>
+    </div>
 </div>
 
 <!-- Add Font Awesome for icons -->
@@ -446,5 +453,43 @@ setInterval(checkStatus, 5000);
     color: #ffc107;
     font-size: 0.9rem;
     margin-top: 0.5rem;
+}
+
+/* Kembali button styles */
+.button-container {
+    margin-top: 2rem;
+}
+
+.btn-kembali {
+    background-color: #5CBA9B;
+    color: white;
+    padding: 10px 30px;
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border: 2px solid #5CBA9B;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-kembali:hover {
+    background-color: white;
+    color: #5CBA9B;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(92, 186, 155, 0.2);
+}
+
+.btn-kembali i {
+    font-size: 0.9em;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .btn-kembali {
+        padding: 8px 20px;
+        font-size: 0.9rem;
+    }
 }
 </style>
