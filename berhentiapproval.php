@@ -33,7 +33,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['resignID'])) {
     $rejectReason = isset($_POST['rejectionReason']) ? $_POST['rejectionReason'] : '';
 
     // 获取会员的邮箱和姓名
-    $member_query = "SELECT m.memberName, m.email 
+    $member_query = "SELECT m.memberName, m.email, m.employeeID, b.applyDate, b.approveDate 
                      FROM tb_berhenti b
                      JOIN tb_member m ON b.employeeID = m.employeeID
                      WHERE b.berhentiID = ?";
@@ -63,22 +63,42 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['resignID'])) {
             
             // 发送批准邮件
             $to = $member_data['email'];
-            $subject = "Permohonan Berhenti Diluluskan";
+            $subject = "Permohonan Berhenti Ahli Koperasi KADA - DILULUSKAN";
             $message = "Salam sejahtera " . $member_data['memberName'] . ",\n\n"
-                    . "Permohonan berhenti anda telah diluluskan.\n"
-                    . "Terima kasih atas perkhidmatan anda bersama kami.\n\n"
-                    . "Hormat,\n"
-                    . "Koperasi KADA";
+                    . "Merujuk kepada permohonan berhenti ahli koperasi yang telah dikemukakan oleh pihak tuan/puan pada tarikh " . date('d/m/Y', strtotime($member_data['applyDate'])) . ".\n\n"
+                    . "Sukacita dimaklumkan bahawa permohonan tersebut telah *DILULUSKAN* oleh pihak pentadbiran Koperasi KADA.\n\n"
+                    . "Berikut adalah maklumat berkaitan:\n"
+                    . "Nama: " . $member_data['memberName'] . "\n"
+                    . "No. Pekerja: " . $member_data['employeeID'] . "\n"
+                    . "Tarikh Kelulusan: " . date('d/m/Y', strtotime($member_data['approveDate'])) . "\n\n"
+                    . "Pihak kami ingin mengucapkan ribuan terima kasih atas segala sumbangan dan perkhidmatan yang telah diberikan sepanjang menjadi ahli Koperasi KADA.\n\n"
+                    . "Sekiranya terdapat sebarang pertanyaan, sila hubungi pihak pentadbiran Koperasi KADA.\n\n"
+                    . "Sekian, terima kasih.\n\n"
+                    . "Yang benar,\n\n"
+                    . "Pentadbiran\n"
+                    . "Koperasi KADA\n"
+                    . "Tel: 09-7447088\n"
+                    . "Email: koperasikada@kada.gov.my";
         } else {
             // 发送拒绝邮件
             $to = $member_data['email'];
-            $subject = "Permohonan Berhenti Ditolak";
+            $subject = "Permohonan Berhenti Ahli Koperasi KADA - TIDAK DILULUSKAN";
             $message = "Salam sejahtera " . $member_data['memberName'] . ",\n\n"
-                    . "Permohonan berhenti anda telah ditolak.\n"
-                    . "Sebab: " . $rejectReason . "\n\n"
-                    . "Sila hubungi pihak pentadbiran untuk maklumat lanjut. Anda boleh membuat permohonan baru di website koperasi kada.\n\n"
-                    . "Hormat,\n"
-                    . "Koperasi KADA";
+                    . "Merujuk kepada permohonan berhenti ahli koperasi yang telah dikemukakan oleh pihak tuan/puan pada tarikh " . date('d/m/Y', strtotime($member_data['applyDate'])) . ".\n\n"
+                    . "Dukacita dimaklumkan bahawa permohonan tersebut *TIDAK DILULUSKAN* oleh pihak pentadbiran Koperasi KADA.\n\n"
+                    . "Berikut adalah maklumat berkaitan:\n"
+                    . "Nama: " . $member_data['memberName'] . "\n"
+                    . "No. Pekerja: " . $member_data['employeeID'] . "\n"
+                    . "Tarikh Keputusan: " . date('d/m/Y', strtotime($member_data['approveDate'])) . "\n"
+                    . "Sebab Penolakan: " . $rejectReason . "\n\n"
+                    . "Sekiranya tuan/puan ingin membuat rayuan atau mendapatkan penjelasan lanjut, sila hubungi pihak pentadbiran Koperasi KADA dalam tempoh 14 hari dari tarikh surat ini.\n\n"
+                    . "Tuan/Puan juga boleh mengemukakan permohonan baru dengan memastikan segala keperluan dan syarat telah dipenuhi.\n\n"
+                    . "Sekian, terima kasih.\n\n"
+                    . "Yang benar,\n\n"
+                    . "Pentadbiran\n"
+                    . "Koperasi KADA\n"
+                    . "Tel: 09-7447088\n"
+                    . "Email: koperasikada@kada.gov.my";
         }
         
 
