@@ -678,11 +678,11 @@ function convertMonthToMalay($date) {
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Pengesahan Hasil Laporan</h5>
+                <h5 class="modal-title">Pengesahan Laporan Baru</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body text-start">
-                <p>Adakah anda pasti untuk menghasilkan laporan ini?</p>
+                <p>Adakah anda pasti untuk kembali menghasilkan laporan baru?</p>
             </div>
             <div class="modal-footer justify-content-end">
                 <button type="button" class="btn rounded-2" style="background-color: #E9969E; color: white; border: none; padding: 6px 20px;" data-bs-dismiss="modal">Tidak</button>
