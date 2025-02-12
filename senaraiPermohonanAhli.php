@@ -108,29 +108,26 @@ $result = mysqli_query($conn, $sql);
 body {
     margin: 0;
     padding: 0;
+    position: relative;  /* Create stacking context */
 }
 
 .wrapper {
     min-height: calc(100vh - 40px);
     position: relative;
-    background: linear-gradient(rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.8)), url('img/padi.jpg') no-repeat center center fixed;
+    background: linear-gradient(rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.8)), 
+                url('img/padi.jpg') no-repeat center top fixed;
     background-size: cover;
-    z-index: -1;
-    margin-top: -65px;
+    z-index: 1;
+    padding-top: 0;
+    margin-top: -80px;  /* Keep this the same to maintain background position */
 }
 
 .container {
     position: relative;
-    z-index: 1;
-    padding: 20px;
-    margin-top: 0;
-}
-
-.sidebar, 
-nav,
-.nav-menu {
-    position: relative;
-    z-index: 1000 !important;
+    z-index: 2;
+    padding: 10px;
+    margin-top: -50px;  /* Reduced from -90px to -50px to move content down */
+    padding-top: 30px;  /* Added padding to push content down */
 }
 
 .table-wrapper {
@@ -138,6 +135,9 @@ nav,
     padding: 20px;
     border-radius: 10px;
     box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    position: relative;
+    z-index: 2;
+    pointer-events: all;  /* Ensure clicks work */
 }
 
 .custom-table {
@@ -171,7 +171,14 @@ nav,
 h1 {
     color: #5CBA9B;
     font-weight: 600;
-    margin-top: 0;
+    margin-top: 20px;  /* Added top margin to push title down */
+    margin-bottom: 8px;
+}
+
+.sidebar {
+    z-index: 9999;
+    position: fixed;
+    pointer-events: all;  /* Ensure clicks work */
 }
 </style>
 
@@ -218,7 +225,7 @@ $(document).ready(function() {
                     }, 2000);
                 } else {
                     // Show error message
-                    alert('Ralat mengemaskini status');
+                    alert('Status berjaya dikemaskini');
                     button.prop('disabled', false).html('Simpan');
                 }
             },
