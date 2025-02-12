@@ -36,11 +36,11 @@ $savings = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_savings));
 // 计算总储蓄
 $totalSavings = array_sum($savings);
 
-// 获取贷款信息
-$sql_loans = "SELECT 
+// 获取贷款信息 - 从 tb_loan 表获取
+$sql_loans = "SELECT DISTINCT
     l.loanType,
+    l.amountRequested,
     l.balance,
-    la.amountRequested,
     COALESCE((
         SELECT SUM(d.Deduct_Amt)
         FROM tb_deduction d
@@ -48,9 +48,10 @@ $sql_loans = "SELECT
         AND d.DeducType_ID = 6
     ), 0) as total_repaid
 FROM tb_loan l
-JOIN tb_loanapplication la ON l.employeeID = la.employeeID 
+JOIN tb_loanapplication la ON l.loanApplicationID = la.loanApplicationID
 WHERE l.employeeID = ?
-AND la.loanStatus = 'Diluluskan'";
+AND la.loanStatus = 'Diluluskan'
+GROUP BY l.loanType, l.amountRequested, l.balance";
 
 $stmt_loans = mysqli_prepare($conn, $sql_loans);
 mysqli_stmt_bind_param($stmt_loans, 's', $employeeID);
@@ -68,13 +69,11 @@ while ($loan = mysqli_fetch_assoc($loans_result)) {
 ?>
 
 <div class="container mt-4">
-    <!-- Add Kembali button -->
-    <div class="mb-3">
+<div class="mb-3">
         <a href="profil.php" class="btn btn-secondary">
             <i class="fas fa-arrow-left me-2"></i>Kembali
         </a>
     </div>
-
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Penyata Kewangan</h2>
     </div>
@@ -340,20 +339,5 @@ while ($loan = mysqli_fetch_assoc($loans_result)) {
 .nav-card:hover {
     transform: translateY(-3px);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-}
-
-.btn-secondary {
-    background-color: #6c757d;
-    border: none;
-    padding: 8px 20px;
-    border-radius: 5px;
-    color: white;
-    text-decoration: none;
-    transition: all 0.3s ease;
-}
-
-.btn-secondary:hover {
-    background-color: #5a6268;
-    transform: translateY(-1px);
 }
 </style>
