@@ -1,66 +1,17 @@
 <?php
-header('Content-Type: application/json');
 include 'dbconnect.php';
 
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$search = isset($_GET['search']) ? $_GET['search'] : '';
+$type = isset($_GET['type']) ? $_GET['type'] : 'ahli';
+$fromDate = isset($_GET['fromDate']) ? $_GET['fromDate'] : '';
+$toDate = isset($_GET['toDate']) ? $_GET['toDate'] : '';
+$limit = 5;
+$offset = ($page - 1) * $limit;
+
+header('Content-Type: application/json');
+
 try {
-    // Check if we're requesting all IDs
-    if (isset($_GET['getAllIds']) && $_GET['getAllIds'] === 'true') {
-        $type = $_GET['type'];
-        $search = isset($_GET['search']) ? $_GET['search'] : '';
-
-        if ($type === 'ahli') {
-            $sql = "SELECT m.employeeID as id
-                    FROM tb_member m
-                    LEFT JOIN (
-                        SELECT memberRegistrationID, regisStatus
-                        FROM tb_memberregistration_memberapplicationdetails
-                        WHERE regisStatus = 'Diluluskan'
-                        GROUP BY memberRegistrationID
-                        HAVING regisStatus = 'Diluluskan'
-                    ) md ON m.employeeID = md.memberRegistrationID
-                    WHERE md.regisStatus = 'Diluluskan'";
-            
-            if (!empty($search)) {
-                $sql .= " AND (m.employeeID LIKE ? OR m.memberName LIKE ?)";
-            }
-        } else {
-            $sql = "SELECT l.loanApplicationID as id
-                    FROM tb_loanapplication l
-                    JOIN tb_member m ON l.employeeID = m.employeeID
-                    WHERE l.loanStatus = 'Diluluskan'";
-            
-            if (!empty($search)) {
-                $sql .= " AND (l.loanApplicationID LIKE ? OR m.memberName LIKE ?)";
-            }
-        }
-
-        $stmt = $conn->prepare($sql);
-        
-        if (!empty($search)) {
-            $searchParam = "%$search%";
-            $stmt->bind_param('ss', $searchParam, $searchParam);
-        }
-
-        $stmt->execute();
-        $result = $stmt->get_result();
-        
-        $allIds = [];
-        while ($row = $result->fetch_assoc()) {
-            $allIds[] = $row['id'];
-        }
-
-        echo json_encode(['allIds' => $allIds]);
-        exit;
-    }
-
-    $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-    $search = isset($_GET['search']) ? $_GET['search'] : '';
-    $type = isset($_GET['type']) ? $_GET['type'] : 'ahli';
-    $fromDate = isset($_GET['fromDate']) ? $_GET['fromDate'] : '';
-    $toDate = isset($_GET['toDate']) ? $_GET['toDate'] : '';
-    $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 5;
-    $offset = ($page - 1) * $limit;
-
     // Build search and date conditions
     $searchCondition = '';
     if (!empty($search)) {
@@ -80,30 +31,13 @@ try {
     }
 
     // Get total records for pagination
-    if ($type === 'ahli') {
-        $countQuery = "SELECT COUNT(*) as total 
-                      FROM tb_member m
-                      LEFT JOIN (
-                          SELECT memberRegistrationID, regisStatus
-                          FROM tb_memberregistration_memberapplicationdetails
-                          WHERE regisStatus = 'Diluluskan'
-                          GROUP BY memberRegistrationID
-                          HAVING regisStatus = 'Diluluskan'
-                      ) md ON m.employeeID = md.memberRegistrationID
-                      WHERE md.regisStatus = 'Diluluskan'";
-        
-        if (!empty($search)) {
-            $countQuery .= " AND (m.employeeID LIKE '%$search%' OR m.memberName LIKE '%$search%')";
-        }
+    if ($type === 'pembiayaan') {
+        $countQuery = "SELECT COUNT(*) as total FROM tb_loan l 
+                       JOIN tb_member m ON l.employeeID = m.employeeID 
+                       WHERE 1=1 $dateCondition $searchCondition";
     } else {
-        $countQuery = "SELECT COUNT(*) as total 
-                      FROM tb_loanapplication l
-                      JOIN tb_member m ON l.employeeID = m.employeeID
-                      WHERE l.loanStatus = 'Diluluskan'";
-        
-        if (!empty($search)) {
-            $countQuery .= " AND (l.loanApplicationID LIKE '%$search%' OR m.memberName LIKE '%$search%')";
-        }
+        $countQuery = "SELECT COUNT(*) as total FROM tb_member m 
+                       WHERE 1=1 $dateCondition $searchCondition";
     }
 
     $countResult = $conn->query($countQuery);
@@ -112,56 +46,43 @@ try {
 
     $members = [];
 
-    if ($type === 'ahli') {
-        $sql = "SELECT m.employeeID, m.memberName, m.created_at 
-                FROM tb_member m
-                LEFT JOIN (
-                    SELECT memberRegistrationID, regisStatus
-                    FROM tb_memberregistration_memberapplicationdetails
-                    WHERE regisStatus = 'Diluluskan'
-                    GROUP BY memberRegistrationID
-                    HAVING regisStatus = 'Diluluskan'
-                ) md ON m.employeeID = md.memberRegistrationID
-                WHERE md.regisStatus = 'Diluluskan'";
-        
-        if (!empty($search)) {
-            $sql .= " AND (m.employeeID LIKE ? OR m.memberName LIKE ?)";
-        }
-        
-        $sql .= " ORDER BY m.created_at DESC LIMIT ? OFFSET ?";
+    // Get records for current page (limited to 5 rows)
+    if ($type === 'pembiayaan') {
+        $query = "SELECT l.loanApplicationID, m.employeeID, m.memberName, l.amountRequested, l.created_at 
+                  FROM tb_loan l 
+                  JOIN tb_member m ON l.employeeID = m.employeeID 
+                  WHERE 1=1 $dateCondition $searchCondition
+                  ORDER BY l.created_at DESC 
+                  LIMIT $offset, $limit";
     } else {
-        $sql = "SELECT 
-                    l.loanApplicationID, 
-                    m.memberName, 
-                    l.loanApplicationDate as created_at,
-                    l.loanStatus
-                FROM tb_loanapplication l
-                JOIN tb_member m ON l.employeeID = m.employeeID
-                WHERE l.loanStatus = 'Diluluskan'";
-        
-        if (!empty($search)) {
-            $sql .= " AND (l.loanApplicationID LIKE ? OR m.memberName LIKE ?)";
-        }
-        
-        $sql .= " ORDER BY l.loanApplicationDate DESC LIMIT ? OFFSET ?";
+        $query = "SELECT employeeID, memberName, created_at 
+                  FROM tb_member m 
+                  WHERE 1=1 $dateCondition $searchCondition
+                  ORDER BY created_at DESC 
+                  LIMIT $offset, $limit";
     }
 
-    $stmt = $conn->prepare($sql);
+    $result = $conn->query($query);
     
-    if (!empty($search)) {
-        $searchParam = "%$search%";
-        $stmt->bind_param('ssii', $searchParam, $searchParam, $limit, $offset);
-    } else {
-        $stmt->bind_param('ii', $limit, $offset);
-    }
-
-    $stmt->execute();
-    $result = $stmt->get_result();
-
     while ($row = $result->fetch_assoc()) {
-        $members[] = $row;
+        if ($type === 'pembiayaan') {
+            $members[] = [
+                'loanApplicationID' => $row['loanApplicationID'],
+                'employeeID' => $row['employeeID'],
+                'memberName' => $row['memberName'],
+                'amountRequested' => $row['amountRequested'],
+                'created_at' => $row['created_at']
+            ];
+        } else {
+            $members[] = [
+                'employeeID' => $row['employeeID'],
+                'memberName' => $row['memberName'],
+                'created_at' => $row['created_at']
+            ];
+        }
     }
 
+    // Return JSON response with additional pagination info
     echo json_encode([
         'members' => $members,
         'totalPages' => $totalPages,

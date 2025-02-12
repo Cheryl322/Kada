@@ -100,7 +100,7 @@ include "footer.php";
                                         <th>Tempoh (Bulan)</th>
                                         <th>Ansuran (RM)</th>
                                         <th>Status</th>
-                                        <th>Details</th>
+                                        <th>Butiran</th>
                                     </tr>
                                 </thead>
                                 <tbody>

@@ -11,28 +11,128 @@ if (!isset($_SESSION['employeeID'])) {
 $employeeID = $_SESSION['employeeID'];
 
 // Fetch member details
-$sqlMember = "SELECT m.*, f.* 
-              FROM tb_member m
-              LEFT JOIN tb_memberregistration_feesandcontribution f ON m.employeeID = f.employeeID 
-              WHERE m.employeeID = ?";
+$sqlMember = "SELECT 
+    m.*,
+    COALESCE((
+        SELECT SUM(CASE 
+            WHEN d.DeducType_ID = 1 THEN d.Deduct_Amt -- Modal Saham
+            ELSE 0 
+        END)
+        FROM tb_deduction d 
+        WHERE d.employeeID = m.employeeID
+    ), 0) as modalShare,
+    COALESCE((
+        SELECT SUM(CASE 
+            WHEN d.DeducType_ID = 2 THEN d.Deduct_Amt -- Modal Yuran
+            ELSE 0 
+        END)
+        FROM tb_deduction d 
+        WHERE d.employeeID = m.employeeID
+    ), 0) as feeCapital,
+    COALESCE((
+        SELECT SUM(CASE 
+            WHEN d.DeducType_ID = 3 THEN d.Deduct_Amt -- Simpanan Tetap
+            ELSE 0 
+        END)
+        FROM tb_deduction d 
+        WHERE d.employeeID = m.employeeID
+    ), 0) as fixedDeposit,
+    COALESCE((
+        SELECT SUM(CASE 
+            WHEN d.DeducType_ID = 4 THEN d.Deduct_Amt -- Tabung Anggota
+            ELSE 0 
+        END)
+        FROM tb_deduction d 
+        WHERE d.employeeID = m.employeeID
+    ), 0) as contribution,
+    COALESCE((
+        SELECT SUM(CASE 
+            WHEN d.DeducType_ID = 5 THEN d.Deduct_Amt -- Simpanan Anggota
+            ELSE 0 
+        END)
+        FROM tb_deduction d 
+        WHERE d.employeeID = m.employeeID
+    ), 0) as memberSavings
+FROM tb_member m
+WHERE m.employeeID = ?";
 $stmtMember = mysqli_prepare($conn, $sqlMember);
 mysqli_stmt_bind_param($stmtMember, 's', $employeeID);
 mysqli_stmt_execute($stmtMember);
 $memberData = mysqli_fetch_assoc(mysqli_stmt_get_result($stmtMember));
 
-// Fetch loan data
+// 添加调试输出
+echo "<!-- Starting loan query for employeeID: $employeeID -->";
+
+// 修改贷款查询
 $sqlLoan = "SELECT 
-    SUM(CASE WHEN l.loanType = 'AL-BAI' THEN l.amountRequested ELSE 0 END) as alBai,
-    SUM(CASE WHEN l.loanType = 'AL-INAH' THEN l.amountRequested ELSE 0 END) as alnnah,
-    SUM(CASE WHEN l.loanType = 'B/PULIH KENDERAAN' THEN l.amountRequested ELSE 0 END) as bPulihKenderaan,
-    SUM(CASE WHEN l.loanType = 'ROAD TAX & INSURAN' THEN l.amountRequested ELSE 0 END) as roadTaxInsurance
-    FROM tb_loan l
-    JOIN tb_loanapplication la ON l.loanApplicationID = la.loanApplicationID
-    WHERE l.employeeID = ? AND la.loanStatus = 'Diluluskan'";
+    l.loanApplicationID,
+    l.loanType,
+    l.amountRequested,
+    l.balance,
+    la.loanStatus,
+    COALESCE((
+        SELECT SUM(d.Deduct_Amt)
+        FROM tb_deduction d
+        WHERE d.employeeID = l.employeeID 
+        AND d.DeducType_ID = 6
+        AND d.loanApplicationID = l.loanApplicationID
+    ), 0) as total_repaid
+FROM tb_loan l
+JOIN tb_loanapplication la ON l.loanApplicationID = la.loanApplicationID
+WHERE l.employeeID = ? 
+AND la.loanStatus = 'Diluluskan'";
+
 $stmtLoan = mysqli_prepare($conn, $sqlLoan);
 mysqli_stmt_bind_param($stmtLoan, 's', $employeeID);
 mysqli_stmt_execute($stmtLoan);
-$loanData = mysqli_fetch_assoc(mysqli_stmt_get_result($stmtLoan));
+$loanResult = mysqli_stmt_get_result($stmtLoan);
+
+// 详细的调试输出
+echo "<!-- Debug: Found " . mysqli_num_rows($loanResult) . " loans -->";
+$loanData = [
+    'alBai' => [],          // 改为数组以存储多个同类型贷款
+    'alInnah' => [],
+    'bPulihKenderaan' => [],
+    'roadTaxInsurance' => [],
+    'khas' => [],
+    'alQadrulHassan' => []
+];
+
+while ($row = mysqli_fetch_assoc($loanResult)) {
+    echo "<!-- Debug loan: " . 
+         "ID: " . $row['loanApplicationID'] . ", " .
+         "Type: " . $row['loanType'] . ", " .
+         "Amount: " . $row['amountRequested'] . ", " .
+         "Balance: " . $row['balance'] . ", " .
+         "Status: " . $row['loanStatus'] . " -->";
+    
+    $remainingAmount = $row['balance'] ?? ($row['amountRequested'] - $row['total_repaid']);
+    
+    // 修改 switch 语句，确保正确匹配 SKIM KHAS
+    switch ($row['loanType']) {
+        case 'AL-BAI':
+            $loanData['alBai'][] = $remainingAmount;
+            break;
+        case 'AL-INAH':
+            $loanData['alInnah'][] = $remainingAmount;
+            break;
+        case 'B/PULIH KENDERAAN':
+            $loanData['bPulihKenderaan'][] = $remainingAmount;
+            break;
+        case 'ROAD TAX & INSURAN':
+            $loanData['roadTaxInsurance'][] = $remainingAmount;
+            break;
+        case 'SKIM KHAS':  // 修改这里以匹配数据库中的确切名称
+            $loanData['khas'][] = $remainingAmount;
+            break;
+        case 'AL-QADRUL HASSAN':
+            $loanData['alQadrulHassan'][] = $remainingAmount;
+            break;
+    }
+}
+
+// 添加调试输出
+echo "<!-- Debug loan data: " . json_encode($loanData) . " -->";
 
 function formatNumber($number) {
     return str_pad($number, 4, '0', STR_PAD_LEFT);
@@ -101,6 +201,10 @@ function formatNumber($number) {
                     <td>Tabung Anggota</td>
                     <td>RM <?php echo number_format($memberData['contribution'] ?? 0, 2); ?></td>
                 </tr>
+                <tr>
+                    <td>Simpanan Anggota</td>
+                    <td>RM <?php echo number_format($memberData['memberSavings'] ?? 0, 2); ?></td>
+                </tr>
             </table>
         </div>
 
@@ -110,19 +214,27 @@ function formatNumber($number) {
             <table class="table table-bordered">
                 <tr>
                     <td width="50%">Al-Bai</td>
-                    <td>RM <?php echo number_format($loanData['alBai'] ?? 0, 2); ?></td>
+                    <td>RM <?php echo number_format(array_sum($loanData['alBai']), 2); ?></td>
                 </tr>
                 <tr>
-                    <td>Al-Innah</td>
-                    <td>RM <?php echo number_format($loanData['alnnah'] ?? 0, 2); ?></td>
+                    <td>Al-Inah</td>
+                    <td>RM <?php echo number_format(array_sum($loanData['alInnah']), 2); ?></td>
                 </tr>
                 <tr>
                     <td>B/Pulih Kenderaan</td>
-                    <td>RM <?php echo number_format($loanData['bPulihKenderaan'] ?? 0, 2); ?></td>
+                    <td>RM <?php echo number_format(array_sum($loanData['bPulihKenderaan']), 2); ?></td>
                 </tr>
                 <tr>
                     <td>Road Tax & Insuran</td>
-                    <td>RM <?php echo number_format($loanData['roadTaxInsurance'] ?? 0, 2); ?></td>
+                    <td>RM <?php echo number_format(array_sum($loanData['roadTaxInsurance']), 2); ?></td>
+                </tr>
+                <tr>
+                    <td>Skim Khas</td>
+                    <td>RM <?php echo number_format(array_sum($loanData['khas']), 2); ?></td>
+                </tr>
+                <tr>
+                    <td>Al-Qadrul Hassan</td>
+                    <td>RM <?php echo number_format(array_sum($loanData['alQadrulHassan']), 2); ?></td>
                 </tr>
             </table>
         </div>
@@ -136,28 +248,27 @@ function formatNumber($number) {
                No. Ahli: <strong><?php echo formatNumber($memberData['employeeID']); ?></strong> 
                mengesahkan bahawa Penyata Kewangan Koperasi Kakitangan KADA Kelantan Berhad adalah benar.</p>
             
-            <?php if (isset($_POST['confirmation']) && $_POST['confirmation'] == 'agree'): ?>
-                <p><strong>Status: Setuju</strong></p>
-            <?php elseif (isset($_POST['confirmation']) && $_POST['confirmation'] == 'disagree'): ?>
-                <p><strong>Status: Tidak Setuju</strong></p>
-            <?php else: ?>
+            <div class="mb-3">
                 <div class="form-check mb-2">
-                    <input class="form-check-input" type="radio" name="confirmation" id="agree" value="agree" required>
+                    <input class="form-check-input" type="radio" name="confirmation" id="agree" value="agree">
                     <label class="form-check-label" for="agree">Setuju</label>
                 </div>
-                <div class="form-check mb-3">
+                <div class="form-check mb-2">
                     <input class="form-check-input" type="radio" name="confirmation" id="disagree" value="disagree">
                     <label class="form-check-label" for="disagree">Tidak Setuju</label>
                 </div>
-            <?php endif; ?>
-        </div>
-    </div>
+            </div>
 
-    <!-- Print Button -->
-    <div class="text-end mt-4 no-print">
-        <button onclick="window.print()" class="btn btn-secondary">
-            <i class="fas fa-print"></i> Cetak
-        </button>
+            <div id="statusMessage" class="alert d-none">
+                Status: <span id="statusText"></span>
+            </div>
+
+            <div class="text-end">
+                <button onclick="window.print()" id="printButton" class="btn btn-danger rounded-pill d-none">
+                    <i class="fas fa-print"></i> Cetak
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -226,7 +337,21 @@ function formatNumber($number) {
     }
 }
 
-/* 正常显示时的样式保持不变 */
+.btn-danger {
+    background-color: #ff6b6b;
+    border: none;
+}
+
+.btn-danger:hover {
+    background-color: #ff5252;
+}
+
+@media print {
+    .form-check, 
+    #printButton {
+        display: none !important;
+    }
+}
 </style>
 
 <!-- 添加内容包装器 -->
@@ -236,5 +361,26 @@ function formatNumber($number) {
 
 <!-- Add Font Awesome for icons -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+<script>
+document.querySelectorAll('input[name="confirmation"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        const statusMessage = document.getElementById('statusMessage');
+        const statusText = document.getElementById('statusText');
+        const printButton = document.getElementById('printButton');
+        
+        statusMessage.classList.remove('d-none');
+        printButton.classList.remove('d-none');
+        
+        if (this.value === 'agree') {
+            statusMessage.className = 'alert alert-success';
+            statusText.textContent = 'Setuju';
+        } else {
+            statusMessage.className = 'alert alert-warning';
+            statusText.textContent = 'Tidak Setuju';
+        }
+    });
+});
+</script>
 </div> 
 </div> 

@@ -31,6 +31,64 @@ if (mysqli_stmt_num_rows($stmt) > 0) {
     // exit();
 }
 
+// 检查会员状态
+$sql_check_status = "SELECT status FROM tb_member_status WHERE employeeID = ?";
+$stmt_status = mysqli_prepare($conn, $sql_check_status);
+mysqli_stmt_bind_param($stmt_status, 's', $employeeID);
+mysqli_stmt_execute($stmt_status);
+$result_status = mysqli_stmt_get_result($stmt_status);
+$member_status = mysqli_fetch_assoc($result_status);
+
+// 检查是否有待处理的会员申请
+$sql_check_pending = "SELECT status 
+                     FROM tb_member_status 
+                     WHERE employeeID = ? 
+                     AND status = 'Dalam Proses'";
+$stmt_pending = mysqli_prepare($conn, $sql_check_pending);
+mysqli_stmt_bind_param($stmt_pending, 's', $employeeID);
+mysqli_stmt_execute($stmt_pending);
+$result_pending = mysqli_stmt_get_result($stmt_pending);
+
+// 只有当状态是 "Aktif" 时才显示已注册消息
+if ($member_status['status'] == 'Aktif') {
+    ?>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        Swal.fire({
+            title: 'Perhatian!',
+            text: 'Anda telah mendaftar sebagai ahli.',
+            icon: 'warning',
+            confirmButtonText: 'OK'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = 'mainpage.php';
+            }
+        });
+    </script>
+    <?php
+    exit();
+}
+
+// 如果有待处理申请，不允许再次申请
+if (mysqli_num_rows($result_pending) > 0) {
+    ?>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        Swal.fire({
+            title: 'Akses Ditolak!',
+            text: 'Maaf, anda masih mempunyai permohonan keahlian yang belum selesai.',
+            icon: 'error',
+            confirmButtonText: 'OK'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = 'mainpage.php';
+            }
+        });
+    </script>
+    <?php
+    exit();
+}
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Debug: Print form data
     error_log("Form Data: " . print_r($_POST, true));

@@ -70,48 +70,31 @@ function formatNumber($number) {
 }
 
 
+// 修改贷款查询以获取所有活跃贷款
 $sql_loan = "SELECT 
     l.loanType,
     la.amountRequested,
-    la.monthlyInstallments
+    la.monthlyInstallments,
+    COALESCE((
+        SELECT SUM(d.Deduct_Amt)
+        FROM tb_deduction d
+        JOIN tb_deduction_type dt ON d.DeducType_ID = dt.DeducType_ID
+        WHERE d.employeeID = l.employeeID 
+        AND dt.typeName = 'Loan Payment'
+        AND (
+            YEAR(d.Deduct_date) < ? 
+            OR (YEAR(d.Deduct_date) = ? AND MONTH(d.Deduct_date) <= ?)
+        )
+    ), 0) as total_paid
 FROM tb_loan l
-JOIN tb_loanapplication la ON l.employeeID = la.employeeID 
+JOIN tb_loanapplication la ON l.loanApplicationID = la.loanApplicationID 
 WHERE l.employeeID = ?
 AND la.loanStatus = 'Diluluskan'";
 
 $stmt_loan = mysqli_prepare($conn, $sql_loan);
-mysqli_stmt_bind_param($stmt_loan, 's', $employeeID);
+mysqli_stmt_bind_param($stmt_loan, 'iiis', $year, $year, $month, $employeeID);
 mysqli_stmt_execute($stmt_loan);
-$loan_data = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_loan));
-
-if ($loan_data) {
-    $totalLoanAmount = $loan_data['amountRequested'];
-    
-    // 获取到指定月份为止的所有还款记录
-    $sql_payments = "SELECT SUM(d.Deduct_Amt) as total_paid
-                    FROM tb_deduction d
-                    JOIN tb_deduction_type dt ON d.DeducType_ID = dt.DeducType_ID
-                    WHERE d.employeeID = ? 
-                    AND dt.typeName = 'Loan Payment'
-                    AND (
-                        YEAR(d.Deduct_date) < ? 
-                        OR (YEAR(d.Deduct_date) = ? AND MONTH(d.Deduct_date) <= ?)
-                    )";
-
-    $stmt_payments = mysqli_prepare($conn, $sql_payments);
-    mysqli_stmt_bind_param($stmt_payments, 'siii', $employeeID, $year, $year, $month);
-    mysqli_stmt_execute($stmt_payments);
-    $payments = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_payments));
-    
-    $total_paid = $payments['total_paid'] ?? 0;
-    $currentBalance = $totalLoanAmount - $total_paid;
-    
-   
-}
-
-// 添加调试日志
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+$loan_result = mysqli_stmt_get_result($stmt_loan);
 
 // 修改储蓄金额查询，修复参数绑定的类型和数量
 $sql_savings = "SELECT 
@@ -289,29 +272,34 @@ $savings['deposit'] = $savings['deposit'] ?? 0;
             <h5 class="section-title">MAKLUMAT PINJAMAN</h5>
             <div class="financial-details">
                 <div class="row">
-                    <div class="col-md-8"> 
-                        <table class="table table-borderless financial-table">
-                            <tr>
-                                <td style="width: 300px;">Jenis Pinjaman</td>
-                                <td style="width: 30px;">:</td>
-                                <td style="width: 150px;"><?php echo $loan_data['loanType'] ?? '-'; ?></td>
-                            </tr>
-                            <tr>
-                                <td>Jumlah Pinjaman</td>
-                                <td>:</td>
-                                <td>RM <?php echo number_format($totalLoanAmount ?? 0, 2); ?></td>
-                            </tr>
-                            <tr>
-                                <td>Baki Pinjaman</td>
-                                <td>:</td>
-                                <td>RM <?php echo number_format($currentBalance ?? 0, 2); ?></td>
-                            </tr>
-                            <tr>
-                                <td>Bayaran Bulanan</td>
-                                <td>:</td>
-                                <td>RM <?php echo number_format($loan_data['monthlyInstallments'] ?? 0, 2); ?></td>
-                            </tr>
-                        </table>
+                    <div class="col-md-12">
+                        <?php if (mysqli_num_rows($loan_result) > 0): ?>
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Jenis Pinjaman</th>
+                                        <th class="text-end">Jumlah Pinjaman</th>
+                                        <th class="text-end">Baki Pinjaman</th>
+                                        <th class="text-end">Bayaran Bulanan</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php 
+                                    while ($loan = mysqli_fetch_assoc($loan_result)): 
+                                        $currentBalance = $loan['amountRequested'] - $loan['total_paid'];
+                                    ?>
+                                        <tr>
+                                            <td><?php echo $loan['loanType']; ?></td>
+                                            <td class="text-end">RM <?php echo number_format($loan['amountRequested'], 2); ?></td>
+                                            <td class="text-end">RM <?php echo number_format($currentBalance, 2); ?></td>
+                                            <td class="text-end">RM <?php echo number_format($loan['monthlyInstallments'], 2); ?></td>
+                                        </tr>
+                                    <?php endwhile; ?>
+                                </tbody>
+                            </table>
+                        <?php else: ?>
+                            <p class="text-center">Tiada pinjaman aktif</p>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>

@@ -45,18 +45,25 @@ $result = mysqli_stmt_get_result($stmt);
 
 $sql_loan = "SELECT 
     l.loanType,
-    l.balance,
     la.amountRequested,
-    la.monthlyInstallments
+    la.monthlyInstallments,
+    COALESCE((
+        SELECT SUM(d.Deduct_Amt)
+        FROM tb_deduction d
+        JOIN tb_deduction_type dt ON d.DeducType_ID = dt.DeducType_ID
+        WHERE d.employeeID = l.employeeID 
+        AND dt.typeName = 'Loan Payment'
+        AND YEAR(d.Deduct_date) <= ?
+    ), 0) as total_paid
 FROM tb_loan l
-JOIN tb_loanapplication la ON l.employeeID = la.employeeID 
+JOIN tb_loanapplication la ON l.loanApplicationID = la.loanApplicationID 
 WHERE l.employeeID = ?
 AND la.loanStatus = 'Diluluskan'";
 
 $stmt_loan = mysqli_prepare($conn, $sql_loan);
-mysqli_stmt_bind_param($stmt_loan, 's', $employeeID);
+mysqli_stmt_bind_param($stmt_loan, 'is', $year, $employeeID);
 mysqli_stmt_execute($stmt_loan);
-$loan_data = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_loan));
+$loan_result = mysqli_stmt_get_result($stmt_loan);
 
 
 $monthly_data = [];
@@ -209,7 +216,7 @@ $malay_months = [
         <!-- Loan Information Section -->
         <div class="financial-section">
             <h5 class="section-title">MAKLUMAT PINJAMAN</h5>
-            <?php if ($loan_data): ?>
+            <?php if (mysqli_num_rows($loan_result) > 0): ?>
                 <div class="table-responsive">
                     <table class="table table-bordered">
                         <thead>
@@ -221,12 +228,17 @@ $malay_months = [
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td><?php echo $loan_data['loanType']; ?></td>
-                                <td class="text-end">RM <?php echo number_format($loan_data['amountRequested'], 2); ?></td>
-                                <td class="text-end">RM <?php echo number_format($loan_data['monthlyInstallments'], 2); ?></td>
-                                <td class="text-end">RM <?php echo number_format($loan_data['balance'], 2); ?></td>
-                            </tr>
+                            <?php 
+                            while ($loan = mysqli_fetch_assoc($loan_result)): 
+                                $currentBalance = $loan['amountRequested'] - $loan['total_paid'];
+                            ?>
+                                <tr>
+                                    <td><?php echo $loan['loanType']; ?></td>
+                                    <td class="text-end">RM <?php echo number_format($loan['amountRequested'], 2); ?></td>
+                                    <td class="text-end">RM <?php echo number_format($loan['monthlyInstallments'], 2); ?></td>
+                                    <td class="text-end">RM <?php echo number_format($currentBalance, 2); ?></td>
+                                </tr>
+                            <?php endwhile; ?>
                         </tbody>
                     </table>
                 </div>
