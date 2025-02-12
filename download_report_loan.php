@@ -11,33 +11,7 @@ if (!isset($_GET['loanApplicationID'])) {
 $loanApplicationID = $_GET['loanApplicationID'];
 
 try {
-    require_once('tcpdf/tcpdf.php');
-    
-    // Add error reporting at the start
-    error_reporting(E_ALL);
-    ini_set('display_errors', 1);
-
-    // Verify database connection
-    if (!$conn) {
-        throw new Exception("Database connection failed: " . mysqli_connect_error());
-    }
-    
-    // Initialize PDF with proper settings
-    $pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
-    
-    // Set document information
-    $pdf->SetCreator('Your System');
-    $pdf->SetTitle('Financial Statement');
-    
-    // Remove default header/footer
-    $pdf->setPrintHeader(false);
-    $pdf->setPrintFooter(false);
-    
-    // Set margins and add page
-    $pdf->SetMargins(15, 15, 15);
-    $pdf->AddPage();
-    
-    // Query loan data and employee data - updated to use loanApplicationID
+    // Get loan and member data
     $query = "SELECT 
                 m.memberName,
                 m.employeeID,
@@ -56,75 +30,134 @@ try {
               
     $stmt = mysqli_prepare($conn, $query);
     mysqli_stmt_bind_param($stmt, "s", $loanApplicationID);
-
-    // Add debugging before query execution
-    if (!$stmt) {
-        throw new Exception("Query preparation failed: " . mysqli_error($conn));
-    }
-    
     mysqli_stmt_execute($stmt);
     $result = mysqli_stmt_get_result($stmt);
-    
-    // Verify data was retrieved
-    if (!$data = mysqli_fetch_assoc($result)) {
-        throw new Exception("No data found for Loan Application ID: " . $loanApplicationID);
+    $data = mysqli_fetch_assoc($result);
+
+    if (!$data) {
+        throw new Exception('Loan application not found');
     }
 
-    // Add content to PDF
-    $pdf->SetFont('helvetica', 'B', 14);
-    $pdf->Cell(0, 10, 'Pengesahan Penyata Kewangan Ahli Koperasi Kakitangan KADA', 0, 1, 'C');
-    $pdf->Cell(0, 10, 'Kelantan Berhad', 0, 1, 'C');
+    require_once('tcpdf/tcpdf.php');
+    
+    // Add error reporting at the start
+    error_reporting(E_ALL);
+    ini_set('display_errors', 1);
+
+    // Verify database connection
+    if (!$conn) {
+        throw new Exception("Database connection failed: " . mysqli_connect_error());
+    }
+    
+    // Initialize PDF with proper settings
+    $pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
+    
+    // Set document information
+    $pdf->SetCreator('KADA Kelantan');
+    $pdf->SetTitle('Pengesahan Penyata Kewangan');
+    
+    // Remove default header/footer
+    $pdf->setPrintHeader(false);
+    $pdf->setPrintFooter(false);
+    
+    // Set margins and add page
+    $pdf->SetMargins(15, 15, 15);
+    $pdf->AddPage();
+
+    // Add KADA logo with adjusted positioning
+    $logoPath = 'img/kadalogo.jpg';
+    if (file_exists($logoPath)) {
+        $pdf->Image($logoPath, 80, 10, 50, 0, 'JPG', '', 'T', false, 300, 'C');
+        $pdf->Ln(45); // Increased space after logo from 30 to 45
+    }
+    
+    // Add decorative line
+    $pdf->SetLineStyle(array('width' => 0.5, 'color' => array(0, 48, 135)));
+    $pdf->Line(15, $pdf->GetY(), 195, $pdf->GetY());
+    
+    // Add title with enhanced styling
+    $pdf->SetFont('helvetica', 'B', 16);
+    $pdf->SetTextColor(0, 48, 135);
+    $pdf->Cell(0, 10, 'Pengesahan Penyata Kewangan Ahli Koperasi', 0, 1, 'C');
+    $pdf->Cell(0, 10, 'Kakitangan KADA Kelantan Berhad', 0, 1, 'C');
+    
+    // Add decorative line
+    $pdf->Line(15, $pdf->GetY(), 195, $pdf->GetY());
     $pdf->Ln(10);
 
-    // Maklumat Peribadi section
+    // Add "Maklumat Peribadi" heading with styled background
+    $pdf->SetFillColor(0, 48, 135);
+    $pdf->SetTextColor(255, 255, 255);
     $pdf->SetFont('helvetica', 'B', 12);
-    $pdf->Cell(0, 10, 'Maklumat Peribadi', 0, 1, 'L');
+    $pdf->Cell(0, 10, ' Maklumat Peribadi', 0, 1, 'L', true);
+    $pdf->Ln(5);
+    
+    // Reset colors for table content
+    $pdf->SetTextColor(0, 0, 0);
     $pdf->SetFont('helvetica', '', 11);
     
-    $pdf->Cell(40, 8, 'Nama', 1, 0);
-    $pdf->Cell(150, 8, htmlspecialchars($data['memberName']), 1, 1);
+    // Create table with enhanced styling
+    $pdf->SetFillColor(240, 240, 250);
+    $pdf->SetDrawColor(0, 48, 135);
     
-    $pdf->Cell(40, 8, 'No. Pekerja', 1, 0);
-    $pdf->Cell(150, 8, htmlspecialchars($data['employeeID']), 1, 1);
+    // Personal Information table with alternating backgrounds
+    $pdf->Cell(60, 10, ' Nama', 1, 0, 'L', true);
+    $pdf->Cell(120, 10, ' ' . htmlspecialchars($data['memberName']), 1, 1, 'L');
     
-    $pdf->Cell(40, 8, 'No. Kad Pengenalan', 1, 0);
-    $pdf->Cell(150, 8, htmlspecialchars($data['ic']), 1, 1);
+    $pdf->Cell(60, 10, ' No. Anggota', 1, 0, 'L');
+    $pdf->Cell(120, 10, ' ' . htmlspecialchars($data['employeeID']), 1, 1, 'L');
     
-    $pdf->Cell(40, 8, 'No. PF', 1, 0);
-    $pdf->Cell(150, 8, htmlspecialchars($data['no_pf']), 1, 1);
+    $pdf->Cell(60, 10, ' No. Kad Pengenalan', 1, 0, 'L', true);
+    $pdf->Cell(120, 10, ' ' . htmlspecialchars($data['ic']), 1, 1, 'L');
     
+    $pdf->Cell(60, 10, ' No. PF', 1, 0, 'L');
+    $pdf->Cell(120, 10, ' ' . htmlspecialchars($data['no_pf']), 1, 1, 'L');
+
     $pdf->Ln(10);
 
-    // Maklumat Pembiayaan section
+    // Add "Maklumat Pembiayaan" heading
+    $pdf->SetFillColor(0, 48, 135);
+    $pdf->SetTextColor(255, 255, 255);
     $pdf->SetFont('helvetica', 'B', 12);
-    $pdf->Cell(0, 10, 'Maklumat Pembiayaan', 0, 1, 'L');
+    $pdf->Cell(0, 10, ' Maklumat Pembiayaan', 0, 1, 'L', true);
+    $pdf->Ln(5);
+
+    // Reset colors for table content
+    $pdf->SetTextColor(0, 0, 0);
     $pdf->SetFont('helvetica', '', 11);
-    
-    $pdf->Cell(40, 8, 'No. Pembiayaan', 1, 0);
-    $pdf->Cell(150, 8, htmlspecialchars($data['loanID']), 1, 1);
-    
-    $pdf->Cell(40, 8, 'Jenis Pembiayaan', 1, 0);
-    $pdf->Cell(150, 8, $data['loanType'], 1, 1);
-    
-    $pdf->Cell(40, 8, 'Amaun Dipohon', 1, 0);
-    $pdf->Cell(150, 8, 'RM ' . number_format($data['amountRequested'], 2), 1, 1);
-    
-    $pdf->Cell(40, 8, 'Tempoh Pembiayaan', 1, 0);
-    $pdf->Cell(150, 8, $data['financingPeriod'] . ' bulan', 1, 1);
-    
-    $pdf->Cell(40, 8, 'Ansuran Bulanan', 1, 0);
-    $pdf->Cell(150, 8, 'RM ' . number_format($data['monthlyInstallments'], 2), 1, 1);
+    $pdf->SetFillColor(240, 240, 250); // Reset fill color for table rows
 
-    // Add tarikh_pembiayaan to PDF
-    $pdf->Cell(40, 8, 'Tarikh Pembiayaan', 1, 0);
-    $pdf->Cell(150, 8, $data['tarikh_pembiayaan'], 1, 1);
+    // Loan Information table with matching alternating backgrounds
+    $pdf->Cell(60, 10, ' No. Pembiayaan', 1, 0, 'L', true);
+    $pdf->Cell(120, 10, ' ' . htmlspecialchars($data['loanID']), 1, 1, 'L');
+    
+    $pdf->Cell(60, 10, ' Jenis Pembiayaan', 1, 0, 'L');
+    $pdf->Cell(120, 10, ' ' . htmlspecialchars($data['loanType']), 1, 1, 'L');
+    
+    $pdf->Cell(60, 10, ' Amaun Dipohon', 1, 0, 'L', true);
+    $pdf->Cell(120, 10, ' RM ' . number_format($data['amountRequested'], 2), 1, 1, 'L');
+    
+    $pdf->Cell(60, 10, ' Tempoh Pembiayaan', 1, 0, 'L');
+    $pdf->Cell(120, 10, ' ' . htmlspecialchars($data['financingPeriod']) . ' bulan', 1, 1, 'L');
+    
+    $pdf->Cell(60, 10, ' Ansuran Bulanan', 1, 0, 'L', true);
+    $pdf->Cell(120, 10, ' RM ' . number_format($data['monthlyInstallments'], 2), 1, 1, 'L');
+    
+    $pdf->Cell(60, 10, ' Tarikh Pembiayaan', 1, 0, 'L');
+    $pdf->Cell(120, 10, ' ' . htmlspecialchars($data['tarikh_pembiayaan']), 1, 1, 'L');
 
-    // Add timestamp
+    // Add timestamp with enhanced styling
     $pdf->Ln(10);
-    $pdf->SetFont('helvetica', '', 10);
+    $pdf->SetFont('helvetica', 'I', 10);
+    $pdf->SetTextColor(128, 128, 128);
     $pdf->Cell(0, 10, 'Laporan dijana pada: ' . date('d/m/Y H:i:s'), 0, 1, 'L');
 
-    // Clear any output buffers
+    // Add footer line
+    $pdf->SetY(-30);
+    $pdf->SetDrawColor(0, 48, 135);
+    $pdf->Line(15, $pdf->GetY(), 195, $pdf->GetY());
+
+    // Clear any output buffers before sending headers
     ob_end_clean();
 
     // Output the PDF
