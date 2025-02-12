@@ -439,7 +439,7 @@ body {
         <a class="nav-link" href="adminviewreport.php">Cek Laporan</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" href="admin_update_payment.php">Rekod Bayaran</a>
+        <a class="nav-link" href="admin_upload_payment.php">Rekod Bayaran</a>
       </li>
       <li class="nav-item">
         <a class="nav-link" href="manage_member_status.php">Pengurusan Status Anggota</a>
