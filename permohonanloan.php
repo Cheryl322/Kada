@@ -47,6 +47,33 @@ if ($row['regisStatus'] !== 'Diluluskan') {
     exit();
 }
 
+// 检查会员状态
+$sql_check_status = "SELECT status FROM tb_member_status WHERE employeeID = ?";
+$stmt_status = mysqli_prepare($conn, $sql_check_status);
+mysqli_stmt_bind_param($stmt_status, 's', $employeeID);
+mysqli_stmt_execute($stmt_status);
+$result_status = mysqli_stmt_get_result($stmt_status);
+$member_status = mysqli_fetch_assoc($result_status);
+
+// 如果状态是 "Berhenti"，不允许申请贷款
+if ($member_status['status'] == 'Berhenti') {
+    // 使用 SweetAlert2 显示错误消息
+    echo "<script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>";
+    echo "<script>
+        document.addEventListener('DOMContentLoaded', function() {
+            Swal.fire({
+                title: 'Akses Ditolak!',
+                text: 'Maaf, anda tidak boleh membuat permohonan pinjaman kerana status keahlian anda telah berhenti.',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            }).then((result) => {
+                window.location.href = 'mainpage.php';
+            });
+        });
+    </script>";
+    exit();
+}
+
 include 'headermember.php';
 
 $employeeID = $_SESSION['employeeID'];

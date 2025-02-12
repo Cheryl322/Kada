@@ -36,35 +36,47 @@ $savings = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_savings));
 // 计算总储蓄
 $totalSavings = array_sum($savings);
 
-// 获取贷款信息 - 从 tb_loan 表获取
-$sql_loans = "SELECT DISTINCT
-    l.loanType,
+// 获取贷款信息
+$sql_loans = "SELECT 
+    l.loanApplicationID,
     l.amountRequested,
+    l.monthlyInstallments,
+    l.loanType,
     l.balance,
     COALESCE((
         SELECT SUM(d.Deduct_Amt)
         FROM tb_deduction d
         WHERE d.employeeID = l.employeeID 
         AND d.DeducType_ID = 6
+        AND d.loanApplicationID = l.loanApplicationID
     ), 0) as total_repaid
 FROM tb_loan l
 JOIN tb_loanapplication la ON l.loanApplicationID = la.loanApplicationID
 WHERE l.employeeID = ?
-AND la.loanStatus = 'Diluluskan'
-GROUP BY l.loanType, l.amountRequested, l.balance";
+AND la.loanStatus = 'Diluluskan'";
 
 $stmt_loans = mysqli_prepare($conn, $sql_loans);
 mysqli_stmt_bind_param($stmt_loans, 's', $employeeID);
 mysqli_stmt_execute($stmt_loans);
 $loans_result = mysqli_stmt_get_result($stmt_loans);
 
-// 初始化贷款变量
+// 初始化总贷款金额
 $totalAllLoans = 0;
-$loanTypes = [];
 
+// 储存贷款数据
+$loan_details = array();
+$loanTypes = array();  // 只存储贷款类型
 while ($loan = mysqli_fetch_assoc($loans_result)) {
-    $totalAllLoans += $loan['amountRequested'];
-    $loanTypes[] = $loan['loanType'];
+    $remaining_amount = $loan['balance'] ?? ($loan['amountRequested'] - $loan['total_repaid']);
+    $totalAllLoans += $loan['amountRequested'];  // 计算总贷款金额
+    
+    $loan_details[] = array(
+        'type' => $loan['loanType'],
+        'remaining' => $remaining_amount,
+        'total' => $loan['amountRequested']
+    );
+    
+    $loanTypes[] = $loan['loanType'];  // 只存储贷款类型
 }
 ?>
 
@@ -192,19 +204,15 @@ while ($loan = mysqli_fetch_assoc($loans_result)) {
                     <i class="fas fa-file-invoice-dollar me-2"></i>
                     Butiran Pinjaman
                 </h3>
-                <?php 
-                mysqli_data_seek($loans_result, 0);
-                while ($loan = mysqli_fetch_assoc($loans_result)): 
-                    $remaining_amount = $loan['amountRequested'] - $loan['total_repaid'];
-                ?>
-                <div class="detail-item">
-                    <span class="detail-label"><?php echo $loan['loanType']; ?></span>
-                    <span class="detail-amount">
-                        RM <?php echo number_format($remaining_amount, 2); ?> / 
-                        RM <?php echo number_format($loan['amountRequested'], 2); ?>
-                    </span>
-                </div>
-                <?php endwhile; ?>
+                <?php foreach ($loan_details as $loan): ?>
+                    <div class="detail-item">
+                        <span class="detail-label"><?php echo $loan['type']; ?></span>
+                        <span class="detail-amount">
+                            RM <?php echo number_format($loan['remaining'], 2); ?> / 
+                            RM <?php echo number_format($loan['total'], 2); ?>
+                        </span>
+                    </div>
+                <?php endforeach; ?>
             </div>
         </div>
     </div>

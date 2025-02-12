@@ -24,10 +24,13 @@ $sql = "SELECT d.Deduct_date as transDate,
                    WHEN dt.DeducType_ID = 3 THEN 'Simpanan Tetap'
                    WHEN dt.DeducType_ID = 4 THEN 'Sumbangan Tabung Kebajikan (AL-ABRAR)'
                    WHEN dt.DeducType_ID = 5 THEN 'Wang Deposit Anggota'
+                   WHEN dt.DeducType_ID = 6 THEN CONCAT('Loan Payment (', l.loanType, ')')
                    ELSE dt.typeName 
-               END as displayType
+               END as displayType,
+               l.loanType
         FROM tb_deduction d
         JOIN tb_deduction_type dt ON d.DeducType_ID = dt.DeducType_ID
+        LEFT JOIN tb_loan l ON d.loanApplicationID = l.loanApplicationID
         WHERE d.employeeID = ? 
         AND MONTH(d.Deduct_date) = ? 
         AND YEAR(d.Deduct_date) = ?
@@ -169,7 +172,15 @@ $months_in_malay = [
                             <i class="fas fa-receipt"></i>
                         </div>
                         <div class="transaction-details">
-                            <div class="transaction-type"><?php echo $row['displayType']; ?></div>
+                            <div class="transaction-type">
+                                <?php 
+                                if (strpos($row['displayType'], 'Loan Payment') !== false) {
+                                    echo $row['displayType'];
+                                } else {
+                                    echo $row['displayType'];
+                                }
+                                ?>
+                            </div>
                             <div class="transaction-date"><?php echo date('d/m/Y', strtotime($row['transDate'])); ?></div>
                         </div>
                         <div class="transaction-amount">
