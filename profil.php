@@ -97,25 +97,27 @@ if ($isMember) {
 }
 
 // 从IC提取生日和计算年龄
-function getBirthDateFromIC($ic) {
-    $year = substr($ic, 0, 2);
-    $month = substr($ic, 2, 2);
-    $day = substr($ic, 4, 2);
-    
-    // 确定世纪
-    $year = (int)$year;
-    if ($year >= 00 && $year <= 30) {
-        $year += 2000;
-    } else {
-        $year += 1900;
+if (!function_exists('getBirthDateFromIC')) {
+    function getBirthDateFromIC($ic) {
+        $year = substr($ic, 0, 2);
+        $month = substr($ic, 2, 2);
+        $day = substr($ic, 4, 2);
+        
+        // 确定世纪
+        $year = (int)$year;
+        if ($year >= 00 && $year <= 30) {
+            $year += 2000;
+        } else {
+            $year += 1900;
+        }
+        
+        // 验证日期的有效性
+        if (!checkdate((int)$month, (int)$day, $year)) {
+            return null;
+        }
+        
+        return sprintf('%04d-%02d-%02d', $year, $month, $day);
     }
-    
-    // 验证日期的有效性
-    if (!checkdate((int)$month, (int)$day, $year)) {
-        return null;
-    }
-    
-    return sprintf('%04d-%02d-%02d', $year, $month, $day);
 }
 
 if (!function_exists('calculateAge')) {
@@ -167,6 +169,12 @@ function getStatusClass($status) {
     }
 }
 ?>
+
+<!-- 在 head 部分添加 Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+<!-- 添加 SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <div class="wrapper">
     <div class="container mt-5">
@@ -221,8 +229,7 @@ function getStatusClass($status) {
                 <div class="card">
                     <?php if (!$isMember): ?>
                         <div class="alert alert-info m-3" role="alert">
-                            <i class="fas fa-info-circle"></i>
-                            Tiada rekod maklumat. Sila mohon keahlian KADA.
+                            <i class="fas fa-info-circle"></i> Tiada rekod maklumat. Sila mohon keahlian KADA.
                             <a href="daftar_ahli.php" class="btn btn-primary ms-2">Mohon Sekarang</a>
                         </div>
                     <?php endif; ?>
@@ -233,13 +240,16 @@ function getStatusClass($status) {
                                 Maklumat Peribadi
                             </button>
                         </li>
-                        <?php if ($isMember): ?>
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="family-tab" data-bs-toggle="tab" data-bs-target="#family" type="button" role="tab">
                                 Maklumat Keluarga
                             </button>
                         </li>
-                        <?php endif; ?>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="password-tab" data-bs-toggle="tab" data-bs-target="#password" type="button" role="tab">
+                                Tukar Kata Laluan
+                            </button>
+                        </li>
                     </ul>
 
                     <div class="tab-content" id="myTabContent">
@@ -441,6 +451,73 @@ function getStatusClass($status) {
                                 </div>
                             </div>
                         </div>
+
+                        <!-- 密码更改标签页 -->
+                        <div class="tab-pane fade" id="password" role="tabpanel">
+                            <div class="card-body">
+                                <div class="card">
+                                    <div class="card-header bg-success text-white">
+                                        <h4 class="mb-0">TUKAR KATA LALUAN</h4>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <!-- 左侧表单 -->
+                                            <div class="col-md-7 border-end">
+                                                <form id="changePasswordForm" onsubmit="return updatePassword(event)">
+                                                    <div class="mb-3">
+                                                        <label for="currentPassword">Kata Laluan Semasa</label>
+                                                        <div class="input-group">
+                                                            <input type="password" class="form-control" id="currentPassword" name="currentPassword" required>
+                                                            <button type="button" class="btn btn-outline-secondary" onclick="togglePassword('currentPassword')">
+                                                                <i class="far fa-eye-slash"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="mb-3">
+                                                        <label for="newPassword">Kata Laluan Baru</label>
+                                                        <div class="input-group">
+                                                            <input type="password" class="form-control" id="newPassword" name="newPassword" required>
+                                                            <button type="button" class="btn btn-outline-secondary" onclick="togglePassword('newPassword')">
+                                                                <i class="far fa-eye-slash"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="mb-3">
+                                                        <label for="confirmPassword">Sahkan Kata Laluan</label>
+                                                        <div class="input-group">
+                                                            <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" required>
+                                                            <button type="button" class="btn btn-outline-secondary" onclick="togglePassword('confirmPassword')">
+                                                                <i class="far fa-eye-slash"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+
+                                                    <button type="submit" class="btn btn-primary">
+                                                        <i class="fas fa-save"></i> SIMPAN
+                                                    </button>
+                                                </form>
+                                            </div>
+
+                                            <!-- 右侧密码要求 -->
+                                            <div class="col-md-5">
+                                                <div class="password-requirements ps-md-4">
+                                                    <h5 class="text-muted mb-3">Kata laluan mestilah:</h5>
+                                                    <ul class="list-unstyled">
+                                                        <li id="length" class="requirement">• Minimum 8 aksara</li>
+                                                        <li id="uppercase" class="requirement">• Sekurang-kurangnya 1 huruf besar</li>
+                                                        <li id="lowercase" class="requirement">• Sekurang-kurangnya 1 huruf kecil</li>
+                                                        <li id="number" class="requirement">• Sekurang-kurangnya 1 nombor</li>
+                                                        <li id="special" class="requirement">• Sekurang-kurangnya 1 simbol (@$!%*?&)</li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -542,7 +619,151 @@ document.getElementById('profileForm').addEventListener('submit', function(e) {
         });
     }
 });
+
+document.addEventListener('DOMContentLoaded', function() {
+    const newPassword = document.getElementById('newPassword');
+    const confirmPassword = document.getElementById('confirmPassword');
+    const requirements = {
+        length: /.{8,}/,
+        uppercase: /[A-Z]/,
+        lowercase: /[a-z]/,
+        number: /[0-9]/,
+        special: /[@$!%*?&]/
+    };
+
+    // 实时检查密码要求
+    newPassword.addEventListener('input', function() {
+        const password = this.value;
+        let allValid = true;
+        
+        for (let req in requirements) {
+            const element = document.getElementById(req);
+            if (requirements[req].test(password)) {
+                element.classList.add('text-success');
+                element.classList.remove('text-danger');
+            } else {
+                element.classList.add('text-danger');
+                element.classList.remove('text-success');
+                allValid = false;
+            }
+        }
+    });
+
+    // 实时检查密码匹配
+    confirmPassword.addEventListener('input', function() {
+        if (this.value !== newPassword.value) {
+            this.setCustomValidity('Kata laluan tidak sepadan');
+        } else {
+            this.setCustomValidity('');
+        }
+    });
+});
+
+function updatePassword(e) {
+    e.preventDefault();
+    
+    const currentPassword = document.getElementById('currentPassword').value;
+    const newPassword = document.getElementById('newPassword').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+
+    // 验证所有字段都已填写
+    if (!currentPassword || !newPassword || !confirmPassword) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Perhatian',
+            text: 'Sila isi semua medan yang diperlukan'
+        });
+        return false;
+    }
+
+    // 验证新密码和确认密码是否匹配
+    if (newPassword !== confirmPassword) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Ralat',
+            text: 'Kata laluan baru dan pengesahan tidak sepadan'
+        });
+        return false;
+    }
+
+    // 验证密码要求
+    if (!validatePassword(newPassword)) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Perhatian',
+            text: 'Sila pastikan kata laluan memenuhi semua keperluan'
+        });
+        return false;
+    }
+
+    // 显示确认对话框
+    Swal.fire({
+        title: 'Pengesahan',
+        text: 'Adakah anda pasti untuk menukar kata laluan?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Ya',
+        cancelButtonText: 'Tidak'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const form = e.target;
+            fetch('update_password.php', {
+                method: 'POST',
+                body: new FormData(form)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Berjaya',
+                        text: 'Kata laluan berjaya dikemaskini',
+                        showConfirmButton: false,
+                        timer: 1500
+                    }).then(() => {
+                        form.reset();
+                        $('#profile-tab').tab('show');
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Ralat',
+                        text: data.message
+                    });
+                }
+            });
+        }
+    });
+    
+    return false;
+}
+
+function validatePassword(password) {
+    return password.length >= 8 && 
+           /[A-Z]/.test(password) && 
+           /[a-z]/.test(password) && 
+           /[0-9]/.test(password) && 
+           /[@$!%*?&]/.test(password);
+}
+
+function togglePassword(inputId) {
+    const input = document.getElementById(inputId);
+    const icon = event.target.closest('button').querySelector('i');
+    
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+    } else {
+        input.type = 'password';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+    }
+}
 </script>
+
+<!-- 在密码表单上方添加错误消息显示区域 -->
+<div id="password-error-message" class="d-none mb-3"></div>
 
 <style>
 /* 卡片样式优化 */
@@ -755,5 +976,45 @@ h5 {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(117, 183, 152, 0.2);
     background: linear-gradient(45deg, #5a8f76, #4d7a64);
+}
+
+.requirement {
+    margin-bottom: 0.8rem;
+    padding-left: 1.5rem;
+    position: relative;
+    color: #6c757d;
+}
+
+.requirement.text-success {
+    color: #198754 !important;
+}
+
+.requirement.text-danger {
+    color: #dc3545 !important;
+}
+
+.requirement.text-success:before {
+    content: '✓';
+    position: absolute;
+    left: 0;
+}
+
+.requirement.text-danger:before {
+    content: '•';
+    position: absolute;
+    left: 0;
+}
+
+@media (max-width: 767.98px) {
+    .border-end {
+        border-right: none !important;
+        border-bottom: 1px solid #dee2e6;
+        padding-bottom: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .password-requirements {
+        padding-left: 0 !important;
+    }
 }
 </style>
