@@ -68,6 +68,13 @@ while ($loan = mysqli_fetch_assoc($loans_result)) {
 ?>
 
 <div class="container mt-4">
+    <!-- Add Kembali button -->
+    <div class="mb-3">
+        <a href="profil.php" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Kembali
+        </a>
+    </div>
+
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Penyata Kewangan</h2>
     </div>
