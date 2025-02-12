@@ -109,6 +109,36 @@ include 'headeradmin.php';
     .search-container {
         display: inline-block;
     }
+
+    .report-action-container {
+        margin-top: -20px;
+        margin-bottom: 40px;
+        padding-left: 20px;
+        position: relative;
+    }
+
+    .report-action-container .btn-primary {
+        padding: 10px 20px;
+        font-size: 16px;
+        background-color: MediumAquamarine;  /* Matches your system's color scheme */
+        border-color: MediumAquamarine;
+    }
+
+    /* Add hover state */
+    .report-action-container .btn-primary:hover {
+        background-color: #5f9ea0;  /* Slightly darker shade for hover */
+        border-color: #5f9ea0;
+    }
+
+    /* Add this to your existing styles */
+    footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 1000;  /* Very high z-index to ensure it's always on top */
+        background-color: #fff;  /* Or whatever your footer's background color is */
+    }
   </style>
 </head>
 
@@ -164,7 +194,7 @@ include 'headeradmin.php';
                                 <label class="me-2">Dalam:</label>
                                 <select class="form-select btn btn-success" id="dateRangeSelect" style="width: auto; background-color: MediumAquamarine; color: white; border-color: MediumAquamarine;">
                                     <option value="7">Past 7 days</option>
-                                    <option value="30">Past 30 days</option>
+                                    <option value="30" selected>Past 30 days</option>
                                 </select>
                             </div>
                         </div>
@@ -232,20 +262,11 @@ include 'headeradmin.php';
                         Sila pilih sekurang-kurangnya seorang ahli
                     </div>
                 </div>
-                <div class="report-box">
-                    <h4>4. Hasil Laporan</h4>
-                    <div class="form-check mt-3">
-                        <input class="form-check-input required-field" type="radio" name="reportFormat" id="pdf" value="pdf">
-                        <label class="form-check-label" for="pdf">
-                            PDF
-                        </label>
-                    </div>
-                    <div class="invalid-feedback">
-                        Sila pilih format laporan
-                    </div>
+            </div>
 
-                    <button type="button" class="btn btn-primary mt-4" onclick="validateAndSubmit()">Hasil Laporan</button>
-                </div>
+            <!-- Add the button outside the report-boxes div -->
+            <div class="report-action-container">
+                <button type="button" class="btn btn-primary" onclick="validateAndSubmit()">Hasil Laporan</button>
             </div>
         </form>
     </div>
@@ -281,7 +302,7 @@ include 'headeradmin.php';
             return;
         }
 
-        fetch(`get_report_data.php?page=${page}&search=${search}&type=${type}&fromDate=${fromDate}&toDate=${toDate}&limit=5`)
+        fetch(`get_report_data.php?page=${page}&search=${search}&type=${type}&fromDate=${fromDate}&toDate=${toDate}&limit=5&status=Diluluskan`)
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
@@ -433,7 +454,7 @@ include 'headeradmin.php';
         });
 
         // Initial update
-        updateDateRange(7);
+        updateDateRange(30);
     });
 
     function attachCheckboxListeners() {
@@ -441,23 +462,51 @@ include 'headeradmin.php';
         const memberCheckboxes = document.getElementsByClassName('member-checkbox');
         
         selectAll.addEventListener('change', function() {
-            Array.from(memberCheckboxes).forEach(checkbox => {
-                checkbox.checked = this.checked;
-                if (this.checked) {
-                    selectedItems.add(checkbox.value);
-                } else {
-                    selectedItems.delete(checkbox.value);
-                }
-            });
-            updateSelectedCount();
+            const type = document.querySelector('input[name="reportType"]:checked').value;
+            const fromDate = document.getElementById('fromDate').value;
+            const toDate = document.getElementById('toDate').value;
+            const search = document.getElementById('searchInput').value;
+
+            if (this.checked) {
+                // Fetch all available IDs when "Select All" is checked
+                fetch(`get_report_data.php?type=${type}&fromDate=${fromDate}&toDate=${toDate}&search=${search}&getAllIds=true`)
+                    .then(response => response.json())
+                    .then(data => {
+                        // Clear existing selections and add all IDs
+                        selectedItems.clear();
+                        data.allIds.forEach(id => {
+                            selectedItems.add(id.toString());
+                        });
+
+                        // Check all visible checkboxes
+                        Array.from(memberCheckboxes).forEach(checkbox => {
+                            checkbox.checked = true;
+                        });
+
+                        updateSelectedCount();
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+            } else {
+                // Clear all selections when unchecked
+                selectedItems.clear();
+                Array.from(memberCheckboxes).forEach(checkbox => {
+                    checkbox.checked = false;
+                });
+                updateSelectedCount();
+            }
         });
 
+        // Individual checkbox listeners
         Array.from(memberCheckboxes).forEach(checkbox => {
             checkbox.addEventListener('change', function() {
                 if (this.checked) {
                     selectedItems.add(this.value);
                 } else {
                     selectedItems.delete(this.value);
+                    // Uncheck "Select All" if any individual checkbox is unchecked
+                    document.getElementById('selectAll').checked = false;
                 }
                 updateSelectAllCheckbox();
                 updateSelectedCount();
@@ -488,12 +537,6 @@ include 'headeradmin.php';
     function validateAndSubmit() {
         if (selectedItems.size === 0) {
             alert('Sila pilih sekurang-kurangnya seorang ahli');
-            return;
-        }
-        
-        const reportFormat = document.querySelector('input[name="reportFormat"]:checked');
-        if (!reportFormat) {
-            alert('Sila pilih format laporan');
             return;
         }
         
