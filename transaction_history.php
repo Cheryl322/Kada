@@ -81,10 +81,21 @@ while ($row = mysqli_fetch_assoc($dates_result)) {
     $available_dates[$row['year']][] = $row['month'];
 }
 
-if (!isset($_GET['year']) || !isset($_GET['month'])) {
-    reset($available_dates);
-    $year = key($available_dates);
-    $month = $available_dates[$year][0];
+// 检查是否有可用日期
+if (empty($available_dates)) {
+    // 如果没有任何记录，设置默认值
+    $year = date('Y');
+    $month = date('m');
+} else {
+    // 如果没有选择年月，使用最新的记录日期
+    if (!isset($_GET['year']) || !isset($_GET['month'])) {
+        reset($available_dates);
+        $year = key($available_dates);
+        $month = !empty($available_dates[$year]) ? $available_dates[$year][0] : date('m');
+    } else {
+        $year = $_GET['year'];
+        $month = $_GET['month'];
+    }
 }
 
 $months_in_malay = [
@@ -140,17 +151,19 @@ $months_in_malay = [
     <!-- Transactions Card -->
     <div class="transaction-card">
         <div class="transaction-header">
-            <h3>Transaksi <?php echo $months_in_malay[$month] . ' ' . $year; ?></h3>
+            <h3>Transaksi <?php 
+                if (mysqli_num_rows($result) > 0 && isset($months_in_malay[$month])) {
+                    echo $months_in_malay[$month] . ' ' . $year;
+                }
+            ?></h3>
         </div>
         <div class="transaction-body">
-            <?php 
-            $totalAmount = 0; // 初始化总额
-            
-            if (mysqli_num_rows($result) > 0): 
+            <?php if (mysqli_num_rows($result) > 0): ?>
+                <?php 
+                $totalAmount = 0;
                 while ($row = mysqli_fetch_assoc($result)): 
-                    // 累加交易金额
                     $totalAmount += $row['transAmt'];
-            ?>
+                ?>
                     <div class="transaction-item">
                         <div class="transaction-icon">
                             <i class="fas fa-receipt"></i>
@@ -165,7 +178,6 @@ $months_in_malay = [
                     </div>
                 <?php endwhile; ?>
                 
-                <!-- 在所有交易显示后显示总额 -->
                 <div class="total-amount mt-3 p-3 border-top">
                     <h4 class="text-end">
                         Jumlah: <span class="<?php echo ($totalAmount > 0) ? 'text-success' : ''; ?>">
@@ -173,11 +185,9 @@ $months_in_malay = [
                         </span>
                     </h4>
                 </div>
-                
             <?php else: ?>
-                <div class="no-transactions">
-                    <i class="fas fa-receipt fa-3x mb-3"></i>
-                    <p>Tiada rekod transaksi untuk tempoh ini</p>
+                <div class="text-center py-5">
+                    <p class="text-muted mb-0">Tiada rekod transaksi</p>
                 </div>
             <?php endif; ?>
         </div>
