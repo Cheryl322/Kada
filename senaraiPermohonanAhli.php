@@ -48,9 +48,16 @@ $result = mysqli_query($conn, $sql);
 
 ?>
 
-<br><br><br>
+<br>
 <div class="wrapper">
 <div class="container mt-5">
+    <!-- Add Kembali button -->
+    <div class="mb-3">
+        <a href="adminmainpage.php" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Kembali
+        </a>
+    </div>
+
     <h1 class="mb-4">Senarai Permohonan Ahli</h1>
 
     <div class="row">
@@ -108,29 +115,21 @@ $result = mysqli_query($conn, $sql);
 body {
     margin: 0;
     padding: 0;
+    min-height: 100vh;
+    background: linear-gradient(rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.8)), url('img/padi.jpg') no-repeat center center fixed;
+    background-size: cover;
 }
 
 .wrapper {
-    min-height: calc(100vh - 40px);
-    position: relative;
-    background: linear-gradient(rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.8)), url('img/padi.jpg') no-repeat center center fixed;
-    background-size: cover;
-    z-index: -1;
-    margin-top: -65px;
+    min-height: 100vh;
+    padding-top: 20px; /* Reduced from 40px */
+    padding-bottom: 20px;
 }
 
 .container {
     position: relative;
     z-index: 1;
-    padding: 20px;
-    margin-top: 0;
-}
-
-.sidebar, 
-nav,
-.nav-menu {
-    position: relative;
-    z-index: 1000 !important;
+    padding: 20px; /* Reduced from 40px */
 }
 
 .table-wrapper {
@@ -171,7 +170,21 @@ nav,
 h1 {
     color: #5CBA9B;
     font-weight: 600;
-    margin-top: 0;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 5px;
+    color: white;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+    background-color: #5a6268;
+    transform: translateY(-1px);
 }
 </style>
 

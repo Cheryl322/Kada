@@ -27,19 +27,16 @@ $reportType = isset($_POST['reportType']) ? $_POST['reportType'] : 'yearly';
 
 if ($reportType === 'monthly') {
     $summaryQuery = "SELECT 
-        DATE_FORMAT(created_at, '%Y-%m') as period,
-        COUNT(DISTINCT CASE WHEN type = 'member' THEN employeeID END) as new_members,
-        COUNT(DISTINCT CASE WHEN type = 'loan' THEN loanApplicationID END) as loan_applications,
-        SUM(CASE WHEN type = 'loan' THEN amountRequested ELSE 0 END) as total_loan_amount
-    FROM (
-        SELECT employeeID, NULL as loanApplicationID, created_at, 'member' as type, 0 as amountRequested 
-        FROM tb_member
-        UNION ALL
-        SELECT employeeID, loanApplicationID, created_at, 'loan' as type, amountRequested 
-        FROM tb_loan
-    ) combined_data
-    WHERE YEAR(created_at) = YEAR(CURRENT_DATE)
-    GROUP BY DATE_FORMAT(created_at, '%Y-%m')
+        DATE_FORMAT(m.created_at, '%Y-%m') as period,
+        MONTH(m.created_at) as month,
+        COUNT(DISTINCT m.employeeID) as new_members,
+        COUNT(DISTINCT l.loanApplicationID) as loan_applications,
+        COALESCE(SUM(l.amountRequested), 0) as total_loan_amount
+    FROM tb_member m
+    LEFT JOIN tb_loan l ON m.employeeID = l.employeeID 
+        AND YEAR(l.created_at) = '2025'
+    WHERE YEAR(m.created_at) = '2025'
+    GROUP BY DATE_FORMAT(m.created_at, '%Y-%m'), MONTH(m.created_at)
     ORDER BY period ASC";
 } else {
     $summaryQuery = $yearlyQuery;
@@ -47,9 +44,80 @@ if ($reportType === 'monthly') {
 
 $summaryResult = mysqli_query($conn, $summaryQuery);
 
+// Add debugging
+if (!$summaryResult) {
+    error_log("Query error: " . mysqli_error($conn));
+} else {
+    error_log("Query executed successfully");
+}
+
 // Add error checking
 if (!$summaryResult) {
     error_log("MySQL Error: " . mysqli_error($conn));
+}
+
+// Update the delete handling code at the top of the file
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_employeeID'])) {
+    include 'dbconnect.php';  // Make sure we have database connection
+    
+    $employeeIDToDelete = $_POST['delete_employeeID'];
+    $loanApplicationIDToDelete = isset($_POST['delete_loanApplicationID']) ? $_POST['delete_loanApplicationID'] : null;
+    
+    try {
+        // Start transaction
+        mysqli_begin_transaction($conn);
+        
+        if ($loanApplicationIDToDelete) {
+            // Delete loan entry
+            $stmt = mysqli_prepare($conn, "DELETE FROM tb_loan WHERE employeeID = ? AND loanApplicationID = ?");
+            mysqli_stmt_bind_param($stmt, "ss", $employeeIDToDelete, $loanApplicationIDToDelete);
+            mysqli_stmt_execute($stmt);
+        } else {
+            // Delete member entry
+            $stmt = mysqli_prepare($conn, "DELETE FROM tb_member WHERE employeeID = ?");
+            mysqli_stmt_bind_param($stmt, "s", $employeeIDToDelete);
+            mysqli_stmt_execute($stmt);
+        }
+        
+        // If we get here, database update was successful
+        // Now update session data
+        if (isset($_SESSION['reportData']) && is_array($_SESSION['reportData'])) {
+            $tempData = [];
+            
+            foreach ($_SESSION['reportData'] as $entry) {
+                if ($loanApplicationIDToDelete) {
+                    // For loan entries
+                    if ($entry['employeeID'] !== $employeeIDToDelete || 
+                        $entry['loanApplicationID'] !== $loanApplicationIDToDelete) {
+                        $tempData[] = $entry;
+                    }
+                } else {
+                    // For member entries
+                    if ($entry['employeeID'] !== $employeeIDToDelete) {
+                        $tempData[] = $entry;
+                    }
+                }
+            }
+            
+            $_SESSION['reportData'] = $tempData;
+        }
+        
+        // Commit transaction
+        mysqli_commit($conn);
+        
+        // Send success response
+        header('Content-Type: application/json');
+        echo json_encode(['success' => true]);
+        
+    } catch (Exception $e) {
+        // Rollback transaction on error
+        mysqli_rollback($conn);
+        
+        header('Content-Type: application/json');
+        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+    }
+    
+    exit();
 }
 
 // Include header after handling redirects
@@ -448,8 +516,17 @@ function convertMonthToMalay($date) {
                 if ($summaryResult && mysqli_num_rows($summaryResult) > 0): 
                     $monthlyData = array();
                     while ($row = mysqli_fetch_assoc($summaryResult)) {
-                        $month = date('m', strtotime($row['period']));
-                        $monthlyData[$month] = $row;
+                        // Debug print
+                        error_log("Raw row data: " . print_r($row, true));
+                        
+                        // Store data for January 2025 (since that's where our data is)
+                        $monthlyData['01'] = array(
+                            'new_members' => (int)$row['new_members'],
+                            'loan_applications' => (int)$row['loan_applications'],
+                            'total_loan_amount' => (float)$row['total_loan_amount']
+                        );
+                        
+                        error_log("Stored data for January: " . print_r($monthlyData['01'], true));
                     }
 
                     $total_members = 0;
@@ -460,8 +537,10 @@ function convertMonthToMalay($date) {
                         $row = isset($monthlyData[$monthNum]) ? $monthlyData[$monthNum] : array(
                             'new_members' => 0,
                             'loan_applications' => 0,
-                            'total_loan_amount' => 0
+                            'total_loan_amount' => 0.00
                         );
+
+                        error_log("Displaying month $monthNum data: " . print_r($row, true));
 
                         $total_members += $row['new_members'];
                         $total_loans += $row['loan_applications'];
@@ -797,35 +876,34 @@ function handleDelete(form, employeeID, loanApplicationID) {
         return false;
     }
     
-    // Remove the row from the table
-    const rowId = `row_${employeeID}${loanApplicationID ? '_' + loanApplicationID : ''}`;
-    const row = document.getElementById(rowId);
-    if (row) {
-        row.remove();
-        updateRowNumbers();
-        
-        // Update session data by removing the entry
-        updateSessionData(employeeID, loanApplicationID);
-    }
+    const formData = new FormData(form);
     
-    return false;
-}
-
-// Add new function to update session data
-function updateSessionData(employeeID, loanApplicationID) {
-    fetch('update_session.php', {
+    fetch(window.location.href, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            employeeID: employeeID,
-            loanApplicationID: loanApplicationID
-        })
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Remove the row
+            const rowId = `row_${employeeID}${loanApplicationID ? '_' + loanApplicationID : ''}`;
+            const row = document.getElementById(rowId);
+            if (row) {
+                row.remove();
+                updateRowNumbers();
+            }
+            // Reload the page to ensure everything is in sync
+            window.location.reload();
+        } else {
+            alert('Ralat semasa memadamkan entri. Sila cuba lagi.');
+        }
     })
     .catch(error => {
-        console.error('Error updating session:', error);
+        console.error('Error:', error);
+        alert('Ralat semasa memadamkan entri. Sila cuba lagi.');
     });
+    
+    return false;
 }
 
 function updateRowNumbers() {

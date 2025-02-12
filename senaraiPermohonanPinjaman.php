@@ -36,9 +36,18 @@ $sql = "SELECT
 $result = mysqli_query($conn, $sql);
 ?>
 
-<br><br><br>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+<br><br>
 <div class="wrapper">
-<div class="container mt-5">
+<div class="container">
+    <!-- Move Kembali button before the title and style it -->
+    <div class="mb-3">
+        <a href="adminmainpage.php" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Kembali
+        </a>
+    </div>
+    
     <h1 class="mb-4">Senarai Permohonan Pinjaman</h1>
 
     <div class="row">
@@ -137,8 +146,7 @@ body {
     position: relative;
     background: linear-gradient(rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.8)), url('img/padi.jpg') no-repeat center center fixed;
     background-size: cover;
-    z-index: -1;
-    margin-top: -65px;  /* Increased negative margin from -50px to -65px */
+    padding-top: 20px;
 }
 
 .container {
@@ -146,14 +154,6 @@ body {
     z-index: 1;
     padding: 20px;
     margin-top: 0;
-}
-
-/* Add this to ensure sidebar stays on top */
-.sidebar, 
-nav,
-.nav-menu {
-    position: relative;
-    z-index: 1000 !important;  /* High value to ensure it's above other elements */
 }
 
 .table-wrapper {
@@ -194,6 +194,34 @@ nav,
 h1 {
     color: #5CBA9B;
     font-weight: 600;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 5px;
+    color: white;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 16px;
+}
+
+.btn-secondary:hover {
+    background-color: #5a6268;
+}
+
+/* Make sure Font Awesome is included */
+.fa-arrow-left {
+    margin-right: 5px;
+}
+
+/* Adjust container spacing */
+.container {
+    position: relative;
+    z-index: 1;
+    padding: 20px;
     margin-top: 0;
 }
 </style>
