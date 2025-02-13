@@ -152,7 +152,7 @@ function getStatusLabel($status) {
 
 function getStatusClass($status) {
     if ($status === null) {
-        $status = 'Aktif'; // 默认状态
+        $status = 'Aktif';
     }
     
     switch ($status) {
@@ -163,7 +163,7 @@ function getStatusClass($status) {
         case 'Pencen':
             return 'bg-info text-white';
         case 'Aktif/Pencen':
-            return 'bg-primary text-white';
+            return 'bg-secondary text-white';
         default:
             return 'bg-light text-dark';
     }
@@ -191,7 +191,7 @@ function getStatusClass($status) {
                                     <div class="mt-2">
                                         <p class="mb-1"><strong>No. Anggota:</strong> <?php echo $memberData['employeeID']; ?></p>
                                         <div class="mt-2">
-                                            <span class="badge bg-success rounded-pill px-3 py-2">
+                                            <span class="badge <?php echo getStatusClass($memberStatus); ?> rounded-pill px-3 py-2">
                                                 <?php echo $memberStatus; ?>
                                             </span>
                                         </div>
