@@ -182,18 +182,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['resignID'])) {
             <!-- 搜索和显示条数控件 - 确保只有一组 -->
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <div class="d-flex align-items-center">
-                    <label class="me-2">Papar</label>
-                    <select class="form-select me-2" style="width: auto" id="recordsPerPage">
+                    <span class="me-2">Papar</span>
+                    <select class="form-select me-2" style="width: 70px" id="recordsPerPage">
                         <option value="10">10</option>
                         <option value="25">25</option>
                         <option value="50">50</option>
                         <option value="100">100</option>
                     </select>
-                    <span>rekod</span>
+                    <span class="me-2">rekod</span>
                 </div>
-                <div class="d-flex align-items-center">
-                    <label class="me-2">Carian:</label>
-                    <input type="search" class="form-control" style="width: 200px" id="searchInput">
+                <div class="search-container">
+                    <div class="input-group">
+                        <input type="search" class="form-control" id="searchInput" placeholder="Cari..." style="width: 200px;">
+                        <button class="btn btn-outline-secondary search-btn" type="button">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -335,11 +339,13 @@ function processApproval($conn) {
 
 <script>
 $(document).ready(function() {
-    // 初始化 DataTable，但不使用其默认的搜索和显示条数控件
     var table = $('#berhentiTable').DataTable({
-        dom: 't<"bottom"p>', // 只显示表格和分页
+        dom: 't<"bottom"p>', // only show table and pagination
         language: {
-            url: "//cdn.datatables.net/plug-ins/1.10.24/i18n/Malay.json"
+            paginate: {
+                previous: "<<",
+                next: ">>"
+            }
         },
         pageLength: 10
     });
@@ -435,24 +441,137 @@ html {
 
 /* 卡片样式 */
 .card {
+    background: white;
     border: none;
-    box-shadow: 0 0 20px rgba(0,0,0,0.08);
-    border-radius: 12px;
-    margin: 0 auto;
-    width: 100%;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    margin-bottom: 30px;
 }
 
 .card-header {
-    background: white;
-    padding: 12px 20px; /* 减少上下内边距 */
-    border-bottom: 1px solid #edf2f7;
+    background: #5CBA9B;  /* Light sea green color from the image */
+    color: white;
+    padding: 15px 20px;
+    border-radius: 8px 8px 0 0;
+    border: none;
 }
 
 .card-title {
-    color: #2d3748;
-    font-weight: 600;
-    font-size: 1.5rem; /* 稍微减小标题大小 */
     margin: 0;
+    font-size: 1.25rem;
+    font-weight: 500;
+}
+
+.card-body {
+    padding: 20px;
+}
+
+/* Table Styling */
+.table {
+    width: 100%;
+    margin-bottom: 0;
+}
+
+.table th {
+    background-color: #5CBA9B;
+    color: white;
+    font-weight: 500;
+    border: none;
+    padding: 12px 15px;
+}
+
+.table td {
+    padding: 12px 15px;
+    vertical-align: middle;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+/* Status Badge Styling */
+.badge {
+    padding: 8px 12px;
+    font-weight: 500;
+    border-radius: 4px;
+}
+
+/* Button Styling */
+.btn-tindakan {
+    background-color: #5CBA9B;
+    border: none;
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.btn-tindakan:hover {
+    background-color: #4a9b81;
+}
+
+/* Modal Styling */
+.modal-content {
+    border-radius: 8px;
+    border: none;
+}
+
+.modal-header {
+    background-color: #5CBA9B;
+    color: white;
+    border-radius: 8px 8px 0 0;
+}
+
+.modal-title {
+    font-weight: 500;
+}
+
+.form-select, .form-control {
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    padding: 8px 12px;
+}
+
+.form-select:focus, .form-control:focus {
+    border-color: #5CBA9B;
+    box-shadow: 0 0 0 0.2rem rgba(92, 186, 155, 0.25);
+}
+
+/* Current Rate Display */
+.current-rate {
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.current-rate h3 {
+    color: #5CBA9B;
+    font-size: 2rem;
+    margin: 0;
+    font-weight: 500;
+}
+
+.current-rate p {
+    color: #6c757d;
+    margin: 5px 0 0 0;
+    font-size: 0.9rem;
+}
+
+/* Search and Records Per Page Controls */
+.d-flex.justify-content-between {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+#searchInput {
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    padding: 8px 12px;
+}
+
+#recordsPerPage {
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    padding: 8px 12px;
 }
 
 /* 表格样式 */
@@ -521,36 +640,77 @@ html {
     padding: 6px 12px;
 }
 
+.dataTables_wrapper .dataTables_paginate {
+    float: right;
+    margin-top: 15px;
+    padding-top: 10px;
+}
+
 .dataTables_wrapper .dataTables_paginate .paginate_button {
-    border-radius: 6px;
     padding: 6px 12px;
     margin: 0 2px;
+    border-radius: 4px;
+    cursor: pointer;
+    user-select: none;
+    color: #5CBA9B !important;
+    background: #fff !important;
+    border: 1px solid #e0e0e0;
+    transition: all 0.2s ease;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+    background-color: #f0f0f0 !important;
+    color: #5CBA9B !important;
+    border-color: #5CBA9B;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button:active {
+    transform: translateY(0);
+    box-shadow: none;
 }
 
 .dataTables_wrapper .dataTables_paginate .paginate_button.current {
-    background: #3b82f6;
-    border: none;
+    background-color: #FF9B9B !important;
     color: white !important;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-/* 搜索框样式 */
-.dataTables_filter input {
-    background-color: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 6px;
-    padding: 8px 12px;
-    width: 250px !important;
+.dataTables_wrapper .dataTables_paginate .paginate_button.previous,
+.dataTables_wrapper .dataTables_paginate .paginate_button.next {
+    background-color: #98D4C2 !important;
+    color: white !important;
+    border: none;
+    font-weight: bold;
 }
 
-.dataTables_filter input:focus {
-    border-color: #3b82f6;
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+.dataTables_wrapper .dataTables_paginate .paginate_button.previous:hover,
+.dataTables_wrapper .dataTables_paginate .paginate_button.next:hover {
+    background-color: #7bc0aa !important;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-/* 分页样式 */
-.dataTables_paginate {
-    margin-top: 20px !important;
+.dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
+    color: #ccc !important;
+    cursor: not-allowed;
+    background: #f8f9fa !important;
+    border-color: #e0e0e0;
+    opacity: 0.7;
+}
+
+/* Remove the :before content since we're using DataTables language option */
+.dataTables_wrapper .dataTables_paginate .paginate_button.previous:before,
+.dataTables_wrapper .dataTables_paginate .paginate_button.next:before {
+    content: none;  /* Remove the content that was causing duplication */
+}
+
+/* Keep the padding adjustment */
+.dataTables_wrapper .dataTables_paginate .paginate_button.previous,
+.dataTables_wrapper .dataTables_paginate .paginate_button.next {
+    padding: 6px 12px;
 }
 
 /* 设置各列的最小宽度 */
@@ -658,5 +818,65 @@ html {
 /* 调整卡片内容区域的内边距 */
 .card-body {
     padding-top: 15px; /* 减少顶部内边距 */
+}
+
+/* Add these new styles */
+.search-container {
+    display: flex;
+    align-items: center;
+}
+
+.input-group {
+    display: flex;
+    align-items: center;
+}
+
+.form-select {
+    padding: 0.375rem 1.75rem 0.375rem 0.75rem;
+    font-size: 0.9rem;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    background-color: white;
+}
+
+.search-btn {
+    padding: 0.375rem 0.75rem;
+    color: #6c757d;
+    background-color: white;
+    border: 1px solid #ced4da;
+    border-left: none;
+}
+
+.search-btn:hover {
+    background-color: #f8f9fa;
+    color: #5CBA9B;
+}
+
+.form-control {
+    border-right: none;
+}
+
+.form-control:focus {
+    box-shadow: none;
+    border-color: #ced4da;
+}
+
+.form-control:focus + .btn-outline-secondary {
+    border-color: #ced4da;
+}
+
+/* Ensure everything stays on one line */
+.d-flex {
+    flex-wrap: nowrap;
+}
+
+@media (max-width: 576px) {
+    .d-flex {
+        flex-wrap: nowrap;
+    }
+    
+    .form-control {
+        width: 150px !important;
+    }
 }
 </style>
