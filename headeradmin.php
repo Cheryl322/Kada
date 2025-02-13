@@ -418,6 +418,167 @@ body {
     opacity: 0.8;
     transition: opacity 0.3s;
 }
+
+.header {
+    position: fixed;
+    top: 0;
+    right: 0;
+    padding: 10px 20px;
+    z-index: 10000;
+    pointer-events: auto; /* Ensure clicks are registered */
+}
+
+.profile-section {
+    position: relative;
+    cursor: pointer;
+    z-index: 10001;
+}
+
+.profile-img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.logout-dropdown {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: white;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    border-radius: 5px;
+    padding: 8px 0;
+    margin-top: 5px;
+    z-index: 10002;
+    min-width: 150px;
+}
+
+.logout-dropdown.show {
+    display: block;
+}
+
+.logout-link {
+    display: flex;
+    align-items: center;
+    padding: 8px 20px;
+    color: #dc3545;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.logout-link:hover {
+    background-color: #f8f9fa;
+    color: #c82333;
+    text-decoration: none;
+}
+
+.logout-link i {
+    margin-right: 8px;
+}
+
+.header-admin {
+    position: fixed;
+    top: 0;
+    right: 0;
+    padding: 10px 20px;
+    z-index: 999999;
+}
+
+.profile-container {
+    position: relative;
+    cursor: pointer;
+}
+
+.profile-image {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.logout-menu {
+    display: none;
+    position: absolute;
+    top: 45px;
+    right: 0;
+    background: white;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    border-radius: 5px;
+    padding: 8px 0;
+    min-width: 150px;
+}
+
+.logout-menu.active {
+    display: block;
+}
+
+.logout-option {
+    display: flex;
+    align-items: center;
+    padding: 8px 20px;
+    color: #dc3545;
+    text-decoration: none;
+    transition: background-color 0.2s;
+}
+
+.logout-option:hover {
+    background-color: #f8f9fa;
+    color: #c82333;
+    text-decoration: none;
+}
+
+.logout-option i {
+    margin-right: 8px;
+}
+
+#headerAdmin {
+    position: fixed;
+    top: 0;
+    right: 0;
+    padding: 10px 20px;
+    z-index: 999999;
+}
+
+#profileButton {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+#logoutContainer {
+    display: none;
+    position: absolute;
+    top: 50px;
+    right: 20px;
+    background: white;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    border-radius: 5px;
+    min-width: 150px;
+}
+
+#logoutLink {
+    display: flex;
+    align-items: center;
+    padding: 10px 15px;
+    color: #dc3545;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+#logoutLink i {
+    margin-right: 8px;
+}
+
+#logoutLink:hover {
+    background-color: #f8f9fa;
+}
 </style>
 </head>
 
@@ -432,16 +593,7 @@ body {
             <i class="fas fa-home"></i>
         </a>
     </div>
-    <div class="top-right-icons">
-        <div class="dropdown">
-            <div class="icon-button" id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Profile" class="profile-pic">
-            </div>
-            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
-                <li><a class="dropdown-item" href="logout.php"><i class="fas fa-sign-out-alt me-2"></i>Log Keluar</a></li>
-            </ul>
-        </div>
-    </div>
+    
 </div>
 
 <div class="navbar initial-state closed" id="sidebar">
@@ -483,6 +635,22 @@ body {
   </div>
 </div>
 
+<div id="simpleHeader" style="position: fixed; top: 10px; right: 20px; z-index: 100000;">
+    <div style="position: relative;">
+        <img 
+            src="img/admin.jpg" 
+            alt="Profile" 
+            style="width: 40px; height: 40px; border-radius: 50%; cursor: pointer; border: 2px solid #fff; object-fit: cover;" 
+            onclick="toggleMenu()"
+        >
+        <div id="logoutMenu" style="display: none; position: absolute; top: 45px; right: 0; background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border-radius: 5px; min-width: 150px;">
+            <a href="logout.php" style="display: flex; align-items: center; padding: 10px 15px; color: #dc3545; text-decoration: none;">
+                <i class="fas fa-sign-out-alt" style="margin-right: 8px;"></i> Log Keluar
+            </a>
+        </div>
+    </div>
+</div>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const sidebar = document.getElementById('sidebar');
@@ -502,5 +670,39 @@ document.addEventListener('DOMContentLoaded', function() {
 
     menuButton.addEventListener('click', toggleSidebar);
     closeSidebar.addEventListener('click', toggleSidebar);
+
+    // Make sure this script runs after the DOM is loaded
+    window.toggleLogout = function() {
+        const dropdown = document.getElementById('logoutDropdown');
+        if (dropdown) {
+            dropdown.classList.toggle('show');
+        }
+    };
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(event) {
+        const profile = document.querySelector('.profile-section');
+        const dropdown = document.getElementById('logoutDropdown');
+        
+        if (profile && dropdown && !profile.contains(event.target)) {
+            dropdown.classList.remove('show');
+        }
+    });
+});
+
+function toggleMenu() {
+    const menu = document.getElementById('logoutMenu');
+    menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+}
+
+// Close menu when clicking outside
+document.addEventListener('click', function(e) {
+    const menu = document.getElementById('logoutMenu');
+    const header = document.getElementById('simpleHeader');
+    if (!header.contains(e.target)) {
+        menu.style.display = 'none';
+    }
 });
 </script>
+</body>
+</html>

@@ -40,62 +40,64 @@ $result = mysqli_query($conn, $sql);
 
 <br><br>
 <div class="wrapper">
-<div class="container">
-    <!-- Move Kembali button before the title and style it -->
-    <div class="mb-3">
-        <a href="adminmainpage.php" class="btn btn-secondary">
-            <i class="fas fa-arrow-left"></i> Kembali
-        </a>
-    </div>
-    
-    <h1 class="mb-4">Senarai Permohonan Pinjaman</h1>
+    <div class="container">
+        <br><br><br>
+        <!-- Back button -->
+        <div class="mb-3">
+            <a href="adminmainpage.php" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Kembali
+            </a>
+        </div>
 
-    <div class="row">
-        <div class="col-md-12">
-            <div class="table-wrapper">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th style="background-color: LightSeaGreen; color: white;">No. Permohonan</th>
-                            <th style="background-color: LightSeaGreen; color: white;">Nama</th>
-                            <th style="background-color: LightSeaGreen; color: white;">IC</th>
-                            <th style="background-color: LightSeaGreen; color: white;">Tarikh Penyerahan</th>
-                            <th style="background-color: LightSeaGreen; color: white;">Borang Permohonan</th>
-                            <th style="background-color: LightSeaGreen; color: white;">Status</th>        
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php
-                        if (mysqli_num_rows($result) > 0) {
-                            while($row = mysqli_fetch_assoc($result)) {
-                                echo "<tr>";
-                                echo "<td>" . htmlspecialchars($row['loanApplicationID']) . "</td>";
-                                echo "<td>" . htmlspecialchars($row['memberName']) . "</td>";
-                                echo "<td>" . htmlspecialchars($row['ic']) . "</td>";
-                                echo "<td>" . htmlspecialchars($row['applicationDate']) . "</td>";
-                                echo "<td><a href='penyatapermohonanpinjaman.php?id=" . $row['loanApplicationID'] . "' class='btn btn-primary'>Tekan borang</a></td>";
-                                echo "<td>";
-                                echo "<div class='d-flex align-items-center'>";
-                                echo "<select class='form-select status-select me-2' data-id='" . $row['loanApplicationID'] . "'>";
-                                echo "<option value='Belum Selesai'" . ($row['loanStatus'] == 'Belum Selesai' ? ' selected' : '') . ">Belum Selesai</option>";
-                                echo "<option value='Diluluskan'" . ($row['loanStatus'] == 'Diluluskan' ? ' selected' : '') . ">Diluluskan</option>";
-                                echo "<option value='Ditolak'" . ($row['loanStatus'] == 'Ditolak' ? ' selected' : '') . ">Ditolak</option>";
-                                echo "</select>";
-                                echo "<button class='btn btn-primary save-status' data-id='" . $row['loanApplicationID'] . "'>Simpan</button>";
-                                echo "</div>";
-                                echo "</td>";
-                                echo "</tr>";
+        <!-- Your existing title -->
+        <h1 class="mb-4">Senarai Permohonan Pinjaman</h1>
+
+        <div class="row">
+            <div class="col-md-12">
+                <div class="table-wrapper">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th style="background-color: LightSeaGreen; color: white;">No. Permohonan</th>
+                                <th style="background-color: LightSeaGreen; color: white;">Nama</th>
+                                <th style="background-color: LightSeaGreen; color: white;">IC</th>
+                                <th style="background-color: LightSeaGreen; color: white;">Tarikh Penyerahan</th>
+                                <th style="background-color: LightSeaGreen; color: white;">Borang Permohonan</th>
+                                <th style="background-color: LightSeaGreen; color: white;">Status</th>        
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php
+                            if (mysqli_num_rows($result) > 0) {
+                                while($row = mysqli_fetch_assoc($result)) {
+                                    echo "<tr>";
+                                    echo "<td>" . htmlspecialchars($row['loanApplicationID']) . "</td>";
+                                    echo "<td>" . htmlspecialchars($row['memberName']) . "</td>";
+                                    echo "<td>" . htmlspecialchars($row['ic']) . "</td>";
+                                    echo "<td>" . htmlspecialchars($row['applicationDate']) . "</td>";
+                                    echo "<td><a href='penyatapermohonanpinjaman.php?id=" . $row['loanApplicationID'] . "' class='btn btn-primary'>Tekan borang</a></td>";
+                                    echo "<td>";
+                                    echo "<div class='d-flex align-items-center'>";
+                                    echo "<select class='form-select status-select me-2' data-id='" . $row['loanApplicationID'] . "'>";
+                                    echo "<option value='Belum Selesai'" . ($row['loanStatus'] == 'Belum Selesai' ? ' selected' : '') . ">Belum Selesai</option>";
+                                    echo "<option value='Diluluskan'" . ($row['loanStatus'] == 'Diluluskan' ? ' selected' : '') . ">Diluluskan</option>";
+                                    echo "<option value='Ditolak'" . ($row['loanStatus'] == 'Ditolak' ? ' selected' : '') . ">Ditolak</option>";
+                                    echo "</select>";
+                                    echo "<button class='btn btn-primary save-status' data-id='" . $row['loanApplicationID'] . "'>Simpan</button>";
+                                    echo "</div>";
+                                    echo "</td>";
+                                    echo "</tr>";
+                                }
+                            } else {
+                                echo "<tr><td colspan='6'>No records found</td></tr>";
                             }
-                        } else {
-                            echo "<tr><td colspan='6'>No records found</td></tr>";
-                        }
-                        ?>
-                    </tbody>
-                </table>
+                            ?>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
-</div>
 </div>
 
 <!-- Add jQuery and JavaScript for status updates -->
@@ -241,23 +243,17 @@ h1 {
     align-items: center;
     gap: 8px;
     font-size: 16px;
+    margin-bottom: 15px;
+    text-decoration: none;
 }
 
 .btn-secondary:hover {
     background-color: #5a6268;
+    color: white;
 }
 
-/* Make sure Font Awesome is included */
 .fa-arrow-left {
     margin-right: 5px;
-}
-
-/* Adjust container spacing */
-.container {
-    position: relative;
-    z-index: 1;
-    padding: 20px;
-    margin-top: 0;
 }
 
 .explanation-box {

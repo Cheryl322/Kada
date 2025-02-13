@@ -223,6 +223,7 @@ if (isset($_SESSION['error_message'])) {
 <head>
     <title>Upload Payment Record</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
         /* 添加在现有样式的顶部 */
         body {
@@ -466,14 +467,91 @@ if (isset($_SESSION['error_message'])) {
         .payment-item:hover {
             background: var(--primary-light);
         }
+        .page-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.9)), 
+                        url('img/padi.jpg') no-repeat center center fixed;
+            background-size: cover;
+            z-index: -1;
+        }
+        .back-section {
+            padding: 10px 20px; /* 减少上下内边距 */
+            margin-top: 20px; /* 减少顶部边距 */
+        }
+        .btn-kembali {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 12px; /* 减少按钮内边距 */
+            background-color: #FF9B9B;
+            color: white;
+            border-radius: 5px;
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        .btn-kembali:hover {
+            background-color: #ff8282;
+            color: white;
+            text-decoration: none;
+        }
+        .btn-kembali i {
+            margin-right: 8px;
+        }
+        /* Update container styles */
+        .container {
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 15px; 
+            margin-top: 10px; 
+        }
+        .page-header {
+            margin-bottom: 15px; 
+            padding: 10px 15px; 
+        }
+        .page-title {
+            font-size: 20px; 
+            margin: 0;
+        }
+       
+        .form-group {
+            margin-bottom: 10px; 
+        }
+        .card {
+            margin-bottom: 15px; 
+        }
+        .card-body {
+            padding: 12px; 
+        }
+        
+        @media (max-width: 768px) {
+            .back-section {
+                padding: 8px 15px;
+                margin-top: 15px;
+            }
+            
+            .container {
+                padding: 10px;
+            }
+        }
     </style>
 </head>
 <body>
-    <?php include "headeradmin.php"; ?>
+<?php include "headeradmin.php"; ?>
+    <div class="page-background"></div>
+    <div class="back-section">
+        <a href="adminmainpage.php" class="btn-kembali">
+            <i class="fas fa-arrow-left"></i> Kembali
+        </a>
+    </div>
     
     <div class="container">
         <div class="page-header">
-            <h2 class="page-title">Upload Payment Record</h2>
+            <h2 class="page-title">Rekod Transaksi</h2>
         </div>
         <form method="POST" id="paymentForm">
             <div class="top-nav">
@@ -484,11 +562,11 @@ if (isset($_SESSION['error_message'])) {
                             <label for="selectAll" class="checkbox-label"></label>
                         </div>
                         <button type="submit" name="update_payments" class="btn btn-primary" id="uploadBtn">
-                            Upload Selected
+                            Muat Naik Terpilih
                         </button>
                     </div>
                     <div class="date-picker">
-                        <label>Transaction Date:</label>
+                        <label>Tarikh Transaksi:</label>
                         <input type="date" name="transDate" class="form-control" 
                                value="<?php echo $transDate; ?>" required>
                     </div>
@@ -509,7 +587,7 @@ if (isset($_SESSION['error_message'])) {
                                     name="single_upload" 
                                     value="<?php echo $member['employeeID']; ?>" 
                                     class="upload-single">
-                                Upload
+                                Muat Naik
                             </button>
                         </div>
                         <div class="payment-grid">
@@ -716,7 +794,7 @@ if (isset($_SESSION['error_message'])) {
 
                             <!-- Total Section -->
                             <div class="total-section">
-                                <span class="total-label">Total Amount</span>
+                                <span class="total-label">Jumlah Keseluruhan</span>
                                 <span class="total-amount" id="total_<?php echo $member['employeeID']; ?>">
                                     RM <?php 
                                       $total = floatval($member['modalShare']) + 
@@ -761,7 +839,7 @@ if (isset($_SESSION['error_message'])) {
             if (currentValue < originalAmount) {
                 input.classList.add('is-invalid');
                 const difference = (originalAmount - currentValue).toFixed(2);
-                validationMessage.textContent = `Amount is RM ${difference} below minimum required`;
+                validationMessage.textContent = Amount is RM ${difference} below minimum required;
                 validationMessage.style.display = 'block';
                 validationMessage.style.color = '#dc3545';
                 validationMessage.style.fontSize = '0.875rem';

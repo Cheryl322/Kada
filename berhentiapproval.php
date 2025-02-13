@@ -66,7 +66,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['resignID'])) {
             $subject = "Permohonan Berhenti Ahli Koperasi KADA - DILULUSKAN";
             $message = "Salam sejahtera " . $member_data['memberName'] . ",\n\n"
                     . "Merujuk kepada permohonan berhenti ahli koperasi yang telah dikemukakan oleh pihak tuan/puan pada tarikh " . date('d/m/Y', strtotime($member_data['applyDate'])) . ".\n\n"
-                    . "Sukacita dimaklumkan bahawa permohonan tersebut telah *DILULUSKAN* oleh pihak pentadbiran Koperasi KADA.\n\n"
+                    . "Sukacita dimaklumkan bahawa permohonan tersebut telah DILULUSKAN oleh pihak pentadbiran Koperasi KADA.\n\n"
                     . "Berikut adalah maklumat berkaitan:\n"
                     . "Nama: " . $member_data['memberName'] . "\n"
                     . "No. Pekerja: " . $member_data['employeeID'] . "\n"
@@ -85,7 +85,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['resignID'])) {
             $subject = "Permohonan Berhenti Ahli Koperasi KADA - TIDAK DILULUSKAN";
             $message = "Salam sejahtera " . $member_data['memberName'] . ",\n\n"
                     . "Merujuk kepada permohonan berhenti ahli koperasi yang telah dikemukakan oleh pihak tuan/puan pada tarikh " . date('d/m/Y', strtotime($member_data['applyDate'])) . ".\n\n"
-                    . "Dukacita dimaklumkan bahawa permohonan tersebut *TIDAK DILULUSKAN* oleh pihak pentadbiran Koperasi KADA.\n\n"
+                    . "Dukacita dimaklumkan bahawa permohonan tersebut TIDAK DILULUSKAN oleh pihak pentadbiran Koperasi KADA.\n\n"
                     . "Berikut adalah maklumat berkaitan:\n"
                     . "Nama: " . $member_data['memberName'] . "\n"
                     . "No. Pekerja: " . $member_data['employeeID'] . "\n"
@@ -116,7 +116,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['resignID'])) {
                 $mail->Port       = 587;
 
                 // 收发件人
-                $mail->setFrom('koperasikada.site@gmail.com', 'Koperasi KADA');
+                $mail->setFrom('koperasikada.site@gmail.com', 'Koperasi Kada');
                 $mail->addAddress($to);
                 
                 // 内容
@@ -145,97 +145,83 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['resignID'])) {
 }
 ?>
 
-<div class="container mt-5 pt-5" style="margin-left: 250px; width: calc(100% - 280px); transition: all 0.3s ease-in-out;">
-    <?php if(isset($_SESSION['success_message'])): ?>
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <?php 
-                echo $_SESSION['success_message'];
-                unset($_SESSION['success_message']);
-            ?>
-            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-            </button>
-        </div>
-    <?php endif; ?>
+<!-- Add this right after opening body tag -->
+<div class="page-background"></div>
 
-    <?php if(isset($_SESSION['error_message'])): ?>
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <?php 
-                echo $_SESSION['error_message'];
-                unset($_SESSION['error_message']);
-            ?>
-            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-            </button>
-        </div>
-    <?php endif; ?>
+<div class="main-content">
+    <br><br><br>
+    <!-- Back button -->
+    <div class="back-section">
+        <a href="adminmainpage.php" class="btn-kembali">
+            <i class="fas fa-arrow-left"></i> Kembali
+        </a>
+    </div>
 
-<!-- Add this new div for spacing -->
-<div class="header-spacing mb-4"></div>
-
-<div class="container mt-4">
-    <div class="card shadow-sm">
-        <div class="card-header">
-            <h3 class="card-title">Senarai Permohonan Berhenti</h3>
-        </div>
-        <div class="card-body">
-            <!-- 搜索和显示条数控件 - 确保只有一组 -->
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <div class="d-flex align-items-center">
-                    <span class="me-2">Papar</span>
-                    <select class="form-select me-2" style="width: 70px" id="recordsPerPage">
-                        <option value="10">10</option>
-                        <option value="25">25</option>
-                        <option value="50">50</option>
-                        <option value="100">100</option>
-                    </select>
-                    <span class="me-2">rekod</span>
-                </div>
-                <div class="search-container">
-                    <div class="input-group">
-                        <input type="search" class="form-control" id="searchInput" placeholder="Cari..." style="width: 200px;">
-                        <button class="btn btn-outline-secondary search-btn" type="button">
-                            <i class="fas fa-search"></i>
-                        </button>
+    <!-- Main container -->
+    <div class="container">
+        <div class="content-card">
+            <div class="card-header">
+                <h3 class="card-title">Senarai Permohonan Berhenti</h3>
+            </div>
+            <div class="card-body">
+                <!-- 搜索和显示条数控件 - 确保只有一组 -->
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="d-flex align-items-center">
+                        <span class="me-2">Papar</span>
+                        <select class="form-select me-2" style="width: 70px" id="recordsPerPage">
+                            <option value="10">10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                        <span class="me-2">rekod</span>
+                    </div>
+                    <div class="search-container">
+                        <div class="input-group">
+                            <input type="search" class="form-control" id="searchInput" placeholder="Cari..." style="width: 200px;">
+                            <button class="btn btn-outline-secondary search-btn" type="button">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="table-responsive">
-                <table class="table" id="berhentiTable">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Nama</th>
-                            <th>Sebab</th>
-                            <th>Tarikh Mohon</th>
-                            <th>Status</th>
-                            <th>Tindakan</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php while ($row = mysqli_fetch_assoc($result)): ?>
+                <div class="table-responsive">
+                    <table class="table" id="berhentiTable">
+                        <thead>
                             <tr>
-                                <td data-label="ID"><?php echo htmlspecialchars($row['berhentiID']); ?></td>
-                                <td data-label="Nama"><?php echo htmlspecialchars($row['memberName']); ?></td>
-                                <td data-label="Sebab"><?php echo htmlspecialchars($row['reason']); ?></td>
-                                <td data-label="Tarikh Mohon"><?php echo date('d/m/Y', strtotime($row['applyDate'])); ?></td>
-                                <td data-label="Status">
-                                    <span class="badge bg-<?php echo getStatusClass($row['approvalStatus']); ?>">
-                                        <?php echo htmlspecialchars($row['approvalStatus']); ?>
-                                    </span>
-                                </td>
-                                <td data-label="Tindakan">
-                                    <?php if ($row['approvalStatus'] == 'Pending'): ?>
-                                        <button type="button" class="btn btn-tindakan text-white" data-id="<?php echo $row['berhentiID']; ?>">
-                                            <i class="fas fa-check-circle me-1"></i>Tindakan
-                                        </button>
-                                    <?php endif; ?>
-                                </td>
+                                <th>ID</th>
+                                <th>Nama</th>
+                                <th>Sebab</th>
+                                <th>Tarikh Mohon</th>
+                                <th>Status</th>
+                                <th>Tindakan</th>
                             </tr>
-                        <?php endwhile; ?>
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            <?php while ($row = mysqli_fetch_assoc($result)): ?>
+                                <tr>
+                                    <td data-label="ID"><?php echo htmlspecialchars($row['berhentiID']); ?></td>
+                                    <td data-label="Nama"><?php echo htmlspecialchars($row['memberName']); ?></td>
+                                    <td data-label="Sebab"><?php echo htmlspecialchars($row['reason']); ?></td>
+                                    <td data-label="Tarikh Mohon"><?php echo date('d/m/Y', strtotime($row['applyDate'])); ?></td>
+                                    <td data-label="Status">
+                                        <span class="badge bg-<?php echo getStatusClass($row['approvalStatus']); ?>">
+                                            <?php echo htmlspecialchars($row['approvalStatus']); ?>
+                                        </span>
+                                    </td>
+                                    <td data-label="Tindakan">
+                                        <?php if ($row['approvalStatus'] == 'Pending'): ?>
+                                            <button type="button" class="btn btn-tindakan text-white" data-id="<?php echo $row['berhentiID']; ?>">
+                                                <i class="fas fa-check-circle me-1"></i>Tindakan
+                                            </button>
+                                        <?php endif; ?>
+                                    </td>
+                                </tr>
+                            <?php endwhile; ?>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
@@ -245,7 +231,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['resignID'])) {
 <div class="modal fade" id="approvalModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form method="POST" action="">
+            <form method="POST" action="" id="approvalForm">
                 <div class="modal-header">
                     <h5 class="modal-title">Tindakan Permohonan</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -389,76 +375,108 @@ function showApprovalModal(id) {
     var myModal = new bootstrap.Modal(document.getElementById('approvalModal'));
     myModal.show();
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Get the form
+    const form = document.querySelector('#approvalForm');
+    
+    // Add submit handler to the form
+    form.addEventListener('submit', function(e) {
+        e.preventDefault(); // Prevent default form submission
+        
+        // Get the selected status
+        const status = document.querySelector('#statusSelect').value;
+        const action = status === 'Lulus' ? 'meluluskan' : 'menolak';
+        
+        // Show confirmation dialog
+        Swal.fire({
+            title: 'Pengesahan',
+            text: `Adakah anda pasti untuk ${action} permohonan ini?`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#5CBA9B',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Ya, Teruskan',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // If confirmed, submit the form
+                form.submit();
+            }
+        });
+    });
+});
 </script>
 
 <style>
-/* Add this to ensure content appears below fixed header */
-.header-spacing {
-    height: 60px; /* Adjust this value based on your header height */
+/* Background styles */
+.page-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.9)), 
+                url('img/padi.jpg') no-repeat center center fixed;
+    background-size: cover;
+    z-index: -1;
 }
 
-/* Optional: Add smooth scroll behavior */
-html {
-    scroll-behavior: smooth;
-}
-
-/* 调整容器宽度 */
-.container {
-    max-width: 1400px; /* 增加最大宽度 */
-    width: 95%; /* 使用百分比宽度 */
-    margin: 0 auto;
+/* Layout */
+.main-content {
     padding: 20px;
-    margin-top: 1rem !important;
+    margin-top: 20px;
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
-/* 移除之前的左边距设置 */
-.container.mt-5 {
-    margin-left: auto !important;
-    width: auto !important;
+/* Back button */
+.back-section {
+    margin-bottom: 15px;
 }
 
-/* Add these styles to your existing CSS */
-.modal-content {
-    border: none;
-    border-radius: 8px;
+.btn-kembali {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 16px;
+    background-color: #FF9B9B;
+    color: white;
+    border-radius: 5px;
+    text-decoration: none;
+    font-size: 14px;
+    transition: all 0.3s ease;
 }
 
-.modal-header {
-    background-color: #f8f9fa;
-    border-bottom: 1px solid #dee2e6;
+.btn-kembali:hover {
+    background-color: #ff8282;
+    color: white;
+    text-decoration: none;
 }
 
-.modal-title {
-    color: #2c3e50;
-    font-weight: 600;
+.btn-kembali i {
+    margin-right: 8px;
 }
 
-.form-select:focus,
-.form-control:focus {
-    border-color: #4361ee;
-    box-shadow: 0 0 0 0.2rem rgba(67, 97, 238, 0.25);
-}
-
-/* 卡片样式 */
-.card {
+/* Card styles */
+.content-card {
     background: white;
-    border: none;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-    margin-bottom: 30px;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
 }
 
 .card-header {
-    background: #5CBA9B;  /* Light sea green color from the image */
+    background-color: #006E5E;
     color: white;
     padding: 15px 20px;
-    border-radius: 8px 8px 0 0;
-    border: none;
+    border-radius: 10px 10px 0 0;
+    border-bottom: none;
 }
 
 .card-title {
     margin: 0;
-    font-size: 1.25rem;
+    font-size: 18px;
     font-weight: 500;
 }
 
@@ -466,417 +484,80 @@ html {
     padding: 20px;
 }
 
-/* Table Styling */
+/* Table styles */
 .table {
     width: 100%;
     margin-bottom: 0;
 }
 
 .table th {
-    background-color: #5CBA9B;
-    color: white;
+    background-color: #f8f9fa;
+    color: #495057;
     font-weight: 500;
-    border: none;
     padding: 12px 15px;
+    border-bottom: 2px solid #dee2e6;
 }
 
 .table td {
     padding: 12px 15px;
     vertical-align: middle;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid #dee2e6;
 }
 
-/* Status Badge Styling */
+/* Status badges */
 .badge {
-    padding: 8px 12px;
-    font-weight: 500;
+    padding: 6px 12px;
     border-radius: 4px;
+    font-weight: 500;
 }
 
-/* Button Styling */
+/* Action buttons */
 .btn-tindakan {
     background-color: #5CBA9B;
+    color: white;
     border: none;
-    padding: 8px 16px;
-    font-size: 0.9rem;
+    padding: 6px 12px;
+    border-radius: 4px;
     transition: all 0.3s ease;
 }
 
 .btn-tindakan:hover {
-    background-color: #4a9b81;
+    background-color: #4a9d82;
 }
 
-/* Modal Styling */
+/* Modal styles */
 .modal-content {
-    border-radius: 8px;
+    border-radius: 10px;
     border: none;
 }
 
 .modal-header {
-    background-color: #5CBA9B;
+    background-color: #006E5E;
     color: white;
-    border-radius: 8px 8px 0 0;
+    border-radius: 10px 10px 0 0;
 }
 
 .modal-title {
-    font-weight: 500;
+    color: white;
 }
 
-.form-select, .form-control {
-    border: 1px solid #e0e0e0;
-    border-radius: 4px;
-    padding: 8px 12px;
-}
-
-.form-select:focus, .form-control:focus {
-    border-color: #5CBA9B;
-    box-shadow: 0 0 0 0.2rem rgba(92, 186, 155, 0.25);
-}
-
-/* Current Rate Display */
-.current-rate {
-    background-color: #f8f9fa;
-    padding: 20px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-}
-
-.current-rate h3 {
-    color: #5CBA9B;
-    font-size: 2rem;
-    margin: 0;
-    font-weight: 500;
-}
-
-.current-rate p {
-    color: #6c757d;
-    margin: 5px 0 0 0;
-    font-size: 0.9rem;
-}
-
-/* Search and Records Per Page Controls */
-.d-flex.justify-content-between {
-    background-color: #f8f9fa;
-    padding: 15px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-}
-
-#searchInput {
-    border: 1px solid #e0e0e0;
-    border-radius: 4px;
-    padding: 8px 12px;
-}
-
-#recordsPerPage {
-    border: 1px solid #e0e0e0;
-    border-radius: 4px;
-    padding: 8px 12px;
-}
-
-/* 表格样式 */
-.table {
-    margin: 0;
-    width: 100%;
-}
-
-.table thead th {
-    background-color: #f8fafc;
-    color: #4a5568;
-    font-weight: 600;
-    border-bottom: 2px solid #edf2f7;
-    padding: 15px;
-}
-
-.table tbody td {
-    padding: 15px;
-    vertical-align: middle;
-    color: #2d3748;
-    border-bottom: 1px solid #edf2f7;
-}
-
-/* 状态标签样式 */
-.badge {
-    padding: 8px 12px;
-    border-radius: 6px;
-    font-weight: 500;
-    font-size: 0.85rem;
-}
-
-.bg-warning {
-    background-color: #fef3c7 !important;
-    color: #92400e;
-}
-
-.bg-success {
-    background-color: #dcfce7 !important;
-    color: #166534;
-}
-
-.bg-danger {
-    background-color: #fee2e2 !important;
-    color: #991b1b;
-}
-
-/* 按钮样式 */
-.btn-tindakan {
-    background-color: #3b82f6;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 6px;
-    transition: all 0.2s;
-}
-
-.btn-tindakan:hover {
-    background-color: #2563eb;
-    transform: translateY(-1px);
-}
-
-/* DataTables 自定义样式 */
-.dataTables_wrapper .dataTables_length select,
-.dataTables_wrapper .dataTables_filter input {
-    border: 1px solid #e2e8f0;
-    border-radius: 6px;
-    padding: 6px 12px;
-}
-
-.dataTables_wrapper .dataTables_paginate {
-    float: right;
-    margin-top: 15px;
-    padding-top: 10px;
-}
-
-.dataTables_wrapper .dataTables_paginate .paginate_button {
-    padding: 6px 12px;
-    margin: 0 2px;
-    border-radius: 4px;
-    cursor: pointer;
-    user-select: none;
-    color: #5CBA9B !important;
-    background: #fff !important;
-    border: 1px solid #e0e0e0;
-    transition: all 0.2s ease;
-}
-
-.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
-    background-color: #f0f0f0 !important;
-    color: #5CBA9B !important;
-    border-color: #5CBA9B;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.dataTables_wrapper .dataTables_paginate .paginate_button:active {
-    transform: translateY(0);
-    box-shadow: none;
-}
-
-.dataTables_wrapper .dataTables_paginate .paginate_button.current {
-    background-color: #FF9B9B !important;
-    color: white !important;
-    border: none;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.dataTables_wrapper .dataTables_paginate .paginate_button.previous,
-.dataTables_wrapper .dataTables_paginate .paginate_button.next {
-    background-color: #98D4C2 !important;
-    color: white !important;
-    border: none;
-    font-weight: bold;
-}
-
-.dataTables_wrapper .dataTables_paginate .paginate_button.previous:hover,
-.dataTables_wrapper .dataTables_paginate .paginate_button.next:hover {
-    background-color: #7bc0aa !important;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
-    color: #ccc !important;
-    cursor: not-allowed;
-    background: #f8f9fa !important;
-    border-color: #e0e0e0;
-    opacity: 0.7;
-}
-
-/* Remove the :before content since we're using DataTables language option */
-.dataTables_wrapper .dataTables_paginate .paginate_button.previous:before,
-.dataTables_wrapper .dataTables_paginate .paginate_button.next:before {
-    content: none;  /* Remove the content that was causing duplication */
-}
-
-/* Keep the padding adjustment */
-.dataTables_wrapper .dataTables_paginate .paginate_button.previous,
-.dataTables_wrapper .dataTables_paginate .paginate_button.next {
-    padding: 6px 12px;
-}
-
-/* 设置各列的最小宽度 */
-.table th:nth-child(1), /* ID列 */
-.table td:nth-child(1) {
-    width: 5%;
-    min-width: 60px;
-}
-
-.table th:nth-child(2), /* Nama列 */
-.table td:nth-child(2) {
-    width: 15%;
-    min-width: 150px;
-}
-
-.table th:nth-child(3), /* Sebab列 */
-.table td:nth-child(3) {
-    width: 30%;
-    min-width: 200px;
-}
-
-.table th:nth-child(4), /* Tarikh Mohon列 */
-.table td:nth-child(4) {
-    width: 15%;
-    min-width: 120px;
-}
-
-.table th:nth-child(5), /* Status列 */
-.table td:nth-child(5) {
-    width: 15%;
-    min-width: 100px;
-}
-
-.table th:nth-child(6), /* Tindakan列 */
-.table td:nth-child(6) {
-    width: 15%;
-    min-width: 120px;
-}
-
-/* 确保表格响应式布局正常 */
-.table-responsive {
-    overflow-x: auto;
-}
-
-/* 调整搜索框宽度 */
-.form-control[type="search"] {
-    width: 250px !important; /* 增加搜索框宽度 */
-}
-
-/* 响应式调整 */
+/* Responsive design */
 @media (max-width: 768px) {
-    .container {
-        padding: 10px;
+    .main-content {
+        padding: 15px;
+        margin-top: 15px;
     }
     
-    .table thead {
-        display: none;
+    .card-body {
+        padding: 15px;
     }
     
-    .table tbody td {
-        display: block;
-        text-align: right;
-        padding: 10px;
-    }
-    
-    .table tbody td:before {
-        content: attr(data-label);
-        float: left;
-        font-weight: 600;
-        color: #4a5568;
-    }
-}
-
-/* 调整搜索和显示条数控件的样式 */
-.form-select {
-    min-width: 70px;
-    padding: 0.375rem 1.75rem 0.375rem 0.75rem;
-}
-
-.form-control {
-    height: calc(1.5em + 0.75rem + 2px);
-}
-
-/* 确保在小屏幕上也保持水平布局 */
-@media (max-width: 576px) {
-    .d-flex {
-        flex-wrap: nowrap;
-    }
-    
-    .form-control {
-        width: 150px !important;
-    }
-}
-
-/* 减少顶部间距 */
-.container.mt-4 {
-    margin-top: 1rem !important; /* 从2rem减少到1rem */
-}
-
-/* 减少搜索区域的下边距 */
-.d-flex.justify-content-between.align-items-center.mb-3 {
-    margin-bottom: 0.75rem !important; /* 减少搜索区域的下边距 */
-}
-
-/* 调整卡片内容区域的内边距 */
-.card-body {
-    padding-top: 15px; /* 减少顶部内边距 */
-}
-
-/* Add these new styles */
-.search-container {
-    display: flex;
-    align-items: center;
-}
-
-.input-group {
-    display: flex;
-    align-items: center;
-}
-
-.form-select {
-    padding: 0.375rem 1.75rem 0.375rem 0.75rem;
-    font-size: 0.9rem;
-    border: 1px solid #ced4da;
-    border-radius: 4px;
-    background-color: white;
-}
-
-.search-btn {
-    padding: 0.375rem 0.75rem;
-    color: #6c757d;
-    background-color: white;
-    border: 1px solid #ced4da;
-    border-left: none;
-}
-
-.search-btn:hover {
-    background-color: #f8f9fa;
-    color: #5CBA9B;
-}
-
-.form-control {
-    border-right: none;
-}
-
-.form-control:focus {
-    box-shadow: none;
-    border-color: #ced4da;
-}
-
-.form-control:focus + .btn-outline-secondary {
-    border-color: #ced4da;
-}
-
-/* Ensure everything stays on one line */
-.d-flex {
-    flex-wrap: nowrap;
-}
-
-@media (max-width: 576px) {
-    .d-flex {
-        flex-wrap: nowrap;
-    }
-    
-    .form-control {
-        width: 150px !important;
+    .table-responsive {
+        margin: 0 -15px;
     }
 }
 </style>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
