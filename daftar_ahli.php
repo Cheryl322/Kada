@@ -14,22 +14,42 @@ include "headermember.php";
 // Check if employee is already registered
 require_once "dbconnect.php";
 $employeeID = $_SESSION['employeeID'];
-$checkSql = "SELECT employeeID FROM tb_member WHERE employeeID = ?";
-$stmt = mysqli_prepare($conn, $checkSql);
-mysqli_stmt_bind_param($stmt, 'i', $employeeID);
+$check_sql = "SELECT status FROM tb_member_status WHERE employeeID = ?";
+$stmt = mysqli_prepare($conn, $check_sql);
+mysqli_stmt_bind_param($stmt, "s", $no_kp);
 mysqli_stmt_execute($stmt);
 mysqli_stmt_store_result($stmt);
 
 if (mysqli_stmt_num_rows($stmt) > 0) {
-    // Employee already registered
-    echo '<div class="alert alert-warning alert-dismissible fade show" role="alert">
-            <strong>Perhatian!</strong> Anda telah mendaftar sebagai ahli.
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-          </div>';
-    // You might want to redirect them somewhere else
-    // header("Location: dashboard.php");
-    // exit();
+    // 绑定结果
+    mysqli_stmt_bind_result($stmt, $status);
+    mysqli_stmt_fetch($stmt);
+    
+    // 只有当状态不是 'Berhenti' 时才显示已注册提示
+    if ($status !== 'Berhenti') {
+        echo '<div class="alert alert-warning alert-dismissible fade show" role="alert">
+                <strong>Perhatian!</strong> Anda telah mendaftar sebagai ahli.
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>';
+        exit();
+    }
 }
+// $checkSql = "SELECT employeeID FROM tb_member WHERE employeeID = ?";
+// $stmt = mysqli_prepare($conn, $checkSql);
+// mysqli_stmt_bind_param($stmt, 'i', $employeeID);
+// mysqli_stmt_execute($stmt);
+// mysqli_stmt_store_result($stmt);
+
+// if (mysqli_stmt_num_rows($stmt) > 0) {
+//     // Employee already registered
+//     echo '<div class="alert alert-warning alert-dismissible fade show" role="alert">
+//             <strong>Perhatian!</strong> Anda telah mendaftar sebagai ahli.
+//             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+//           </div>';
+//     // You might want to redirect them somewhere else
+//     // header("Location: dashboard.php");
+//     // exit();
+// }
 
 // 检查会员状态
 $sql_check_status = "SELECT status FROM tb_member_status WHERE employeeID = ?";
@@ -49,24 +69,26 @@ mysqli_stmt_bind_param($stmt_pending, 's', $employeeID);
 mysqli_stmt_execute($stmt_pending);
 $result_pending = mysqli_stmt_get_result($stmt_pending);
 
-// 只有当状态是 "Aktif" 时才显示已注册消息
-if ($member_status['status'] == 'Aktif') {
-    ?>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script>
-        Swal.fire({
-            title: 'Perhatian!',
-            text: 'Anda telah mendaftar sebagai ahli.',
-            icon: 'warning',
-            confirmButtonText: 'OK'
-        }).then((result) => {
+// 检查 $member_status 是否存在且不为 null
+if (isset($member_status) && $member_status !== null && isset($member_status['status'])) {
+    // 只有当状态是 "Aktif" 时才显示已注册消息
+    if ($member_status['status'] == 'Aktif') {
+        ?>
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        <script>
+            Swal.fire({
+                title: 'Perhatian!',
+                text: 'Anda telah mendaftar sebagai ahli.',
+                icon: 'warning',
+                confirmButtonText: 'OK'
+            }).then((result) => {
             if (result.isConfirmed) {
                 window.location.href = 'mainpage.php';
             }
         });
-    </script>
-    <?php
-    exit();
+        </script>
+        <?php
+    }
 }
 
 // 如果有待处理申请，不允许再次申请
@@ -88,6 +110,53 @@ if (mysqli_num_rows($result_pending) > 0) {
     <?php
     exit();
 }
+
+// 检查连接
+if (!$conn) {
+    die("Connection failed: " . mysqli_connect_error());
+}
+
+// 检查是否是 POST 请求
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    // 初始化变量
+    $no_kp = null;
+    
+    // 安全地获取 POST 数据
+    if (isset($_POST['no_kp']) && !empty($_POST['no_kp'])) {
+        $no_kp = trim($_POST['no_kp']);
+        
+        // 准备 SQL 语句
+            $check_sql = "SELECT status FROM tb_member_status WHERE employeeID = ?";
+            
+        // 准备和执行查询
+        if ($stmt = mysqli_prepare($conn, $check_sql)) {
+            mysqli_stmt_bind_param($stmt, "s", $employeeID);
+            
+            if (mysqli_stmt_execute($stmt)) {
+                mysqli_stmt_store_result($stmt);
+                
+                if (mysqli_stmt_num_rows($stmt) > 0) {
+                    mysqli_stmt_bind_result($stmt, $status);
+                    mysqli_stmt_fetch($stmt);
+                    
+                    // 只有当状态不是 'Berhenti' 时显示警告
+                    if ($status && $status !== 'Berhenti') {
+                        echo '<div class="alert alert-warning alert-dismissible fade show" role="alert">
+                                <strong>Perhatian!</strong> Anda telah mendaftar sebagai ahli.
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                              </div>';
+                        mysqli_stmt_close($stmt);
+                        exit();
+                    }
+                }
+            }
+            mysqli_stmt_close($stmt);
+        }
+    }
+}
+
+// 继续处理注册逻辑
+// ... rest of your code ...
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Debug: Print form data
