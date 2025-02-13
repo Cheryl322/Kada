@@ -139,20 +139,60 @@ include 'headeradmin.php';
         z-index: 1000;  /* Very high z-index to ensure it's always on top */
         background-color: #fff;  /* Or whatever your footer's background color is */
     }
+
+    /* Add these styles to your existing CSS */
+    .btn-secondary {
+        background-color: #6c757d;
+        border: none;
+        padding: 8px 20px;
+        border-radius: 5px;
+        color: white;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 16px;
+    }
+
+    .btn-secondary:hover {
+        background-color: #5a6268;
+    }
+
+    .fa-arrow-left {
+        margin-right: 5px;
+    }
+
+    /* Add these styles to your existing CSS */
+    .header-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .hasil-title {
+        margin: 0;
+    }
   </style>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 </head>
 
 <body>
     <!-- Remove the duplicate header div since it's already in headeradmin.php -->
     
     <div class="content-container">
+        <div class="header-container">
+            <h1 class="hasil-title">Hasil Laporan</h1>
+            <a href="adminmainpage.php" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Kembali
+            </a>
+        </div>
+
         <!-- Update form to submit to adminviewreport.php -->
         <form id="reportForm" method="POST" action="adminviewreport.php">
             <input type="hidden" name="reportType" id="reportTypeInput">
             <!-- Add hidden input for selected members -->
             <input type="hidden" name="selected_members" id="selectedMembersInput">
             
-            <h2 style="color: rgb(34, 119, 210);">Hasil Laporan</h2>
             <hr style="border: 1px solid #ddd; margin-top: 10px; margin-bottom: 20px;">
             
             <div class="report-boxes">

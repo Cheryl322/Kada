@@ -81,6 +81,58 @@ if ($loanApplicationID) {
 // Update the form values to use the correct array keys
 ?>
 
+<style>
+body {
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    background: linear-gradient(rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.8)), url('img/padi.jpg') no-repeat center center fixed;
+    background-size: cover;
+}
+
+.wrapper {
+    min-height: calc(100vh - 60px); /* Account for footer height */
+    padding-top: 20px;
+    padding-bottom: 80px; /* Increased padding to prevent overlap */
+}
+
+.container {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 15px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    padding: 30px;
+    margin-bottom: 80px; /* Increased margin to ensure space above footer */
+    position: relative;
+    z-index: 1;
+}
+
+.table thead.table-dark {
+    background-color: #20B2AA !important;
+    border-color: #20B2AA !important;
+}
+
+.table thead.table-dark th {
+    background-color: #20B2AA !important;
+    color: white;
+    font-weight: 500;
+    border: none;
+}
+
+footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: #7DCFB6;
+    padding: 15px 0;
+    text-align: center;
+    z-index: 1000;
+    height: 60px; /* Fixed height for footer */
+}
+
+/* Keep other existing styles ... */
+</style>
+
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <br><br><br>
 <div class="container mt-3">
@@ -352,7 +404,7 @@ if ($loanApplicationID) {
 
                 <br>
                 <div class="d-grid gap-2">
-                    <button type="button" class="btn btn-secondary prev-step mb-2" onclick="window.location.href='senaraiPermohonanAhli.php'">Kembali</button>
+                    <button type="button" class="btn btn-secondary prev-step mb-2" onclick="window.location.href='senaraiPermohonanPinjaman.php'">Kembali</button>
                 </div>
             </form>
         </div>

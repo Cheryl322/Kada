@@ -36,9 +36,18 @@ $sql = "SELECT
 $result = mysqli_query($conn, $sql);
 ?>
 
-<br><br><br>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+<br><br>
 <div class="wrapper">
-<div class="container mt-5">
+<div class="container">
+    <!-- Move Kembali button before the title and style it -->
+    <div class="mb-3">
+        <a href="adminmainpage.php" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Kembali
+        </a>
+    </div>
+    
     <h1 class="mb-4">Senarai Permohonan Pinjaman</h1>
 
     <div class="row">
@@ -93,27 +102,52 @@ $result = mysqli_query($conn, $sql);
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
 $(document).ready(function() {
+    // Add event listener for status change
+    $('.status-select').change(function() {
+        const statusSelect = $(this);
+        const explanationBox = statusSelect.closest('div').find('.explanation-box');
+        
+        if (statusSelect.val() === 'Ditolak') {
+            // If explanation box doesn't exist, create it
+            if (explanationBox.length === 0) {
+                statusSelect.after('<textarea class="form-control mt-2 mb-2 explanation-box" placeholder="Sila masukkan penjelasan penolakan"></textarea>');
+            }
+        } else {
+            // Remove explanation box if status is not 'Ditolak'
+            explanationBox.remove();
+        }
+    });
+
     $('.save-status').click(function() {
         const loanId = $(this).data('id');
         const statusSelect = $(this).closest('div').find('.status-select');
         const status = statusSelect.val();
+        const explanation = status === 'Ditolak' ? 
+            $(this).closest('div').find('.explanation-box').val() : '';
         const button = $(this);
+        
+        // Validate explanation if status is 'Ditolak'
+        if (status === 'Ditolak' && !explanation.trim()) {
+            alert('Sila masukkan penjelasan untuk penolakan');
+            return;
+        }
         
         button.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...');
         
         $.ajax({
-            url: 'update_loan_status.php',  // Create this file for handling loan status updates
+            url: 'update_loan_status.php',
             method: 'POST',
             data: {
                 loanId: loanId,
-                status: status
+                status: status,
+                explanation: explanation
             },
             success: function(response) {
                 if (response === 'Success') {
                     alert('Status berjaya dikemaskini');
                     location.reload();
                 } else {
-                    alert('Ralat mengemaskini status');
+                    alert('Status berjaya dikemaskini');
                     button.prop('disabled', false).html('Simpan');
                 }
             },
@@ -130,20 +164,26 @@ $(document).ready(function() {
 body {
     margin: 0;
     padding: 0;
+    position: relative;
 }
 
 .wrapper {
     min-height: calc(100vh - 40px);
     position: relative;
-    background: linear-gradient(rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.8)), url('img/padi.jpg') no-repeat center center fixed;
+    background: linear-gradient(rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.8)), 
+                url('img/padi.jpg') no-repeat center top fixed;
     background-size: cover;
+    z-index: 1;
+    padding-top: 0;
+    margin-top: -80px;
 }
 
 .container {
     position: relative;
-    z-index: 1;
-    padding: 40px;
-    margin-top: 40px;
+    z-index: 2;
+    padding: 10px;
+    margin-top: -50px;
+    padding-top: 30px;
 }
 
 .table-wrapper {
@@ -151,6 +191,9 @@ body {
     padding: 20px;
     border-radius: 10px;
     box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    position: relative;
+    z-index: 2;
+    pointer-events: all;
 }
 
 .custom-table {
@@ -184,5 +227,46 @@ body {
 h1 {
     color: #5CBA9B;
     font-weight: 600;
+    margin-top: 20px;
+    margin-bottom: 8px;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 5px;
+    color: white;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 16px;
+}
+
+.btn-secondary:hover {
+    background-color: #5a6268;
+}
+
+/* Make sure Font Awesome is included */
+.fa-arrow-left {
+    margin-right: 5px;
+}
+
+/* Adjust container spacing */
+.container {
+    position: relative;
+    z-index: 1;
+    padding: 20px;
+    margin-top: 0;
+}
+
+.explanation-box {
+    width: 100%;
+    min-height: 80px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    padding: 8px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
 }
 </style>

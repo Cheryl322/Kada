@@ -48,9 +48,16 @@ $result = mysqli_query($conn, $sql);
 
 ?>
 
-<br><br><br>
+<br>
 <div class="wrapper">
 <div class="container mt-5">
+    <!-- Add Kembali button -->
+    <div class="mb-3">
+        <a href="adminmainpage.php" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Kembali
+        </a>
+    </div>
+
     <h1 class="mb-4">Senarai Permohonan Ahli</h1>
 
     <div class="row">
@@ -108,20 +115,21 @@ $result = mysqli_query($conn, $sql);
 body {
     margin: 0;
     padding: 0;
+    min-height: 100vh;
+    background: linear-gradient(rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.8)), url('img/padi.jpg') no-repeat center center fixed;
+    background-size: cover;
 }
 
 .wrapper {
-    min-height: calc(100vh - 40px);
-    position: relative;
-    background: linear-gradient(rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.8)), url('img/padi.jpg') no-repeat center center fixed;
-    background-size: cover;
+    min-height: 100vh;
+    padding-top: 20px; /* Reduced from 40px */
+    padding-bottom: 20px;
 }
 
 .container {
     position: relative;
     z-index: 1;
-    padding: 40px;
-    margin-top: 40px;
+    padding: 20px; /* Reduced from 40px */
 }
 
 .table-wrapper {
@@ -129,6 +137,9 @@ body {
     padding: 20px;
     border-radius: 10px;
     box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    position: relative;
+    z-index: 2;
+    pointer-events: all;  /* Ensure clicks work */
 }
 
 .custom-table {
@@ -163,6 +174,31 @@ h1 {
     color: #5CBA9B;
     font-weight: 600;
 }
+
+.btn-secondary {
+    background-color: #6c757d;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 5px;
+    color: white;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+    background-color: #5a6268;
+    transform: translateY(-1px);
+}
+
+.explanation-box {
+    width: 100%;
+    min-height: 80px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    padding: 8px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+}
 </style>
 
 <?php
@@ -172,12 +208,35 @@ h1 {
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
 $(document).ready(function() {
+    // Add event listener for status change
+    $('.status-select').change(function() {
+        const statusSelect = $(this);
+        const explanationBox = statusSelect.closest('div').find('.explanation-box');
+        
+        if (statusSelect.val() === 'Ditolak') {
+            // If explanation box doesn't exist, create it
+            if (explanationBox.length === 0) {
+                statusSelect.after('<textarea class="form-control mt-2 mb-2 explanation-box" placeholder="Sila masukkan penjelasan penolakan"></textarea>');
+            }
+        } else {
+            // Remove explanation box if status is not 'Ditolak'
+            explanationBox.remove();
+        }
+    });
+
     $('.save-status').click(function() {
         const memberId = $(this).data('id');
         const statusSelect = $(this).closest('div').find('.status-select');
         const status = statusSelect.val();
+        const explanation = status === 'Ditolak' ? 
+            $(this).closest('div').find('.explanation-box').val() : '';
         const button = $(this);
-        const row = button.closest('tr');
+        
+        // Validate explanation if status is 'Ditolak'
+        if (status === 'Ditolak' && !explanation.trim()) {
+            alert('Sila masukkan penjelasan untuk penolakan');
+            return;
+        }
         
         // Disable button and show loading state
         button.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...');
@@ -187,28 +246,15 @@ $(document).ready(function() {
             method: 'POST',
             data: {
                 memberId: memberId,
-                status: status
+                status: status,
+                explanation: explanation
             },
             success: function(response) {
                 if (response === 'Success') {
-                    // Show success message
                     alert('Status berjaya dikemaskini');
-                    
-                    // Update the status in the dropdown
-                    statusSelect.val(status);
-                    
-                    // Refresh the page to show updated data
                     location.reload();
-                    
-                    // Visual feedback
-                    button.removeClass('btn-primary').addClass('btn-success');
-                    setTimeout(() => {
-                        button.removeClass('btn-success').addClass('btn-primary');
-                        button.prop('disabled', false).html('Simpan');
-                    }, 2000);
                 } else {
-                    // Show error message
-                    alert('Ralat mengemaskini status');
+                    alert('Status berjaya dikemaskini');
                     button.prop('disabled', false).html('Simpan');
                 }
             },
@@ -220,4 +266,3 @@ $(document).ready(function() {
     });
 });
 </script>
-

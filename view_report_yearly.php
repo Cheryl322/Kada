@@ -239,6 +239,16 @@ $monthlyBreakdown = mysqli_stmt_get_result($monthlyStmt);
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 </head>
 <body>
+    <!-- Add this div at the very top of the body -->
+    <div class="action-buttons" style="position: absolute; top: 20px; left: 20px; z-index: 1000;">
+        <button onclick="window.location.href='download_report_yearly.php?period=<?php echo $selectedYear; ?>'" class="download-btn">
+            <i class="fas fa-download"></i> Muat Turun PDF
+        </button>
+        <button onclick="goBack()" class="back-btn">
+            <i class="fas fa-arrow-left"></i> Kembali
+        </button>
+    </div>
+
     <div class="header">
         <img src="img/kadalogo.jpg" alt="KADA Logo" class="logo">
         <h1>KOPERASI KAKITANGAN KADA KELANTAN BERHAD (KADA)</h1>
@@ -249,15 +259,6 @@ $monthlyBreakdown = mysqli_stmt_get_result($monthlyStmt);
         <p><strong>Tarikh Laporan:</strong> <?php echo date('d/m/Y'); ?></p>
         <p><strong>Tempoh Laporan:</strong> Tahun <?php echo $selectedYear; ?></p>
         <p><strong>Status:</strong> Laporan Rasmi</p>
-        
-        <div class="action-buttons">
-            <button onclick="window.location.href='download_report_yearly.php?period=<?php echo $selectedYear; ?>'" class="download-btn">
-                <i class="fas fa-download"></i> Muat Turun PDF
-            </button>
-            <button onclick="goBack()" class="back-btn">
-                <i class="fas fa-arrow-left"></i> Kembali
-            </button>
-        </div>
     </div>
 
     <div class="summary-section">
