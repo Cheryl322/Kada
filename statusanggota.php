@@ -8,178 +8,488 @@ if (!isset($_SESSION['employeeID'])) {
     exit();
 }
 
-// Include database connection
-include 'dbconnect.php';
-include 'headermember.php';
+include "headermember.php";
+include "footer.php";
+include "dbconnect.php";
 
-// Get the member's registration ID from session
-$memberID = $_SESSION['employeeID'];
+// Get the current user's employeeID from session
+$employeeID = $_SESSION['employeeID']; // Make sure this matches your session variable name
 
-// Get registration status
-$sql = "SELECT regisStatus, regisDate 
-        FROM tb_memberregistration_memberapplicationdetails 
-        WHERE memberRegistrationID = ?
-        ORDER BY regisDate DESC LIMIT 1";
+// Get the registration status
+$sql = "SELECT 
+            CASE 
+                WHEN mr.memberRegistrationID IS NOT NULL AND mr.regisStatus = 'Diluluskan' THEN 'Diluluskan'
+                WHEN mr.memberRegistrationID IS NOT NULL AND mr.regisStatus = 'Ditolak' THEN 'Ditolak'
+                WHEN mr.memberRegistrationID IS NOT NULL THEN 'Belum Selesai'
+                ELSE 'Tiada Rekod'
+            END as regisStatus,
+            CASE 
+                WHEN mr.regisDate IS NOT NULL THEN DATE(mr.regisDate)
+                WHEN m.created_at IS NOT NULL THEN DATE(m.created_at)
+                ELSE CURRENT_DATE()
+            END as regisDate
+        FROM tb_member m 
+        LEFT JOIN tb_memberregistration_memberapplicationdetails mr 
+        ON m.employeeID = mr.memberRegistrationID 
+        WHERE m.employeeID = ?";
 
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("i", $memberID);
-$stmt->execute();
-$result = $stmt->get_result();
-$row = $result->fetch_assoc();
+$stmt = mysqli_prepare($conn, $sql);
+mysqli_stmt_bind_param($stmt, "i", $employeeID);
+mysqli_stmt_execute($stmt);
+$result = mysqli_stmt_get_result($stmt);
+
+// Set default values
+$status = 'Tiada Rekod';
+$regisDate = date('d/m/Y'); // Default to today's date
+
+// Only update values if we have results
+if ($result && $row = mysqli_fetch_assoc($result)) {
+    $status = $row['regisStatus'];
+    $regisDate = !empty($row['regisDate']) 
+        ? date('d/m/Y', strtotime($row['regisDate'])) 
+        : date('d/m/Y');
+}
+
+// Make sure the date is available for JavaScript
+echo "<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const currentStatus = document.getElementById('currentStatus');
+        if (currentStatus) {
+            currentStatus.setAttribute('data-date', '" . $regisDate . "');
+        }
+    });
+</script>";
 ?>
 
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Status Permohonan Anggota</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body {
-            background: linear-gradient(rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.8)),
-                        src('img/padi.jpg') no-repeat center center fixed;
-            background-size: cover;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-        .content-wrapper {
-            flex: 1 0 auto;
-            padding: 20px 0;
-        }
-        .main-container {
-            max-width: 800px;
-            margin: 50px auto;
-            padding: 30px;
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 15px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.1);
-        }
-        .page-title {
-            color: #2c3e50;
-            font-size: 2rem;
-            font-weight: 600;
-            text-align: center;
-            margin-bottom: 40px;
-        }
-        .status-container {
-            padding: 40px;
-            background: white;
-            border-radius: 15px;
-            text-align: center;
-        }
-        .status-circle {
-            width: 150px;
-            height: 150px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 30px;
-            transition: all 0.3s ease;
-        }
-        .status-circle.processing {
-            background-color: #ffeeba;
-            color: #856404;
-            box-shadow: 0 0 15px rgba(255, 193, 7, 0.3);
-        }
-        .status-circle.approved {
-            background-color: #d4edda;
-            color: #155724;
-            box-shadow: 0 0 15px rgba(40, 167, 69, 0.3);
-        }
-        .status-title {
-            font-size: 1.5rem;
-            font-weight: 600;
-            margin: 20px 0;
-            color: #2c3e50;
-        }
-        .status-date {
-            color: #6c757d;
-            font-size: 1.1rem;
-            margin-bottom: 30px;
-        }
-        .btn-back {
-            background-color: #5CBA9B;
-            color: white;
-            padding: 12px 30px;
-            border-radius: 50px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            border: none;
-        }
-        .btn-back:hover {
-            background-color: #4a9d82;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(92, 186, 155, 0.3);
-            color: white;
-        }
-        .status-info {
-            background-color: rgba(248, 249, 250, 0.9);
-            padding: 20px;
-            border-radius: 10px;
-            margin: 20px 0;
-        }
-        footer {
-            flex-shrink: 0;
-            background-color: #333;
-            color: white;
-            padding: 20px 0;
-            margin-top: auto;
-        }
-    </style>
-</head>
-<body>
-    <div class="content-wrapper">
-        <div class="main-container">
-            <h1 class="page-title">Status Permohonan Anggota</h1>
-            
-            <div class="status-container">
-                <?php
-                if ($row && $row['regisStatus'] == 'Belum Selesai') {
-                    ?>
-                    <div class="status-circle processing">
-                        <i class="fas fa-clock fa-4x"></i>
-                    </div>
-                    <h3 class="status-title">Permohonan Ahli Sedang Diproses</h3>
-                    <div class="status-date">
-                        <i class="far fa-calendar-alt me-2"></i>
-                        Tarikh Permohonan: <?php echo date('d/m/Y', strtotime($row['regisDate'])); ?>
-                    </div>
-                    <div class="status-info">
-                        <p class="mb-0">Permohonan anda sedang diproses oleh pihak pengurusan. 
-                        Sila tunggu sementara permohonan anda disemak.</p>
-                    </div>
-                    <?php
-                } else if ($row && $row['regisStatus'] == 'Diluluskan') {
-                    ?>
-                    <div class="status-circle approved">
-                        <i class="fas fa-check fa-4x"></i>
-                    </div>
-                    <h3 class="status-title">Permohonan Diluluskan</h3>
-                    <div class="status-date">
-                        <i class="far fa-calendar-alt me-2"></i>
-                        Tarikh Kelulusan: <?php echo date('d/m/Y', strtotime($row['regisDate'])); ?>
-                    </div>
-                    <div class="status-info">
-                        <p class="mb-0">Tahniah! Permohonan anda telah diluluskan. 
-                        Anda kini adalah ahli rasmi KADA.</p>
-                    </div>
-                    <?php
-                }
-                ?>
-            </div>
+<div class="container mt-3">
+    <h3>Status Permohonan Anggota</h3>
 
-            <div class="text-center mt-4">
-                <a href="status.php" class="btn btn-back">
-                    <i class="fas fa-arrow-left me-2"></i>Kembali
-                </a>
+    <!-- <?php if ($status == 'Diluluskan'): ?>
+        <div class="success-status">
+            <div class="status-circle">
+                <i class="fas fa-check"></i>
             </div>
+            <div class="status-text">Permohonan Diluluskan</div>
         </div>
+    <?php elseif ($status == 'Ditolak'): ?>
+        <div class="failed-status">
+            <div class="status-circle">
+                <i class="fas fa-times"></i>
+            </div>
+            <div class="status-text">Permohonan Ditolak</div>
+        </div>
+    <?php elseif ($status == 'Belum Selesai'): ?>
+        <div class="pending-status">
+            <div class="status-circle">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="status-text">Permohonan Belum Selesai</div>
+            <div class="status-date">Tarikh: <?php echo $regisDate; ?></div>
+        </div>
+    <?php else: // 'Tiada Rekod' ?>
+        <div class="no-record-status">
+            <div class="status-circle">
+                <i class="fas fa-exclamation"></i>
+            </div>
+            <div class="status-text">Tiada Rekod Permohonan</div>
+        </div>
+    <?php endif; ?> -->
+
+    <!-- Add this button container -->
+    <div class="button-container text-center mt-4">
+        <a href="status.php" class="btn btn-kembali">
+            <i class="fas fa-arrow-left"></i> Kembali
+        </a>
     </div>
+</div>
 
-    <?php include 'footer.php'; ?>
+<!-- Add Font Awesome for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+<input type="hidden" id="currentEmployeeID" value="<?php echo $employeeID; ?>">
+<input type="hidden" id="currentStatus" value="<?php echo $status; ?>">
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+function updateProgressSteps(status) {
+    const container = document.querySelector('.container');
+    // Get the current date if no date is set
+    const currentDate = new Date().toLocaleDateString('en-GB'); // Format as dd/mm/yyyy
+    const regisDate = document.getElementById('currentStatus').getAttribute('data-date') || currentDate;
+    let html = '';
+    
+    if (status === 'Diluluskan') {
+        html = `
+            <div class="success-status">
+                <div class="status-circle">
+                    <i class="fas fa-check"></i>
+                </div>
+                <div class="status-text">Permohonan Diluluskan</div>
+            </div>
+        `;
+    } else if (status === 'Ditolak') {
+        html = `
+            <div class="failed-status">
+                <div class="status-circle">
+                    <i class="fas fa-times"></i>
+                </div>
+                <div class="status-text">Permohonan Ditolak</div>
+            </div>
+        `;
+    } else if (status === 'Belum Selesai') {
+        html = `
+            <div class="pending-status">
+                <div class="status-circle">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="status-text">Permohonan Belum Disahkan</div>
+            </div>
+        `;
+    } else { // 'Tiada Rekod'
+        html = `
+            <div class="no-record-status">
+                <div class="status-circle">
+                    <i class="fas fa-exclamation"></i>
+                </div>
+                <div class="status-text">Tiada Rekod Permohonan</div>
+            </div>
+        `;
+    }
+    
+    // Remove any existing status elements
+    const existingElements = container.querySelectorAll('.success-status, .failed-status, .progress-steps');
+    existingElements.forEach(element => element.remove());
+    
+    // Add the new status element after h3
+    const h3 = container.querySelector('h3');
+    h3.insertAdjacentHTML('afterend', html);
+}
+
+function updateStatus(memberId, newStatus) {
+    $.ajax({
+        url: 'update_status.php',
+        method: 'POST',
+        data: {
+            memberId: memberId,
+            status: newStatus
+        },
+        success: function(response) {
+            try {
+                const data = JSON.parse(response);
+                if (data.success) {
+                    // Update the status immediately
+                    document.getElementById('currentStatus').value = data.status;
+                    document.getElementById('currentStatus').setAttribute('data-date', data.date);
+                    updateProgressSteps(data.status);
+                    
+                    // Optional: Show success message
+                    alert('Status updated successfully');
+                    
+                    // Reload the page to refresh all data
+                    window.location.reload();
+                } else {
+                    alert('Failed to update status');
+                }
+            } catch (e) {
+                console.error('Error parsing response:', e);
+                alert('Error updating status');
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error updating status:', error);
+            alert('Error updating status');
+        }
+    });
+}
+
+// Set initial date
+document.getElementById('currentStatus').setAttribute('data-date', '<?php echo $regisDate; ?>');
+
+// Update status initially
+updateProgressSteps(document.getElementById('currentStatus').value);
+
+// Check for updates every 5 seconds
+setInterval(checkStatus, 5000);
+</script>
+
+<style>
+/* Steps Navigation */
+.progress-steps {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 2.5rem 4rem;
+    background: #fff;
+    margin-bottom: 30px;
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.step-item {
+    flex: 1;
+    text-align: center;
+    position: relative;
+    padding: 0 15px;
+}
+
+.step-circle {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: #f0f0f0;
+    color: #666;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 12px;
+    font-weight: 600;
+    font-size: 1.2rem;
+    position: relative;
+    z-index: 2;
+    transition: all 0.3s ease;
+}
+
+.step-line {
+    position: absolute;
+    top: 25px;
+    left: 50%;
+    width: 100%;
+    height: 3px;
+    background: #e0e0e0;
+    transform: translateY(-50%);
+    z-index: 1;
+}
+
+.step-item:last-child .step-line {
+    display: none;
+}
+
+.step-label {
+    color: #666;
+    font-size: 1rem;
+    font-weight: 500;
+    margin-top: 0.8rem;
+    transition: all 0.3s ease;
+}
+
+/* Active State */
+.step-item.active .step-circle {
+    background: #5CBA9B;
+    color: white;
+    box-shadow: 0 0 0 4px rgba(92,186,155,0.2);
+    transform: scale(1.1);
+}
+
+/* Completed State */
+.step-item.completed .step-circle {
+    background: #5CBA9B;
+    color: white;
+}
+
+.step-item.completed .step-line {
+    background: #5CBA9B;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .progress-steps {
+        padding: 2rem 1rem;
+    }
+
+    .step-circle {
+        width: 45px;
+        height: 45px;
+        font-size: 1.1rem;
+    }
+
+    .step-label {
+        font-size: 0.8rem;
+    }
+
+    .loan-header h1 {
+        font-size: 1.5rem;
+    }
+}
+
+/* Animation */
+.step-item {
+    transition: all 0.3s ease;
+}
+
+.step-item:hover .step-circle {
+    transform: scale(1.1);
+    box-shadow: 0 0 0 3px rgba(92,186,155,0.1);
+}
+
+/* New styles for success/failed status */
+.success-status, .failed-status {
+    text-align: center;
+    padding: 2rem;
+    margin: 2rem auto;
+    max-width: 300px;
+}
+
+.status-circle {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.success-status .status-circle {
+    background: #5CBA9B;
+    box-shadow: 0 0 0 15px rgba(92,186,155,0.2);
+}
+
+.failed-status .status-circle {
+    background: #dc3545;
+    box-shadow: 0 0 0 15px rgba(220,53,69,0.2);
+}
+
+.status-circle i {
+    font-size: 50px;
+    color: white;
+}
+
+.status-text {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-top: 1rem;
+}
+
+.success-status .status-text {
+    color: #5CBA9B;
+}
+
+.failed-status .status-text {
+    color: #dc3545;
+}
+
+/* Animation */
+@keyframes scaleIn {
+    from {
+        transform: scale(0);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.status-circle {
+    animation: scaleIn 0.5s ease-out;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .status-circle {
+        width: 100px;
+        height: 100px;
+    }
+
+    .status-circle i {
+        font-size: 40px;
+    }
+
+    .status-text {
+        font-size: 1.2rem;
+    }
+}
+
+.status-date, .step-date {
+    font-size: 0.9rem;
+    color: #666;
+    margin-top: 0.5rem;
+}
+
+.success-status .status-date {
+    color: #5CBA9B;
+}
+
+.failed-status .status-date {
+    color: #dc3545;
+}
+
+.no-record-status {
+    text-align: center;
+    padding: 2rem;
+    margin: 2rem auto;
+    max-width: 300px;
+}
+
+.no-record-status .status-circle {
+    background: #6c757d;
+    box-shadow: 0 0 0 15px rgba(108, 117, 125, 0.2);
+}
+
+.no-record-status .status-text {
+    color: #6c757d;
+}
+
+/* Add pending status styles */
+.pending-status {
+    text-align: center;
+    padding: 2rem;
+    margin: 2rem auto;
+    max-width: 300px;
+}
+
+.pending-status .status-circle {
+    background: #ffc107;
+    box-shadow: 0 0 0 15px rgba(255, 193, 7, 0.2);
+}
+
+.pending-status .status-text {
+    color: #ffc107;
+}
+
+.pending-status .status-date {
+    color: #ffc107;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+}
+
+/* Kembali button styles */
+.button-container {
+    margin-top: 2rem;
+}
+
+.btn-kembali {
+    background-color: #5CBA9B;
+    color: white;
+    padding: 10px 30px;
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border: 2px solid #5CBA9B;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-kembali:hover {
+    background-color: white;
+    color: #5CBA9B;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(92, 186, 155, 0.2);
+}
+
+.btn-kembali i {
+    font-size: 0.9em;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .btn-kembali {
+        padding: 8px 20px;
+        font-size: 0.9rem;
+    }
+}
+</style>
