@@ -72,7 +72,7 @@ $result_pending = mysqli_stmt_get_result($stmt_pending);
 // 检查 $member_status 是否存在且不为 null
 if (isset($member_status) && $member_status !== null && isset($member_status['status'])) {
     // 只有当状态是 "Aktif" 时才显示已注册消息
-    if ($member_status['status'] == 'Aktif') {
+    if ($member_status['status'] == 'Aktif' ) {
         ?>
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
         <script>
@@ -139,8 +139,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     mysqli_stmt_bind_result($stmt, $status);
                     mysqli_stmt_fetch($stmt);
                     
-                    // 只有当状态不是 'Berhenti' 时显示警告
-                    if ($status && $status !== 'Berhenti') {
+                    // 只有当状态是 'Berhenti' 时显示警告
+                    if ($status && $status !== 'Berhenti')  {
                         echo '<div class="alert alert-warning alert-dismissible fade show" role="alert">
                                 <strong>Perhatian!</strong> Anda telah mendaftar sebagai ahli.
                                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
@@ -545,7 +545,7 @@ if (isset($_SESSION['error'])) {
                         <option value="Buddha">Buddha</option>
                         <option value="Hindu">Hindu</option>
                         <option value="Kristian">Kristian</option>
-                        <option value="Lain-lain">Lain-lain</option>
+                    
                     </select>
                 </div>
             </div>
@@ -558,7 +558,7 @@ if (isset($_SESSION['error'])) {
                         <option value="Melayu">Melayu</option>
                         <option value="Cina">Cina</option>
                         <option value="India">India</option>
-                        <option value="Lain-lain">Lain-lain</option>
+                        
                     </select>
                 </div>
             </div>
