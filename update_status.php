@@ -7,52 +7,64 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $explanation = isset($_POST['explanation']) ? $_POST['explanation'] : null;
     $currentDate = date('Y-m-d H:i:s');
     
-    // First, check if there's an existing record
-    $checkSql = "SELECT memberRegistrationID FROM tb_memberregistration_memberapplicationdetails 
-                 WHERE memberRegistrationID = ?";
-    
-    $checkStmt = mysqli_prepare($conn, $checkSql);
-    mysqli_stmt_bind_param($checkStmt, "i", $memberId);
-    mysqli_stmt_execute($checkStmt);
-    $result = mysqli_stmt_get_result($checkStmt);
-    
-    if (mysqli_num_rows($result) > 0) {
-        // Update existing record
+    try {
+        mysqli_begin_transaction($conn);
+        
+        // Update registration history
+        $update_history_sql = "UPDATE tb_member_registration_history 
+                             SET registrationStatus = ?, 
+                                 registrationDate = ? 
+                             WHERE employeeID = ? AND isActive = TRUE";
+        $history_stmt = mysqli_prepare($conn, $update_history_sql);
+        mysqli_stmt_bind_param($history_stmt, "sss", $status, $currentDate, $memberId);
+        mysqli_stmt_execute($history_stmt);
+
+        // Update member application details
         if ($status === 'Ditolak' && $explanation) {
             $sql = "UPDATE tb_memberregistration_memberapplicationdetails 
                     SET regisStatus = ?, regisDate = ?, explanation = ? 
                     WHERE memberRegistrationID = ?";
-            
             $stmt = mysqli_prepare($conn, $sql);
             mysqli_stmt_bind_param($stmt, "sssi", $status, $currentDate, $explanation, $memberId);
         } else {
             $sql = "UPDATE tb_memberregistration_memberapplicationdetails 
                     SET regisStatus = ?, regisDate = ?, explanation = NULL 
                     WHERE memberRegistrationID = ?";
-            
             $stmt = mysqli_prepare($conn, $sql);
             mysqli_stmt_bind_param($stmt, "ssi", $status, $currentDate, $memberId);
         }
-    } else {
-        // Insert new record
-        if ($status === 'Ditolak' && $explanation) {
-            $sql = "INSERT INTO tb_memberregistration_memberapplicationdetails 
-                    (memberRegistrationID, regisDate, regisStatus, explanation) 
-                    VALUES (?, ?, ?, ?)";
-            
-            $stmt = mysqli_prepare($conn, $sql);
-            mysqli_stmt_bind_param($stmt, "isss", $memberId, $currentDate, $status, $explanation);
-        } else {
-            $sql = "INSERT INTO tb_memberregistration_memberapplicationdetails 
-                    (memberRegistrationID, regisDate, regisStatus) 
-                    VALUES (?, ?, ?)";
-            
-            $stmt = mysqli_prepare($conn, $sql);
-            mysqli_stmt_bind_param($stmt, "iss", $memberId, $currentDate, $status);
+        mysqli_stmt_execute($stmt);
+
+        // If status is 'Diluluskan', check if record exists in tb_member_status
+        if ($status === 'Diluluskan') {
+            $check_sql = "SELECT statusID FROM tb_member_status WHERE employeeID = ?";
+            $check_stmt = mysqli_prepare($conn, $check_sql);
+            mysqli_stmt_bind_param($check_stmt, "s", $memberId);
+            mysqli_stmt_execute($check_stmt);
+            $result = mysqli_stmt_get_result($check_stmt);
+
+            if (mysqli_num_rows($result) > 0) {
+                // Update existing record
+                $update_sql = "UPDATE tb_member_status 
+                             SET status = 'Aktif', 
+                                 dateUpdated = ? 
+                             WHERE employeeID = ?";
+                $update_stmt = mysqli_prepare($conn, $update_sql);
+                mysqli_stmt_bind_param($update_stmt, "ss", $currentDate, $memberId);
+                mysqli_stmt_execute($update_stmt);
+            } else {
+                // Insert new record
+                $insert_sql = "INSERT INTO tb_member_status 
+                             (employeeID, status, dateUpdated) 
+                             VALUES (?, 'Aktif', ?)";
+                $insert_stmt = mysqli_prepare($conn, $insert_sql);
+                mysqli_stmt_bind_param($insert_stmt, "ss", $memberId, $currentDate);
+                mysqli_stmt_execute($insert_stmt);
+            }
         }
-    }
-    
-    if (mysqli_stmt_execute($stmt)) {
+
+        mysqli_commit($conn);
+
         // Get member's email and name
         $memberSql = "SELECT memberName, email FROM tb_member WHERE employeeID = ?";
         $memberStmt = mysqli_prepare($conn, $memberSql);
@@ -123,12 +135,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'date' => date('d/m/Y', strtotime($currentDate))
             ]);
         }
-    } else {
+
+    } catch (Exception $e) {
+        mysqli_rollback($conn);
         http_response_code(500);
         echo json_encode([
             'success' => false,
-            'error' => mysqli_error($conn)
+            'error' => $e->getMessage()
         ]);
+        exit();
     }
     
     mysqli_stmt_close($stmt);

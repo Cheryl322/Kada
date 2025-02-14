@@ -8,6 +8,35 @@ if (!isset($_SESSION['employeeID'])) {
     exit();
 }
 
+$employeeId = $_SESSION['employeeID'];
+
+// 检查用户是否是会员
+$check_member = "SELECT status FROM tb_member_status WHERE employeeID = ?";
+$stmt = mysqli_prepare($conn, $check_member);
+mysqli_stmt_bind_param($stmt, "s", $employeeId);
+mysqli_stmt_execute($stmt);
+$result = mysqli_stmt_get_result($stmt);
+
+// 如果用户不是会员，显示错误消息并重定向
+if (mysqli_num_rows($result) === 0) {
+    ?>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            Swal.fire({
+                title: 'Akses Ditolak!',
+                text: 'Anda perlu menjadi ahli terlebih dahulu sebelum membuat permohonan berhenti.',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            }).then((result) => {
+                window.location.href = 'daftar_ahli.php';
+            });
+        });
+    </script>
+    <?php
+    exit();
+}
+
 $employeeID = $_SESSION['employeeID'];
 
 // 检查会员状态
