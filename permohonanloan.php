@@ -303,7 +303,13 @@ $interestRate = $rateRow['rate'] ?? 2.00; // Default to 2% if no rate found
                                    class="form-control" 
                                    id="jumlah_pinjaman" 
                                    name="amountRequested"
+                                   min="1000"
+                                   oninput="validateLoanAmount(this)"
                                    required>
+                        </div>
+                         <small class="text-muted">*Jumlah pinjaman minimum adalah RM1,000</small>
+                        <div class="invalid-feedback">
+                            Jumlah pinjaman mestilah sekurang-kurangnya RM1,000
                         </div>
                     </div>
                     <div class="col-md-6">
@@ -312,7 +318,13 @@ $interestRate = $rateRow['rate'] ?? 2.00; // Default to 2% if no rate found
                                class="form-control" 
                                id="tempoh_pembayaran" 
                                name="financingPeriod" 
+                               min="12"
+                               oninput="validatePaymentPeriod(this)"
                                required>
+                        <small class="text-muted">*Tempoh pembayaran minimum adalah 12 bulan</small>
+                        <div class="invalid-feedback">
+                            Tempoh pembayaran mestilah sekurang-kurangnya 12 bulan
+                        </div>
                     </div>
                 </div>
 
@@ -1865,5 +1877,67 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+});
+</script>
+
+<script>
+function validateLoanAmount(input) {
+    const nextButton = input.closest('.form-step').querySelector('.next-step');
+    const amount = parseFloat(input.value);
+    
+    if (amount < 1000) {
+        input.classList.add('is-invalid');
+        input.classList.remove('is-valid');
+        nextButton.disabled = true;
+    } else {
+        input.classList.remove('is-invalid');
+        input.classList.add('is-valid');
+        nextButton.disabled = false;
+    }
+    
+    // Recalculate monthly payment if the function exists
+    if (typeof calculateMonthlyPayment === 'function') {
+        calculateMonthlyPayment();
+    }
+}
+
+// Add this to your document ready function
+$(document).ready(function() {
+    // Initialize validation on page load
+    const loanInput = document.getElementById('jumlah_pinjaman');
+    if (loanInput) {
+        validateLoanAmount(loanInput);
+    }
+});
+</script>
+
+<script>
+function validatePaymentPeriod(input) {
+    const nextButton = input.closest('.form-step').querySelector('.next-step');
+    const period = parseInt(input.value);
+    
+    if (period < 12) {
+        input.classList.add('is-invalid');
+        input.classList.remove('is-valid');
+        nextButton.disabled = true;
+    } else {
+        input.classList.remove('is-invalid');
+        input.classList.add('is-valid');
+        nextButton.disabled = false;
+    }
+    
+    // Recalculate monthly payment if the function exists
+    if (typeof calculateMonthlyPayment === 'function') {
+        calculateMonthlyPayment();
+    }
+}
+
+// Add this to your document ready function
+$(document).ready(function() {
+    // Initialize validation on page load
+    const periodInput = document.getElementById('tempoh_pembayaran');
+    if (periodInput) {
+        validatePaymentPeriod(periodInput);
+    }
 });
 </script>
