@@ -689,7 +689,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const icInput = document.querySelector('input[name="ic"]');
     icInput.addEventListener('input', function() {
         this.value = this.value.replace(/[^0-9]/g, '').slice(0, 12);
-        validateInput(this, /^\d{12}$/, 'Sila masukkan 12 digit nombor kad pengenalan');
+        validateInput(this, /^\d{12}$/);
     });
 
     // Validate postcodes (5 digits)
@@ -726,7 +726,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Validate email
     const emailInput = document.querySelector('input[name="alamat_emel"]');
     emailInput.addEventListener('input', function() {
-        validateInput(this, /^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Sila masukkan alamat emel yang sah');
+        validateInput(this, /^[^\s@]+@[^\s@]+\.[^\s@]+$/);
     });
 
     // Helper function to validate input and show error message

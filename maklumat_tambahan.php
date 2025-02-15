@@ -334,28 +334,43 @@ if (isset($conn->error) && $conn->error) {
                         </tr>
                         <tr>
                             <td>2</td>
-                            <td>MODAL SYER *</td>
-                            <td><input type="number" name="modal_syer" class="form-control" min="300" step="1"></td>
+                            <td>
+                                MODAL SYER *
+                                <small class="text-muted d-block">*Minimum RM300.00</small>
+                            </td>
+                            <td><input type="number" name="modal_syer" class="form-control" min="300" value="300" step="1"></td>
                         </tr>
                         <tr>
                             <td>3</td>
-                            <td>MODAL YURAN</td>
-                            <td><input type="number" name="modal_yuran" class="form-control" min="35" step="1"></td>
+                            <td>
+                                MODAL YURAN
+                                <small class="text-muted d-block">*Minimum RM35.00</small>
+                            </td>
+                            <td><input type="number" name="modal_yuran" class="form-control" min="35" value="35" step="1"></td>
                         </tr>
                         <tr>
                             <td>4</td>
-                            <td>WANG DEPOSIT ANGGOTA</td>
-                            <td><input type="number" name="wang_deposit" class="form-control" min="0" step="1"></td>
+                            <td>
+                                WANG DEPOSIT ANGGOTA
+                                <small class="text-muted d-block">*Minimum RM20.00</small>
+                            </td>
+                            <td><input type="number" name="wang_deposit" class="form-control" min="20" value="20" step="1"></td>
                         </tr>
                         <tr>
                             <td>5</td>
-                            <td>SUMBANGAN TABUNG KEBAJIKAN (AL-ABRAR)</td>
-                            <td><input type="number" name="sumbangan_tabung" class="form-control" min="0" step="1"></td>
+                            <td>
+                                SUMBANGAN TABUNG KEBAJIKAN (AL-ABRAR)
+                                <small class="text-muted d-block">*Minimum RM5.00</small>
+                            </td>
+                            <td><input type="number" name="sumbangan_tabung" class="form-control" min="5" value="5" step="1"></td>
                         </tr>
                         <tr>
                             <td>6</td>
-                            <td>SIMPANAN TETAP</td>
-                            <td><input type="number" name="simpanan_tetap" class="form-control" min="0" step="1"></td>
+                            <td>
+                                SIMPANAN TETAP
+                                <small class="text-muted d-block">*Minimum RM5.00</small>
+                            </td>
+                            <td><input type="number" name="simpanan_tetap" class="form-control" min="5" value="5" step="1"></td>
                         </tr>
                     </tbody>
                 </table>
@@ -376,7 +391,7 @@ if (isset($conn->error) && $conn->error) {
                     <a href="daftar_ahli.php" class="btn btn-secondary">
                         <i class="fas fa-arrow-left"></i> Kembali
                     </a>
-                    <button type="submit" name="submit" class="btn btn-primary" id="submitBtn">
+                    <button type="submit" name="submit" class="btn btn-primary" id="submitBtn" onclick="return confirmSubmit()">
                         Hantar Pendaftaran <i class="fas fa-paper-plane"></i>
                     </button>
                 </div>
@@ -501,6 +516,13 @@ function validateForm() {
     }
 
     return true;
+}
+
+function confirmSubmit() {
+    if (validateForm()) {
+        return confirm('Adakah anda pasti untuk menghantar pendaftaran ini?');
+    }
+    return false;
 }
 </script>
 
