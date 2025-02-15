@@ -16,40 +16,70 @@ require_once "dbconnect.php";
 $employeeID = $_SESSION['employeeID'];
 $check_sql = "SELECT status FROM tb_member_status WHERE employeeID = ?";
 $stmt = mysqli_prepare($conn, $check_sql);
-mysqli_stmt_bind_param($stmt, "s", $no_kp);
+mysqli_stmt_bind_param($stmt, "s", $employeeID);
 mysqli_stmt_execute($stmt);
-mysqli_stmt_store_result($stmt);
+$result = mysqli_stmt_get_result($stmt);
+$existing_member = mysqli_fetch_assoc($result);
 
-if (mysqli_stmt_num_rows($stmt) > 0) {
-    // 绑定结果
-    mysqli_stmt_bind_result($stmt, $status);
-    mysqli_stmt_fetch($stmt);
-    
-    // 只有当状态不是 'Berhenti' 时才显示已注册提示
-    if ($status !== 'Berhenti') {
-        echo '<div class="alert alert-warning alert-dismissible fade show" role="alert">
-                <strong>Perhatian!</strong> Anda telah mendaftar sebagai ahli.
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-              </div>';
+if ($existing_member) {
+    if ($existing_member['status'] === 'Berhenti') {
+        // 如果状态是 'Berhenti'，提示用户联系管理员
+        ?>
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        <script>
+            Swal.fire({
+                title: 'Perhatian!',
+                text: 'Status keahlian anda telah berhenti. Sila hubungi admin untuk mengaktifkan semula akaun anda.',
+                icon: 'warning',
+                confirmButtonText: 'OK'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = 'mainpage.php';
+                }
+            });
+        </script>
+        <?php
+        exit();
+    } else if ($existing_member['status'] === 'Pencen') {
+        // 如果状态是 'Pencen'，显示不能申请的消息
+        ?>
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        <script>
+            Swal.fire({
+                title: 'Akses Ditolak!',
+                text: 'Maaf, anda tidak boleh mendaftar sebagai ahli kerana status anda adalah pencen.',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = 'mainpage.php';
+                }
+            });
+        </script>
+        <?php
+        exit();
+    } else {
+        // 其他状态显示已注册消息
+        ?>
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        <script>
+            Swal.fire({
+                title: 'Perhatian!',
+                text: 'Anda telah mendaftar sebagai ahli.',
+                icon: 'warning',
+                confirmButtonText: 'OK'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = 'mainpage.php';
+                }
+            });
+        </script>
+        <?php
         exit();
     }
-}
-// $checkSql = "SELECT employeeID FROM tb_member WHERE employeeID = ?";
-// $stmt = mysqli_prepare($conn, $checkSql);
-// mysqli_stmt_bind_param($stmt, 'i', $employeeID);
-// mysqli_stmt_execute($stmt);
-// mysqli_stmt_store_result($stmt);
+} else {
 
-// if (mysqli_stmt_num_rows($stmt) > 0) {
-//     // Employee already registered
-//     echo '<div class="alert alert-warning alert-dismissible fade show" role="alert">
-//             <strong>Perhatian!</strong> Anda telah mendaftar sebagai ahli.
-//             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-//           </div>';
-//     // You might want to redirect them somewhere else
-//     // header("Location: dashboard.php");
-//     // exit();
-// }
+}
 
 // 检查会员状态
 $sql_check_status = "SELECT status FROM tb_member_status WHERE employeeID = ?";
@@ -60,10 +90,10 @@ $result_status = mysqli_stmt_get_result($stmt_status);
 $member_status = mysqli_fetch_assoc($result_status);
 
 // 检查是否有待处理的会员申请
-$sql_check_pending = "SELECT status 
-                     FROM tb_member_status 
-                     WHERE employeeID = ? 
-                     AND status = 'Dalam Proses'";
+$sql_check_pending = "SELECT regisStatus
+                     FROM tb_memberregistration_memberapplicationdetails 
+                     WHERE memberRegistrationID  = ? 
+                     AND regisStatus = 'Belum Selesai'";
 $stmt_pending = mysqli_prepare($conn, $sql_check_pending);
 mysqli_stmt_bind_param($stmt_pending, 's', $employeeID);
 mysqli_stmt_execute($stmt_pending);

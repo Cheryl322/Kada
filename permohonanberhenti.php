@@ -10,81 +10,112 @@ if (!isset($_SESSION['employeeID'])) {
 
 $employeeId = $_SESSION['employeeID'];
 
-// 检查用户是否是会员
-$check_member = "SELECT status FROM tb_member_status WHERE employeeID = ?";
-$stmt = mysqli_prepare($conn, $check_member);
+// 首先检查用户是否是会员
+$check_member_sql = "SELECT memberRegistrationID, regisStatus 
+                    FROM tb_memberregistration_memberapplicationdetails 
+                    WHERE memberRegistrationID = ? 
+                    ORDER BY regisDate DESC LIMIT 1";
+$stmt = mysqli_prepare($conn, $check_member_sql);
 mysqli_stmt_bind_param($stmt, "s", $employeeId);
 mysqli_stmt_execute($stmt);
 $result = mysqli_stmt_get_result($stmt);
 
-// 如果用户不是会员，显示错误消息并重定向
+// 如果没有找到记录，说明是新用户
 if (mysqli_num_rows($result) === 0) {
     ?>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            Swal.fire({
-                title: 'Akses Ditolak!',
-                text: 'Anda perlu menjadi ahli terlebih dahulu sebelum membuat permohonan berhenti.',
-                icon: 'error',
-                confirmButtonText: 'OK'
-            }).then((result) => {
-                window.location.href = 'daftar_ahli.php';
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    </head>
+    <body>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                Swal.fire({
+                    title: 'Akses Ditolak!',
+                    text: 'Anda perlu mendaftar sebagai ahli terlebih dahulu sebelum membuat permohonan berhenti.',
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                }).then((result) => {
+                    window.location.href = 'daftar_ahli.php';
+                });
             });
-        });
-    </script>
+        </script>
+    </body>
+    </html>
     <?php
     exit();
 }
 
-$employeeID = $_SESSION['employeeID'];
+// 如果用户已注册，检查状态
+$member_status = mysqli_fetch_assoc($result);
 
-// 检查会员状态
-$sql_check_status = "SELECT status FROM tb_member_status WHERE employeeID = ?";
-$stmt_status = mysqli_prepare($conn, $sql_check_status);
-mysqli_stmt_bind_param($stmt_status, 's', $employeeID);
+// 检查注册状态
+if ($member_status['regisStatus'] !== 'Diluluskan') {
+    ?>
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    </head>
+    <body>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                Swal.fire({
+                    title: 'Akses Ditolak!',
+                    text: 'Anda perlu mendapat kelulusan pendaftaran dahulu sebelum membuat permohonan berhenti.',
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                }).then((result) => {
+                    window.location.href = 'mainpage.php';
+                });
+            });
+        </script>
+    </body>
+    </html>
+    <?php
+    exit();
+}
+
+// 如果是已批准的会员，继续检查会员状态
+$check_status_sql = "SELECT status FROM tb_member_status WHERE employeeID = ?";
+$stmt_status = mysqli_prepare($conn, $check_status_sql);
+mysqli_stmt_bind_param($stmt_status, "s", $employeeId);
 mysqli_stmt_execute($stmt_status);
 $result_status = mysqli_stmt_get_result($stmt_status);
 $member_status = mysqli_fetch_assoc($result_status);
 
-// 如果已经是 Berhenti 状态，不允许再次申请
-if ($member_status['status'] == 'Berhenti') {
-    echo "<script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>";
-    echo "<script>
-        document.addEventListener('DOMContentLoaded', function() {
-            Swal.fire({
-                title: 'Akses Ditolak!',
-                text: 'Maaf, anda tidak boleh membuat permohonan berhenti kerana status anda telah berhenti.',
-                icon: 'error',
-                confirmButtonText: 'OK'
-            }).then((result) => {
-                window.location.href = 'mainpage.php';
+if ($member_status && ($member_status['status'] === 'Berhenti' || $member_status['status'] === 'Pencen')) {
+    $message = $member_status['status'] === 'Berhenti' 
+        ? 'Maaf, anda tidak boleh membuat permohonan berhenti kerana status keahlian anda telah berhenti.'
+        : 'Maaf, anda tidak boleh membuat permohonan berhenti kerana status anda adalah pencen.';
+    ?>
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    </head>
+    <body>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                Swal.fire({
+                    title: 'Akses Ditolak!',
+                    text: '<?php echo $message; ?>',
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                }).then((result) => {
+                    window.location.href = 'mainpage.php';
+                });
             });
-        });
-    </script>";
+        </script>
+    </body>
+    </html>
+    <?php
     exit();
 }
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $employeeID = $_SESSION['employeeID'];
-    $reason = $_POST['reasonDetail'];
-    
-    $sql = "INSERT INTO tb_berhenti (employeeID, reason, applyDate) 
-            VALUES (?, ?, CURRENT_DATE)";
-    $stmt = mysqli_prepare($conn, $sql);
-    mysqli_stmt_bind_param($stmt, 'is', $employeeID, $reason);
-    
-    if (mysqli_stmt_execute($stmt)) {
-        $_SESSION['success_message'] = "Permohonan anda telah dihantar.";
-        header("Location: status_permohonanberhenti.php");
-        exit();
-    } else {
-        $error_message = "Ralat: " . mysqli_error($conn);
-    }
-}
-
-// Now include the header which contains HTML output
-include "headermember.php";
+// 如果通过所有检查，继续显示退出申请表单
+include 'headermember.php';
 
 // 从IC提取生日和计算年龄
 function getBirthDateFromIC($ic) {
@@ -129,7 +160,7 @@ $check_sql = "SELECT * FROM tb_berhenti
               WHERE employeeID = ? 
               AND approvalStatus = 'Pending'";
 $stmt = mysqli_prepare($conn, $check_sql);
-mysqli_stmt_bind_param($stmt, 's', $employeeID);
+mysqli_stmt_bind_param($stmt, 's', $employeeId);
 mysqli_stmt_execute($stmt);
 $result = mysqli_stmt_get_result($stmt);
 
@@ -165,7 +196,7 @@ $sql_member = "SELECT m.*,
                WHERE m.employeeID = ?";
 
 $stmt_member = mysqli_prepare($conn, $sql_member);
-mysqli_stmt_bind_param($stmt_member, 's', $employeeID);
+mysqli_stmt_bind_param($stmt_member, 's', $employeeId);
 mysqli_stmt_execute($stmt_member);
 $member = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_member));
 
