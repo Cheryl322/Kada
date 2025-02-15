@@ -114,6 +114,25 @@ if ($member_status && ($member_status['status'] === 'Berhenti' || $member_status
     exit();
 }
 
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $employeeID = $_SESSION['employeeID'];
+    $reason = $_POST['reasonDetail'];
+    
+    $sql = "INSERT INTO tb_berhenti (employeeID, reason, applyDate) 
+            VALUES (?, ?, CURRENT_DATE)";
+    $stmt = mysqli_prepare($conn, $sql);
+    mysqli_stmt_bind_param($stmt, 'is', $employeeID, $reason);
+    
+    if (mysqli_stmt_execute($stmt)) {
+        $_SESSION['success_message'] = "Permohonan anda telah dihantar.";
+        header("Location: status_permohonanberhenti.php");
+        exit();
+    } else {
+        $error_message = "Ralat: " . mysqli_error($conn);
+    }
+}
+
+
 // 如果通过所有检查，继续显示退出申请表单
 include 'headermember.php';
 
@@ -518,16 +537,7 @@ textarea.form-control {
 }
 
 .btn {
-    /* position: relative;
-    z-index: 9999;
-    padding: 8px 20px;
-    border: none !important;
-    border-radius: 25px;
-    color: white !important;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px; */
+    
     padding: 10px 20px;
     border-radius: 8px;
     font-weight: 500;
@@ -658,89 +668,5 @@ textarea.form-control {
     background-color: rgba(255, 255, 255, 0.4) !important;
 }
 
-/* 移除任何可能的背景图片
-body::before,
-body::after,
-.container::before,
-.container::after,
-.alert::before,
-.alert::after {
-    display: none !important;
-}
-
-
-.mt-4 {
-    position: relative !important;
-    z-index: 9999 !important;
-}
-
-
-.container, .row, .col-md-8 {
-    background: none !important;
-    border: none !important;
-    box-shadow: none !important;
-}
-
-.warning-box {
-    background-color: rgba(255, 248, 240, 0.9);
-    border-radius: 15px;
-    padding: 30px;
-    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
-    position: relative;
-    z-index: 1;
-}
-
-.button-container {
-    display: flex;
-    justify-content: center;
-    gap: 1rem;
-    position: relative;
-    z-index: 1000;
-}
-
-.solid-btn {
-    display: inline-flex;
-    align-items: center;
-    padding: 8px 20px;
-    border-radius: 25px;
-    color: white;
-    text-decoration: none;
-    border: none;
-    position: relative;
-    z-index: 1000;
-    font-weight: 500;
-}
-
-.solid-btn:hover {
-    color: white;
-    text-decoration: none;
-}
-
-
-.button-container::before,
-.button-container::after,
-.solid-btn::before,
-.solid-btn::after {
-    display: none !important;
-}
-
-
-.solid-btn {
-    isolation: isolate;
-}
-
-a {
-    color: #75B798 !important;
-    text-decoration: none !important;
-}
-
-a:hover {
-    color: #5a8f75 !important;
-    text-decoration: none !important;
-}
-
-.fas {
-    margin-right: 5px;
-} */
 </style>
 
