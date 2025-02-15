@@ -24,7 +24,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         
         // Verify the current password using password_verify
         if (!password_verify($currentPassword, $user['password'])) {
-            throw new Exception('Kata laluan semasa tidak tepat');
+            // Add debugging info to response
+            echo json_encode([
+                'success' => false,
+                'message' => 'Kata laluan semasa tidak tepat',
+                'debug' => [
+                    'stored_hash' => $user['password'],
+                    'current_password' => $currentPassword,
+                    'employee_id' => $employeeID
+                ]
+            ]);
+            exit;
         }
         
         // Hash the new password before saving
