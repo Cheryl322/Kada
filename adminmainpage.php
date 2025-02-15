@@ -32,6 +32,7 @@ if (!isset($_SESSION['employeeID']) || $_SESSION['role'] !== 'admin') {
    background-color: MediumAquamarine;
    color: white;
    text-align: center;
+   z-index: 1000;
 }
 
 .circle-container {
@@ -153,9 +154,9 @@ if (!isset($_SESSION['employeeID']) || $_SESSION['role'] !== 'admin') {
     display: flex;
     gap: 30px;
     padding: 20px 40px;
-    width: calc(100% - 80px); /* Fixed width accounting for padding */
+    width: calc(100% - 80px);
     margin: 80px auto 0;
-    position: relative; /* Change from fixed to relative */
+    position: relative;
     z-index: 1;
     max-width: 1600px;
 }
@@ -717,6 +718,11 @@ if (!isset($_SESSION['employeeID']) || $_SESSION['role'] !== 'admin') {
 .status-belum-selesai {
     background-color: #fff3e0;
     color: #ef6c00;
+}
+
+/* Add margin to prevent content from being hidden behind footer */
+.tables-container {
+    margin-bottom: 60px; /* Add space for footer */
 }
 </style>
 </head>
