@@ -56,67 +56,44 @@ if (!$summaryResult) {
     error_log("MySQL Error: " . mysqli_error($conn));
 }
 
-// Update the delete handling code at the top of the file
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_employeeID'])) {
-    include 'dbconnect.php';  // Make sure we have database connection
-    
+// At the top of the file, after session_start()
+if (!isset($_SESSION['reportData'])) {
+    $_SESSION['reportData'] = array();
+}
+
+// Update the delete handling code
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_employeeID']) && isset($_POST['delete_loanID'])) {
     $employeeIDToDelete = $_POST['delete_employeeID'];
-    $loanApplicationIDToDelete = isset($_POST['delete_loanApplicationID']) ? $_POST['delete_loanApplicationID'] : null;
+    $loanIDToDelete = $_POST['delete_loanID'];
     
-    try {
-        // Start transaction
-        mysqli_begin_transaction($conn);
-        
-        if ($loanApplicationIDToDelete) {
-            // Delete loan entry
-            $stmt = mysqli_prepare($conn, "DELETE FROM tb_loan WHERE employeeID = ? AND loanApplicationID = ?");
-            mysqli_stmt_bind_param($stmt, "ss", $employeeIDToDelete, $loanApplicationIDToDelete);
-            mysqli_stmt_execute($stmt);
-        } else {
-            // Delete member entry
-            $stmt = mysqli_prepare($conn, "DELETE FROM tb_member WHERE employeeID = ?");
-            mysqli_stmt_bind_param($stmt, "s", $employeeIDToDelete);
-            mysqli_stmt_execute($stmt);
-        }
-        
-        // If we get here, database update was successful
-        // Now update session data
-        if (isset($_SESSION['reportData']) && is_array($_SESSION['reportData'])) {
-            $tempData = [];
-            
-            foreach ($_SESSION['reportData'] as $entry) {
-                if ($loanApplicationIDToDelete) {
-                    // For loan entries
-                    if ($entry['employeeID'] !== $employeeIDToDelete || 
-                        $entry['loanApplicationID'] !== $loanApplicationIDToDelete) {
-                        $tempData[] = $entry;
-                    }
-                } else {
-                    // For member entries
-                    if ($entry['employeeID'] !== $employeeIDToDelete) {
-                        $tempData[] = $entry;
-                    }
-                }
+    error_log("Delete request received for employeeID: " . $employeeIDToDelete . " and loanID: " . $loanIDToDelete);
+    
+    if (isset($_SESSION['reportData']) && is_array($_SESSION['reportData'])) {
+        // Create new array without the specific entry
+        $newData = [];
+        foreach ($_SESSION['reportData'] as $item) {
+            // Skip only the specific entry that matches both employeeID and loanApplicationID
+            if (!($item['employeeID'] == $employeeIDToDelete && $item['loanApplicationID'] == $loanIDToDelete)) {
+                $newData[] = $item;
             }
-            
-            $_SESSION['reportData'] = $tempData;
         }
         
-        // Commit transaction
-        mysqli_commit($conn);
-        
-        // Send success response
-        header('Content-Type: application/json');
-        echo json_encode(['success' => true]);
-        
-    } catch (Exception $e) {
-        // Rollback transaction on error
-        mysqli_rollback($conn);
+        // Update session with filtered data
+        $_SESSION['reportData'] = $newData;
         
         header('Content-Type: application/json');
-        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        echo json_encode([
+            'success' => true,
+            'message' => 'Entry deleted successfully',
+            'count' => count($_SESSION['reportData'])
+        ]);
+    } else {
+        header('Content-Type: application/json');
+        echo json_encode([
+            'success' => false,
+            'message' => 'No report data found in session'
+        ]);
     }
-    
     exit();
 }
 
@@ -344,10 +321,8 @@ if (!empty($_SESSION['reportData'])) {
     });
 }
 
-$reportData = $_SESSION['reportData'];
-
-// Use the session data for display
-$reportData = $_SESSION['reportData'];
+// Make sure to use session data for display
+$reportData = isset($_SESSION['reportData']) ? $_SESSION['reportData'] : array();
 
 // Add this function at the top of the file
 function convertMonthToMalay($date) {
@@ -400,7 +375,7 @@ function convertMonthToMalay($date) {
                     foreach ($pageItems as $index => $data): 
                         $displayIndex = $startIndex + $index + 1;
                 ?>
-                    <tr id="row_<?php echo $data['employeeID'] . '_' . ($data['reportType'] === 'pembiayaan' ? $data['loanApplicationID'] : ''); ?>">
+                    <tr id="row_<?php echo $data['employeeID']; ?>">
                         <td><?php echo $displayIndex; ?></td>
                         <td><?php echo htmlspecialchars($data['memberName']); ?></td>
                         <td><?php echo htmlspecialchars($data['employeeID']); ?></td>
@@ -432,13 +407,13 @@ function convertMonthToMalay($date) {
                             </div>
                         </td>
                         <td class="text-center">
-                            <form method="POST" style="display: inline;" onsubmit="return handleDelete(this, '<?php echo $data['employeeID']; ?>', '<?php echo ($data['reportType'] === 'pembiayaan' ? $data['loanApplicationID'] : ''); ?>')">
-                                <input type="hidden" name="delete_employeeID" value="<?php echo htmlspecialchars($data['employeeID']); ?>">
-                                <?php if ($data['reportType'] === 'pembiayaan'): ?>
-                                    <input type="hidden" name="delete_loanApplicationID" value="<?php echo htmlspecialchars($data['loanApplicationID']); ?>">
-                                <?php endif; ?>
-                                <button type="submit" class="btn btn-danger">Padam</button>
-                            </form>
+                            <button type="button" 
+                                    class="btn btn-danger" 
+                                    onclick="handleDelete('<?php echo $data['employeeID']; ?>', '<?php echo $data['loanApplicationID']; ?>')"
+                                    data-employee-id="<?php echo $data['employeeID']; ?>"
+                                    data-loan-id="<?php echo $data['loanApplicationID']; ?>">
+                                Padam
+                            </button>
                         </td>
                     </tr>
                 <?php 
@@ -871,39 +846,35 @@ function downloadCurrentStatement() {
     }
 }
 
-function handleDelete(form, employeeID, loanApplicationID) {
+function handleDelete(employeeID, loanID) {
+    console.log('Delete requested for employeeID:', employeeID, 'loanID:', loanID);
+    
     if (!confirm('Adakah anda pasti mahu memadamkan entri ini?')) {
         return false;
     }
     
-    const formData = new FormData(form);
+    const formData = new FormData();
+    formData.append('delete_employeeID', employeeID);
+    formData.append('delete_loanID', loanID);
     
-    fetch(window.location.href, {
+    fetch(window.location.pathname, {
         method: 'POST',
-        body: formData
+        body: formData,
+        cache: 'no-cache'
     })
     .then(response => response.json())
     .then(data => {
+        console.log('Delete response:', data);
         if (data.success) {
-            // Remove the row
-            const rowId = `row_${employeeID}${loanApplicationID ? '_' + loanApplicationID : ''}`;
-            const row = document.getElementById(rowId);
-            if (row) {
-                row.remove();
-                updateRowNumbers();
-            }
-            // Reload the page to ensure everything is in sync
-            window.location.reload();
+            window.location.href = window.location.pathname + '?t=' + new Date().getTime();
         } else {
-            alert('Ralat semasa memadamkan entri. Sila cuba lagi.');
+            alert('Error: ' + data.message);
         }
     })
     .catch(error => {
-        console.error('Error:', error);
-        alert('Ralat semasa memadamkan entri. Sila cuba lagi.');
+        console.error('Delete error:', error);
+        alert('Error deleting entry. Please try again.');
     });
-    
-    return false;
 }
 
 function updateRowNumbers() {
