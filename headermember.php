@@ -9,6 +9,8 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 
+
+
 <style>
 .footer {
    position: fixed;
@@ -21,6 +23,8 @@
 }
 
 
+
+
 body {
     background: url('img/padi.jpg') no-repeat center center fixed;
     background-size: cover;
@@ -28,6 +32,8 @@ body {
     font-family: 'Poppins', sans-serif;
     min-height: 100vh;
 }
+
+
 
 
 body::before {
@@ -40,6 +46,8 @@ body::before {
     background: linear-gradient(rgba(245, 245, 245, 0.85), rgba(240, 240, 240, 0.8));
     z-index: -1;
 }
+
+
 
 
 .login-container {
@@ -55,11 +63,63 @@ body::before {
 }
 
 
+
+
+.dropdown-menu {
+    padding: 0.5rem 0;
+    border: none;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    border-radius: 0.5rem;
+    background-color: white;
+}
+
+
+.dropdown-header {
+    background-color: #f8f9fa;
+    padding: 0.5rem 1rem;
+    font-weight: 600;
+    color: #000;
+}
+
+
+.dropdown-item {
+    padding: 0.7rem 1.5rem;
+    transition: all 0.2s ease;
+    color: #000;
+}
+
+
+.dropdown-item:hover {
+    padding-left: 2rem;
+    background-color: #f8f9fa;
+    color: #000;
+}
+
+
+.dropdown-item i {
+    margin-right: 0.5rem;
+    width: 20px;
+    text-align: center;
+    color: #000;
+}
+
+
+.dropdown-divider {
+    margin: 0.5rem 0;
+}
+
+
+
+
 </style>
+
+
 
 
 </head>
 <body>
+
+
 
 
 <nav class="navbar navbar-expand-lg bg-primary" data-bs-theme="dark">
@@ -78,22 +138,31 @@ body::before {
         </li>
 
 
+
+
         <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Perkhidmatan</a>
+          <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
+            <i class="fas fa-services"></i> Perkhidmatan
+          </a>
           <div class="dropdown-menu">
-            <a class="dropdown dropend" href="#">
-              Permohonan Anggota
-              <ul class="dropdown dropend">
-                <li><a class="dropdown-item" href="daftar_ahli.php">Borang Permohonan</a>
-                </li>
-                <li><a class="dropdown-item" href="statusanggota.php">Status Permohonan</a>
-                </li>
-              </ul>
+            <div class="dropdown-header">Permohonan Anggota</div>
+            <a class="dropdown-item" href="daftar_ahli.php">
+              <i class="fas fa-user-plus"></i> Borang Permohonan
             </a>
-            <a class="dropdown-item" href="permohonanloan.php">Permohonan Pembiayaan</a>
-            <a class="dropdown-item" href="permohonanberhenti.php">Permohonan Berhenti Menjadi Anggota</a>
+            <a class="dropdown-item" href="statusanggota.php">
+              <i class="fas fa-search"></i> Status Permohonan
+            </a>
+            <div class="dropdown-divider"></div>
+            <a class="dropdown-item" href="permohonanloan.php">
+              <i class="fas fa-money-bill-wave"></i> Permohonan Pembiayaan
+            </a>
+            <a class="dropdown-item" href="permohonanberhenti.php">
+              <i class="fas fa-user-minus"></i> Permohonan Berhenti
+            </a>
           </div>
         </li>
+
+
 
 
        
@@ -107,12 +176,6 @@ body::before {
        
         <!-- Add this new ul for right-aligned items -->
         <ul class="navbar-nav ms-auto mt-2">
-          <li class="nav-item">
-           
-            <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-bell" viewBox="0 0 16 16">
-              <path d="M8 16a2 2 0 0 0 2-2H6a2 2 0 0 0 2 2M8 1.918l-.797.161A4 4 0 0 0 4 6c0 .628-.134 2.197-.459 3.742-.16.767-.376 1.566-.663 2.258h10.244c-.287-.692-.502-1.49-.663-2.258C12.134 8.197 12 6.628 12 6a4 4 0 0 0-3.203-3.92zM14.22 12c.223.447.481.801.78 1H1c.299-.199.557-.553.78-1C2.68 10.2 3 6.88 3 6c0-2.42 1.72-4.44 4.005-4.901a1 1 0 1 1 1.99 0A5 5 0 0 1 13 6c0 .88.32 4.2 1.22 6"/>
-            </svg>
-          </li>
           <li class="nav-item" id="simpleHeader">
             <div style="position: relative;">
               <a class="nav-link" href="#" onclick="toggleMenu()" style="cursor: pointer;">Profil</a>
@@ -133,11 +196,15 @@ body::before {
 </nav>
 
 
+
+
 <script>
 function toggleMenu() {
     const menu = document.getElementById('logoutMenu');
     menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
 }
+
+
 
 
 // Close menu when clicking outside
@@ -149,6 +216,16 @@ document.addEventListener('click', function(e) {
     }
 });
 </script>
+
+
+
+
+
+
+
+
+
+
 
 
 
