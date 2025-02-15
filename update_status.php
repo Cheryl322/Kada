@@ -90,6 +90,34 @@ try {
         mysqli_stmt_close($insertStmt);
     }
 
+    // Add member status update when status is 'Diluluskan'
+    if ($status === 'Diluluskan') {
+        $check_sql = "SELECT statusID FROM tb_member_status WHERE employeeID = ?";
+        $check_stmt = mysqli_prepare($conn, $check_sql);
+        mysqli_stmt_bind_param($check_stmt, "s", $memberId);
+        mysqli_stmt_execute($check_stmt);
+        $result = mysqli_stmt_get_result($check_stmt);
+        
+        if (mysqli_num_rows($result) > 0) {
+            // Update existing record
+            $update_sql = "UPDATE tb_member_status 
+                         SET status = 'Aktif', 
+                             dateUpdated = ? 
+                         WHERE employeeID = ?";
+            $update_stmt = mysqli_prepare($conn, $update_sql);
+            mysqli_stmt_bind_param($update_stmt, "ss", $currentDate, $memberId);
+            mysqli_stmt_execute($update_stmt);
+        } else {
+            // Insert new record
+            $insert_sql = "INSERT INTO tb_member_status 
+                         (employeeID, status, dateUpdated) 
+                         VALUES (?, 'Aktif', ?)";
+            $insert_stmt = mysqli_prepare($conn, $insert_sql);
+            mysqli_stmt_bind_param($insert_stmt, "ss", $memberId, $currentDate);
+            mysqli_stmt_execute($insert_stmt);
+        }
+    }
+
     // Send email if member data exists
     if ($email) {
         $mail = new PHPMailer(true);

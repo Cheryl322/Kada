@@ -110,7 +110,7 @@ $result_pending = mysqli_stmt_get_result($stmt_pending);
 // 检查 $member_status 是否存在且不为 null
 if (isset($member_status) && $member_status !== null && isset($member_status['status'])) {
     // 只有当状态是 "Aktif" 时才显示已注册消息
-    if ($member_status['status'] == 'Aktif' ) {
+    if ($member_status['status'] == 'Aktif' || $result_pending['regisStatus'] == 'Dilulukan' ) {
         ?>
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
         <script>
