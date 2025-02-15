@@ -635,50 +635,43 @@ include 'headeradmin.php';
     function validateAndSubmit() {
         const reportType = document.querySelector('input[name="reportType"]:checked').value;
         
-        // For monthly and yearly reports, skip member validation
-        if (reportType === 'monthly' || reportType === 'yearly') {
-            // Set the report type
-            document.getElementById('reportTypeInput').value = reportType;
+        // Set the report type
+        document.getElementById('reportTypeInput').value = reportType;
+        
+        if (reportType === 'monthly') {
+            // Add month and year to form
+            const month = document.getElementById('monthSelect').value;
+            const year = document.getElementById('yearSelect').value;
             
-            if (reportType === 'monthly') {
-                // Add month and year to form
-                const month = document.getElementById('monthSelect').value;
-                const year = document.getElementById('yearSelect').value;
-                
-                const monthInput = document.createElement('input');
-                monthInput.type = 'hidden';
-                monthInput.name = 'selected_month';
-                monthInput.value = month;
-                document.getElementById('reportForm').appendChild(monthInput);
+            const monthInput = document.createElement('input');
+            monthInput.type = 'hidden';
+            monthInput.name = 'selected_month';
+            monthInput.value = month;
+            document.getElementById('reportForm').appendChild(monthInput);
 
-                const yearInput = document.createElement('input');
-                yearInput.type = 'hidden';
-                yearInput.name = 'selected_year';
-                yearInput.value = year;
-                document.getElementById('reportForm').appendChild(yearInput);
-            } else {
-                // Add year only for yearly reports
-                const year = document.getElementById('yearOnlySelect').value;
-                
-                const yearInput = document.createElement('input');
-                yearInput.type = 'hidden';
-                yearInput.name = 'selected_year';
-                yearInput.value = year;
-                document.getElementById('reportForm').appendChild(yearInput);
-            }
+            const yearInput = document.createElement('input');
+            yearInput.type = 'hidden';
+            yearInput.name = 'selected_year';
+            yearInput.value = year;
+            document.getElementById('reportForm').appendChild(yearInput);
+        } else if (reportType === 'yearly') {
+            // Add year only for yearly reports
+            const year = document.getElementById('yearOnlySelect').value;
             
-            // Submit form directly without showing confirmation
-            document.getElementById('reportForm').submit();
-            return;
+            const yearInput = document.createElement('input');
+            yearInput.type = 'hidden';
+            yearInput.name = 'selected_year';
+            yearInput.value = year;
+            document.getElementById('reportForm').appendChild(yearInput);
+        } else {
+            // For member-based reports (ahli and pembiayaan), check member selection
+            if (selectedItems.size === 0) {
+                alert('Sila pilih sekurang-kurangnya seorang ahli');
+                return;
+            }
         }
         
-        // For member-based reports (ahli and pembiayaan), check member selection
-        if (selectedItems.size === 0) {
-            alert('Sila pilih sekurang-kurangnya seorang ahli');
-            return;
-        }
-        
-        // Show confirmation modal for member-based reports only
+        // Show confirmation modal for all report types
         const confirmationModal = new bootstrap.Modal(document.getElementById('confirmationModal'));
         confirmationModal.show();
     }
