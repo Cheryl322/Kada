@@ -774,7 +774,7 @@ document.addEventListener('DOMContentLoaded', function() {
     phoneInputs.forEach(input => {
         input.addEventListener('input', function() {
             this.value = this.value.replace(/[^0-9]/g, '');
-           
+            
             if (input.name === 'phoneNumber') {
                 // Mobile phone: must be 10-11 digits
                 validateInput(this, /^\d{10,11}$/, 'Sila masukkan nombor telefon bimbit yang sah (10-11 digit)');
@@ -811,34 +811,29 @@ document.addEventListener('DOMContentLoaded', function() {
     // Helper function to validate input and show error message
     function validateInput(input, regex, errorMessage) {
         const isValid = regex.test(input.value);
-        const errorDiv = input.nextElementSibling?.classList.contains('invalid-feedback')
-            ? input.nextElementSibling
-            : createErrorDiv();
-       
         if (!isValid && input.value !== '') {
             input.classList.add('is-invalid');
             input.classList.remove('is-valid');
-            errorDiv.textContent = errorMessage;
-            if (!input.nextElementSibling?.classList.contains('invalid-feedback')) {
+            
+            // Show error message
+            let errorDiv = input.nextElementSibling;
+            if (!errorDiv || !errorDiv.classList.contains('invalid-feedback')) {
+                errorDiv = document.createElement('div');
+                errorDiv.className = 'invalid-feedback';
                 input.parentNode.insertBefore(errorDiv, input.nextSibling);
             }
+            errorDiv.textContent = errorMessage;
         } else if (input.value !== '') {
             input.classList.remove('is-invalid');
             input.classList.add('is-valid');
-            errorDiv.remove();
-        } else {
-            input.classList.remove('is-invalid', 'is-valid');
-            errorDiv.remove();
+            
+            // Remove error message if it exists
+            const errorDiv = input.nextElementSibling;
+            if (errorDiv && errorDiv.classList.contains('invalid-feedback')) {
+                errorDiv.remove();
+            }
         }
         return isValid;
-    }
-
-
-    // Helper function to create error message div
-    function createErrorDiv() {
-        const div = document.createElement('div');
-        div.className = 'invalid-feedback';
-        return div;
     }
 
 
