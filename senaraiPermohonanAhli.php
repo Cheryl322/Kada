@@ -224,7 +224,9 @@ $(document).ready(function() {
         }
     });
 
-    $('.save-status').click(function() {
+    $('.save-status').click(function(e) {
+        e.preventDefault();
+        
         const memberId = $(this).data('id');
         const statusSelect = $(this).closest('div').find('.status-select');
         const status = statusSelect.val();
@@ -232,37 +234,60 @@ $(document).ready(function() {
             $(this).closest('div').find('.explanation-box').val() : '';
         const button = $(this);
         
-        // Validate explanation if status is 'Ditolak'
-        if (status === 'Ditolak' && !explanation.trim()) {
-            alert('Sila masukkan penjelasan untuk penolakan');
-            return;
+        // Customize confirmation message based on status
+        let confirmMessage = '';
+        if (status === 'Diluluskan') {
+            confirmMessage = 'Adakah anda pasti untuk meluluskan permohonan ini?';
+        } else if (status === 'Ditolak') {
+            confirmMessage = 'Adakah anda pasti untuk menolak permohonan ini?';
+        } else {
+            confirmMessage = 'Adakah anda pasti untuk mengubah status permohonan ini?';
         }
         
-        // Disable button and show loading state
-        button.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...');
-        
-        $.ajax({
-            url: 'update_status.php',
-            method: 'POST',
-            data: {
-                memberId: memberId,
-                status: status,
-                explanation: explanation
-            },
-            success: function(response) {
-                if (response === 'Success') {
-                    alert('Status berjaya dikemaskini');
-                    location.reload();
-                } else {
-                    alert('Status berjaya dikemaskini');
+        // Show confirmation dialog
+        if (confirm(confirmMessage)) {
+            button.prop('disabled', true);
+            button.html('<span class="spinner-border spinner-border-sm"></span> Saving...');
+            
+            $.ajax({
+                url: 'update_status.php',
+                method: 'POST',
+                data: {
+                    memberId: memberId,
+                    status: status,
+                    explanation: explanation
+                },
+                dataType: 'json',
+                success: function(response) {
+                    if (response && response.success) {
+                        // Customize success message based on status
+                        let successMessage = '';
+                        if (status === 'Diluluskan') {
+                            successMessage = 'Permohonan telah berjaya diluluskan!';
+                        } else if (status === 'Ditolak') {
+                            successMessage = 'Permohonan telah ditolak.';
+                        } else {
+                            successMessage = 'Status permohonan telah berjaya dikemaskini.';
+                        }
+                        
+                        // Add email notification if applicable
+                        if (response.emailSent) {
+                            successMessage += '\nEmail pemberitahuan telah dihantar kepada pemohon.';
+                        }
+                        
+                        alert(successMessage);
+                        location.reload();
+                    } else {
+                        alert(response?.error || 'Gagal mengemaskini status');
+                        button.prop('disabled', false).html('Simpan');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    alert('Ralat sambungan ke pelayan: ' + error);
                     button.prop('disabled', false).html('Simpan');
                 }
-            },
-            error: function() {
-                alert('Ralat sambungan ke pelayan');
-                button.prop('disabled', false).html('Simpan');
-            }
-        });
+            });
+        }
     });
 });
 </script>

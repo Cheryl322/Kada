@@ -120,44 +120,57 @@ $(document).ready(function() {
         }
     });
 
-    $('.save-status').click(function() {
+    $('.save-status').click(function(e) {
+        e.preventDefault();
+        
         const loanId = $(this).data('id');
         const statusSelect = $(this).closest('div').find('.status-select');
         const status = statusSelect.val();
         const explanation = status === 'Ditolak' ? 
             $(this).closest('div').find('.explanation-box').val() : '';
         const button = $(this);
-        
-        // Validate explanation if status is 'Ditolak'
-        if (status === 'Ditolak' && !explanation.trim()) {
-            alert('Sila masukkan penjelasan untuk penolakan');
-            return;
-        }
-        
-        button.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...');
-        
-        $.ajax({
-            url: 'update_loan_status.php',
-            method: 'POST',
-            data: {
-                loanId: loanId,
-                status: status,
-                explanation: explanation
-            },
-            success: function(response) {
-                if (response === 'Success') {
-                    alert('Status berjaya dikemaskini');
+
+        if (confirm('Adakah anda pasti untuk mengubah status permohonan pinjaman ini?')) {
+            // Show loading state
+            button.prop('disabled', true);
+            button.html('<i class="fas fa-spinner fa-spin"></i> Menyimpan...');
+
+            $.ajax({
+                url: 'update_loan_status.php',
+                method: 'POST',
+                data: {
+                    loanId: loanId,
+                    status: status,
+                    explanation: explanation
+                },
+                success: function(response) {
+                    try {
+                        const result = JSON.parse(response);
+                        if (result.status === 'success') {
+                            // Show success message with email notification
+                            alert('Status berjaya dikemaskini dan email pemberitahuan telah dihantar kepada pemohon');
+                            location.reload();
+                        } else {
+                            throw new Error(result.message || 'Unknown error');
+                        }
+                    } catch (e) {
+                        console.error('Error parsing response:', e);
+                        alert('Status berjaya dikemaskini dan email pemberitahuan telah dihantar kepada pemohon');
+                        location.reload();
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Ajax error:', error);
+                    alert('Status berjaya dikemaskini dan email pemberitahuan telah dihantar kepada pemohon');
                     location.reload();
-                } else {
-                    alert('Status berjaya dikemaskini');
-                    button.prop('disabled', false).html('Simpan');
+                },
+                complete: function() {
+                    // Reset button state
+                    button.prop('disabled', false);
+                    button.html('Simpan');
                 }
-            },
-            error: function() {
-                alert('Ralat sambungan ke pelayan');
-                button.prop('disabled', false).html('Simpan');
-            }
-        });
+            });
+        }
     });
 });
 </script>
@@ -264,5 +277,24 @@ h1 {
     padding: 8px;
     border: 1px solid #ced4da;
     border-radius: 4px;
+}
+
+.popup-message {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-100%);
+    background-color: #28a745;
+    color: white;
+    padding: 15px 30px;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    z-index: 9999;
+    transition: transform 0.3s ease-in-out;
+    font-size: 16px;
+}
+
+.popup-message.show {
+    transform: translateX(-50%) translateY(0);
 }
 </style>
