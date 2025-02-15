@@ -290,8 +290,11 @@ if (isset($conn->error) && $conn->error) {
                                     <option value="Adik-beradik">Adik-beradik</option>
                                 </select>
                             </td>
-                            <td><input type="text" name="nama_waris[]" class="form-control" required></td>
-                            <td><input type="text" name="no_kp_waris[]" class="form-control" placeholder="______-__-____"></td>
+                            <td>
+                                <input type="text" name="nama_waris[]" class="form-control" required>
+                                <small class="text-muted">Sila pastikan NAMA PENUH seperti dalam kad pengenalan</small>
+                            </td>
+                            <td><input type="text" name="no_kp_waris[]" class="form-control" placeholder="__-_-_"></td>
                             <td class="text-center">
                                 <button type="button" class="btn btn-danger btn-sm delete-row">
                                     <i class="fas fa-trash"></i>
@@ -407,7 +410,7 @@ if (isset($conn->error) && $conn->error) {
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize mask for existing inputs
     $('input[name="no_kp_waris[]"]').mask('000000-00-0000', {
-        placeholder: "______-__-____"
+        placeholder: "__-_-_"
     });
 
     // Add new row
@@ -428,7 +431,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     </select>
                 </td>
                 <td><input type="text" name="nama_waris[]" class="form-control" required></td>
-                <td><input type="text" name="no_kp_waris[]" class="form-control" placeholder="______-__-____"></td>
+                <td><input type="text" name="no_kp_waris[]" class="form-control" placeholder="__-_-_"></td>
                 <td class="text-center">
                     <button type="button" class="btn btn-danger btn-sm delete-row">
                         <i class="fas fa-trash"></i>
@@ -440,7 +443,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Apply mask to new input
         $('input[name="no_kp_waris[]"]:last').mask('000000-00-0000', {
-            placeholder: "______-__-____"
+            placeholder: "__-_-_"
         });
     });
 
@@ -528,4 +531,4 @@ function confirmSubmit() {
 
 </body>
 </html>
-<?php include "footer.php"; ?> 
+<?php include "footer.php"; ?>
