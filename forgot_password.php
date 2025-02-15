@@ -81,7 +81,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         // Generate reset link
-        $resetLink = "http://localhost/KADA/reset_password.php?token=" . $token;
+        $resetLink = "http://koperasikada.great-site.net/reset_password.php?token=" . $token;
         
         // First, get the KADA logo and convert it to Base64
         $logoPath = 'img/kadalogo.jpg'; // Make sure this path is correct
