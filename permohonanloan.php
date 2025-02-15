@@ -4,65 +4,38 @@ include "dbconnect.php";
 
 // 检查用户是否登录
 if (!isset($_SESSION['employeeID'])) {
-    $_SESSION['error'] = "Sila log masuk terlebih dahulu";
     header("Location: login.php");
     exit();
 }
 
 $employeeId = $_SESSION['employeeID'];
 
-// 检查用户状态
-$check_sql = "SELECT m.*, ms.status 
-              FROM tb_member m 
-              LEFT JOIN tb_member_status ms ON m.employeeID = ms.employeeID 
-              WHERE m.employeeID = ?";
-$stmt = mysqli_prepare($conn, $check_sql);
+// 检查用户是否是会员
+$check_member = "SELECT status FROM tb_member_status WHERE employeeID = ?";
+$stmt = mysqli_prepare($conn, $check_member);
 mysqli_stmt_bind_param($stmt, "s", $employeeId);
 mysqli_stmt_execute($stmt);
-$result = mysqli_stmt_get_result($stmt);
-$member = mysqli_fetch_assoc($result);
+$result = mysqli_stmt_get_result($stmt);    
 
-// 在显示任何内容之前进行所有检查
-if (!$member) {
-    $error_message = 'Anda perlu mendapat kelulusan pendaftaran dahulu sebelum membuat permohonan pinjaman.';
-    $redirect_url = 'daftar_ahli.php';
-} else if ($member['status'] === 'Berhenti') {
-    $error_message = 'Maaf, anda tidak boleh membuat permohonan pinjaman kerana status keahlian anda telah berhenti.';
-    $redirect_url = 'mainpage.php';
-} else if ($member['status'] === 'Pencen') {
-    $error_message = 'Maaf, anda tidak boleh membuat permohonan pinjaman kerana status anda adalah pencen.';
-    $redirect_url = 'mainpage.php';
-}
-
-// 如果有错误，显示错误消息
-if (isset($error_message)) {
+// 如果用户不是会员，显示错误消息并重定向
+if (mysqli_num_rows($result) === 0) {
     ?>
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    </head>
-    <body>
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                Swal.fire({
-                    title: 'Akses Ditolak!',
-                    text: '<?php echo $error_message; ?>',
-                    icon: 'error',
-                    confirmButtonText: 'OK'
-                }).then((result) => {
-                    window.location.href = '<?php echo $redirect_url; ?>';
-                });
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            Swal.fire({
+                title: 'Akses Ditolak!',
+                text: 'Anda perlu membuat pendaftaran anggota dahulu sebelum membuat permohonan pinjaman.',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            }).then((result) => {
+                window.location.href = 'daftar_ahli.php';
             });
-        </script>
-    </body>
-    </html>
+        });
+    </script>
     <?php
     exit();
 }
-
-// 如果没有错误，继续显示贷款申请表单
-include 'headermember.php';
 
 if (isset($_SESSION['formData'])) {
     $formData = $_SESSION['formData'];
@@ -129,6 +102,7 @@ if ($member_status['status'] == 'Berhenti') {
     exit();
 }
 
+include 'headermember.php';
 
 $employeeID = $_SESSION['employeeID'];
 
@@ -291,9 +265,9 @@ $interestRate = $rateRow['rate'] ?? 2.00; // Default to 2% if no rate found
                     <div class="col-md-6">
                         <label for="officeTel" class="form-label">No. Telefon Bimbit</label>
                         <div class="input-group">
-                            <span class="input-group-text">+60</span>
+                            <span class="input-group-text">+6</span>
                             <input type="text" class="form-control" id="officeTel" name="officeTel" 
-                                value="<?php echo isset($memberData['phoneHome']) ? htmlspecialchars($memberData['phoneHome']) : ''; ?>" readonly>
+                                value="<?php echo isset($memberData['phoneNumber']) ? htmlspecialchars($memberData['phoneNumber']) : ''; ?>" readonly>
                         </div>
                     </div>
                 </div>
