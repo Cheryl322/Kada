@@ -293,7 +293,7 @@ $interestRate = $rateRow['rate'] ?? 2.00; // Default to 2% if no rate found
                         <div class="input-group">
                             <span class="input-group-text">+60</span>
                             <input type="text" class="form-control" id="officeTel" name="officeTel" 
-                                value="<?php echo isset($memberData['phoneHome']) ? htmlspecialchars($memberData['phoneHome']) : ''; ?>" readonly>
+                                value="<?php echo isset($memberData['phoneNumber']) ? htmlspecialchars($memberData['phoneNumber']) : ''; ?>" readonly>
                         </div>
                     </div>
                 </div>
