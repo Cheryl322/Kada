@@ -586,9 +586,9 @@ body {
 
 <div class="main-header">
     <div class="header-left">
-        <button class="menu-button" id="menuButton">
+        <!-- <button class="menu-button" id="menuButton">
             <i class="fas fa-bars"></i>
-        </button>
+        </button> -->
         <a href="adminmainpage.php" class="home-button">
             <i class="fas fa-home"></i>
         </a>
@@ -596,7 +596,7 @@ body {
     
 </div>
 
-<div class="navbar initial-state closed" id="sidebar">
+<!-- <div class="navbar initial-state closed" id="sidebar">
   <div class="container-fluid">
     <div style="display: flex; width: 100%; align-items: center; margin-bottom: 20px;">
       <i class="fas fa-arrow-left" id="closeSidebar" style="cursor:pointer; font-size: 24px; color: white; position: absolute; left: 20px; top: 20px;"></i>
@@ -633,7 +633,7 @@ body {
       </li>
     </ul>
   </div>
-</div>
+</div> -->
 
 <div id="simpleHeader" style="position: fixed; top: 10px; right: 20px; z-index: 100000;">
     <div style="position: relative;">

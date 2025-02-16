@@ -756,10 +756,10 @@ if (!isset($_SESSION['employeeID']) || $_SESSION['role'] !== 'admin') {
                 </a>
             </div>
             <div class="row-2">
-                <a href="adminviewreport.php" class="circle-item">
+                <a href="manage_member_status.php" class="circle-item">
                     <div class="circle-inner">
-                        <i class="fas fa-clipboard-check"></i>
-                        <span>Cek Laporan</span>
+                        <i class="fas fa-users-cog"></i>
+                        <span>Pengurusan Status Anggota</span>
                     </div>
                 </a>
                 <a href="admin_upload_payment.php" class="circle-item">
